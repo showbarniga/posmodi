@@ -1,0 +1,23 @@
+
+
+[
+  {
+    "so_id": "SO-0003",
+    "customer_name": "Praveen",
+    "order_date": "08-01-2026",
+    "shipping_address": "Madurai ...",
+    "items": [
+      { "product_id": "PRD-001", "product_name": "Rice Bag 25kg", "qty": 2, "uom": "Bag", "serials": "" },
+      { "product_id": "PRD-002", "product_name": "Sugar 1kg", "qty": 5, "uom": "Kg", "serials": "" }
+    ]
+  },
+  {
+    "so_id": "SO-0004",
+    "customer_name": "Anitha G",
+    "order_date": "26-02-2026",
+    "shipping_address": "Coimbatore, Tamil Nadu",
+    "items": [
+      { "product_id": "PRD-010", "product_name": "Oil 1L", "qty": 3, "uom": "Nos", "serials": "" }
+    ]
+  }
+]

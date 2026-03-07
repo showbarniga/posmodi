@@ -1,0 +1,286 @@
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<!-- DN2 (New/Edit/View Delivery Note) styles -->
+<link rel="stylesheet" href="{{ url_for('static', filename='deliverynote-new.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="dn2-page">
+
+  <!-- =====================================================
+       HEADER
+  ====================================================== -->
+  <div class="dn2-top">
+
+    <!-- Title + Status pill -->
+    <div class="dn2-title-wrap">
+      <h2 class="dn2-title">
+        <span id="dn2PageTitle">New Delivery Note</span>
+        <span class="dn2-status-pill" id="dn2StatusPill"></span>
+      </h2>
+    </div>
+
+    <!-- Header right actions -->
+    <div class="dn2-top-actions">
+      <button type="button" class="dn2-return-btn" id="dn2ReturnBtn" disabled>
+        Delivery Return
+      </button>
+    </div>
+
+  </div>
+
+  <!-- =====================================================
+       MAIN CARD
+  ====================================================== -->
+  <div class="dn2-card">
+
+    <!-- =====================================================
+         BASIC DETAILS
+    ====================================================== -->
+    <div class="dn2-form">
+
+      <!-- Row 1 -->
+      <div class="dn2-row">
+        <div class="dn2-field">
+          <label>Delivery Note ID (Auto Generate)</label>
+          <input type="text" id="dnIdView" class="dn2-input auto-field" readonly>
+          <input type="hidden" id="dnId" name="delivery_note_id">
+        </div>
+
+        <div class="dn2-field">
+          <label>Delivery Date</label>
+          <input type="date" id="dnDate">
+        </div>
+      </div>
+
+      <!-- Row 2 -->
+      <div class="dn2-row">
+        <div class="dn2-field">
+          <label>Sales Order Reference</label>
+          <select id="soRef">
+            <option value="">Select Order Reference</option>
+            {% if sales_orders %}
+              {% for so in sales_orders %}
+                <option value="{{ so.so_id|e }}">{{ so.so_id|e }}</option>
+              {% endfor %}
+            {% endif %}
+          </select>
+        </div>
+
+        <div class="dn2-field">
+          <label>Customer Name</label>
+          <input type="text" id="custName" placeholder="Enter Customer Name">
+        </div>
+      </div>
+
+      <!-- Row 3 -->
+      <div class="dn2-row">
+        <div class="dn2-field">
+          <label>Delivery Type</label>
+          <select id="dnType">
+            <option value="">Select Delivery Type</option>
+            <option value="regular">Regular</option>
+            <option value="urgent">Urgent</option>
+            <option value="return">Return</option>
+          </select>
+        </div>
+
+        <div class="dn2-field">
+          <label>Destination Address</label>
+          <input type="text" id="destAddr" placeholder="Enter Destination Address">
+        </div>
+      </div>
+
+    </div>
+
+    <!-- =====================================================
+         LINE ITEMS
+    ====================================================== -->
+    <div class="dn2-section">
+      <h3>Line Items</h3>
+
+      <div class="dn2-table-wrap">
+        <table class="dn2-table" id="itemsTable">
+          <thead>
+            <tr>
+              <th class="w-sno">S.No</th>
+              <th>Product Name</th>
+              <th class="w-id">Product ID</th>
+              <th class="w-qty">Quantity</th>
+              <th class="w-uom">UOM</th>
+              <th>Serial No(s)</th>
+              <th class="w-act">Action</th>
+            </tr>
+          </thead>
+
+          <tbody id="itemsBody"></tbody>
+        </table>
+
+        <!-- Add item footer -->
+        <div class="dn2-table-footer">
+          <button type="button" class="dn2-btn dn2-btn-lite" id="addItemBtn">+ Add Item</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         DELIVERY LOGISTICS
+    ====================================================== -->
+    <div class="dn2-section">
+      <div class="dn2-section-head">
+        <h3>Delivery Logistics</h3>
+      </div>
+
+      <div class="dn2-form">
+
+        <div class="dn2-row">
+          <div class="dn2-field">
+            <label>Delivery By</label>
+            <input type="text" id="deliveryBy" placeholder="Enter delivery agent/person's name">
+            <small id="deliveryByError" class="field-error"></small>
+          </div>
+
+          <div class="dn2-field">
+            <label>Delivery Status</label>
+            <select id="deliveryStatus">
+              <option value="draft">Draft</option>
+              <option value="delivered">Delivered</option>
+              <option value="partially_delivered">Partially Delivered</option>
+              <option value="returned">Returned</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="dn2-row">
+          <div class="dn2-field">
+            <label>Vehicle Number</label>
+            <input type="text" id="vehicleNo" placeholder="Enter Vehicle Number">
+          </div>
+
+          <div class="dn2-field">
+            <label>Tracking ID</label>
+            <input type="text" id="trackingId" placeholder="Enter Tracking ID">
+          </div>
+        </div>
+
+        <div class="dn2-row">
+          <div class="dn2-field dn2-full">
+            <label>Delivery Notes</label>
+            <input type="text" id="deliveryNotes" placeholder="Enter Delivery Notes">
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- =====================================================
+         CUSTOMER ACKNOWLEDGEMENT (POD + Received details)
+         JS controls visibility and enabled state
+    ====================================================== -->
+    <div class="dn2-section" id="ackSection" style="display:none;">
+      <div class="dn2-section-head">
+        <h3>Customer Acknowledgement</h3>
+
+        <button type="button" class="dn2-btn dn2-btn-primary" id="ackSaveBtn">
+          Save Changes
+        </button>
+      </div>
+
+      <div class="dn2-form">
+        <div class="dn2-row">
+          <div class="dn2-field">
+            <label>Received By</label>
+            <input type="text" id="ackReceivedBy" placeholder="Customer name receiving goods">
+          </div>
+
+          <div class="dn2-field">
+            <label>Contact Number</label>
+            <input type="text" id="ackContact" placeholder="+91-xxxxxxxxxx">
+          </div>
+        </div>
+
+        <div class="dn2-row">
+          <div class="dn2-field dn2-full">
+            <label>Proof of Delivery (POD)</label>
+
+            <div class="ack-upload">
+              <input type="file" id="ackPodFile" accept=".pdf,.jpg,.jpeg,.png">
+              <small class="ack-hint">Supported formats: PDF, JPG, PNG</small>
+            </div>
+
+            <div class="ack-files" id="ackFiles">
+              <!-- JS will render uploaded file rows -->
+            </div>
+
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- =====================================================
+         FOOTER ACTION BUTTONS
+    ====================================================== -->
+    <div class="dn2-footer">
+
+      <!-- Left actions -->
+      <div class="dn2-left-actions">
+        <button type="button" id="cancelDnBtn" class="btn-cancel-dn">Cancel DN</button>
+      </div>
+
+      <!-- Right actions -->
+      <div class="dn2-right-actions">
+
+        <button type="button" class="btn-outline" id="cancelBtn">Cancel</button>
+
+        <button type="button" class="btn-save-draft" id="saveDraftBtn">Save Draft</button>
+
+        <button type="button" class="btn-submit" id="submitBtn" disabled>
+          Submit (DN)
+        </button>
+
+        <button type="button" class="btn-icon" id="pdfBtn" title="Download PDF">
+          📄
+        </button>
+
+        <button type="button" class="btn-icon" id="emailBtn" title="Send Mail">
+          ✉
+        </button>
+
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- =====================================================
+     CANCEL DN MODAL
+====================================================== -->
+<div class="pos-modal-backdrop" id="cancelDnBackdrop" style="display:none;">
+  <div class="pos-modal">
+    <div class="pos-modal-head">
+      <h4>Cancel Delivery Note</h4>
+      <button type="button" class="pos-modal-x" id="cancelDnX">✕</button>
+    </div>
+
+    <div class="pos-modal-body">
+      <label class="pos-modal-label">Reason for cancellation (optional)</label>
+      <textarea
+        id="cancelDnReason"
+        class="pos-modal-textarea"
+        placeholder="Example: Customer cancelled order / Wrong items / Duplicate DN created"
+      ></textarea>
+    </div>
+
+    <div class="pos-modal-actions">
+      <button type="button" class="pos-btn pos-btn-outline" id="cancelDnNo">Cancel</button>
+      <button type="button" class="pos-btn pos-btn-primary" id="cancelDnYes">OK</button>
+    </div>
+  </div>
+</div>
+
+<!-- DN2 page script -->
+<script src="{{ url_for('static', filename='deliverynote-new.js') }}"></script>
+
+{% endblock %}

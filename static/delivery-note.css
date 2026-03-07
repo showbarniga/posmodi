@@ -1,0 +1,544 @@
+/*=========================================================
+   DELIVERY NOTE PAGE (Layout + Theme)
+========================================================= */
+.delivery-note-page{
+  padding: 20px;
+  font-family: "Poppins", sans-serif;
+  color: #4a1f1a;
+  background: #f6f1f1;
+}
+
+/* =========================================================
+   HEADER
+========================================================= */
+.dn-header{
+  display:flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.dn-heading{
+  font-size: 28px;
+  font-weight: 600;
+  color: #a12828;
+  margin: 0;
+  text-shadow: 1px 1px 2px #d8b7b7;
+}
+
+.dn-btn-primary{
+  background: linear-gradient(#a12828, #8c1f1f);
+  color: #fff;
+  border: none;
+  padding: 8px 14px;
+  font-size: 13px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: 0.25s;
+  box-shadow: 0 5px 0 #6d1717;
+}
+.dn-btn-primary:hover{
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 #6d1717;
+}
+
+/* =========================================================
+   CARD
+========================================================= */
+.dn-card{
+  background: rgba(255, 255, 255, 0.65);
+  border: 1px solid rgba(190, 140, 140, 0.35);
+  border-radius: 18px;
+  padding: 8px;
+  box-shadow: 0 18px 40px rgba(70, 10, 10, 0.08);
+}
+
+/* =========================================================
+   SEARCH
+========================================================= */
+.dn-search-row{
+  display:flex;
+  flex-direction: column;
+}
+
+.dn-search-wrap{
+  display:flex;
+  align-items:center;
+  background:#ffffff;
+  border: 1.5px solid #a12828;
+  border-radius:999px;
+  margin-top: 4px;
+  box-shadow: 0 4px 10px rgba(161, 40, 40, 0.25);
+  transition: 0.2s ease;
+  position: relative;
+  width: 100%;
+  height: 40px;
+}
+
+.dn-search-input{
+  width:100%;
+  height:100%;
+  border:none;
+  outline:none;
+  font-size: 14px;
+  background: transparent;
+  padding-left: 30px;
+  padding-right: 18px;
+  color: #4a1f1a;
+}
+.dn-search-input::placeholder{ color:#9b9b9b; }
+
+.dn-search-wrap:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px rgba(161, 40, 40, 0.35);
+}
+
+.dn-clear-link{
+  font-size: 15px;
+  font-weight: 700;
+  color: #8d1f1f;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  margin-top: 10px;
+  text-align: right;
+  white-space: nowrap;
+  align-self: flex-end;
+}
+
+/* =========================================================
+   FILTERS
+========================================================= */
+.dn-filters{
+  display:flex;
+  align-items:flex-end;
+  gap:16px;
+  margin-bottom: 26px;
+  margin-top: 10px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
+}
+
+.dn-filter{ flex: 1 1 0; min-width: 0; }
+.dn-date-filter{ flex: 2 1 0; }
+
+.dn-label{
+  display:block;
+  font-weight: 700;
+  font-size: 13px;
+  margin-bottom: 8px;
+  color:#4a1f1a;
+}
+
+.dn-select{
+  width:100%;
+  height: 30px;
+  padding: 0 16px;
+  border-radius: 18px;
+  border: 2px solid #ead0d0;
+  background: #fff;
+  font-size: 13px;
+  outline:none;
+  white-space: nowrap;
+}
+
+.dn-date-wrap{
+  display:flex;
+  align-items:center;
+  border: 2px solid #ead0d0;
+  border-radius: 16px;
+  height: 27px;
+  overflow:hidden;
+  background:#fff;
+}
+
+.dn-date-field{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  width: 50%;
+  height: 100%;
+  padding: 0 12px;
+}
+.dn-date-field:first-child{ border-right: 1px solid #e6bcbc; }
+
+.dn-date-text{
+  font-size: 12px;
+  font-weight: 700;
+  color:#7a1d1d;
+  white-space: nowrap;
+}
+
+.dn-date-input{
+  width:100%;
+  height:100%;
+  border:none;
+  outline:none;
+  font-size: 13px;
+  background: transparent;
+  color:#4a1f1a;
+}
+
+/* =========================================================
+   STATUS SORT MENU (inside Status heading)
+========================================================= */
+.dn-sort-th{
+  position: relative;
+  cursor: pointer;
+  -webkit-user-select: none;
+  -moz-user-select: none;
+  -ms-user-select: none;
+  user-select: none;
+}
+
+.dn-sort-caret{
+  font-size: 12px;
+  margin-left: 6px;
+  opacity: 0.7;
+}
+
+/* NOTE: JS should add/remove "open" class on .dn-sort-th to show this menu */
+.dn-sort-menu{
+  position: absolute;
+  top: calc(100% + 8px);
+  left: 0;
+  width: 260px;
+  background: #fff;
+  border: 1px solid rgba(170, 70, 70, 0.25);
+  border-radius: 10px;
+  box-shadow: 0 12px 30px rgba(70, 10, 10, 0.18);
+  padding: 8px;
+  display: none;
+  z-index: 50;
+  flex-direction: column;
+}
+
+.dn-sort-th.open .dn-sort-menu{
+  display: flex;
+}
+
+.dn-sort-menu button{
+  width: 100%;
+  text-align: left;
+  padding: 10px 10px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  border-radius: 8px;
+  font-size: 13px;
+  color: #4a1f1a;
+  display: block;
+}
+.dn-sort-menu button:hover{
+  background: rgba(161, 40, 40, 0.08);
+}
+
+/* =========================================================
+   GENERATE BUTTONS ROW
+========================================================= */
+.dn-gen-actions{
+  display: flex;
+  justify-content: flex-end;
+  gap: 14px;
+  margin: 14px 0 12px;
+  flex-wrap: wrap;
+}
+
+.dn-gen-btn{
+  border: 2px solid #a12828;
+  background: #fff;
+  color: #a12828;
+  padding: 8px 10px;
+  border-radius: 999px;
+  font-size: 13px;
+  letter-spacing: 0.2px;
+  box-shadow: 0 6px 14px rgba(161, 40, 40, 0.12);
+  transition: 0.2s ease;
+}
+
+/* Disabled look */
+.dn-gen-btn:disabled{
+  background: #fff;
+  border-color: #c77a7a;
+  color: #a12828;
+  opacity: 1;
+  cursor: default;
+  box-shadow: none;
+}
+
+/* Enabled hover */
+.dn-gen-btn:not(:disabled):hover{
+  background: linear-gradient(#a12828, #8c1f1f);
+  color: #a12828;
+  transform: translateY(-1px);
+  box-shadow: 0 10px 18px rgba(161, 40, 40, 0.20);
+}
+
+.dn-gen-btn:not(:disabled):active{
+  transform: translateY(0px);
+  box-shadow: 0 6px 14px rgba(161, 40, 40, 0.18);
+}
+
+/* =========================================================
+   TABLE
+========================================================= */
+.dn-table-wrap{
+  overflow-x:auto;
+  overflow-y: visible;
+  border-radius: 10px;
+}
+
+.dn-table{
+  width:100%;
+  border-collapse: collapse;
+  font-size: 14px;
+}
+
+.dn-table thead th{
+  padding: 8px 12px;
+  text-align: left;
+  background: rgba(170, 70, 70, 0.10);
+  color: #7a1d1d;
+  border-bottom: 1px solid rgba(170, 70, 70, 0.2);
+  white-space: nowrap;
+}
+
+.dn-table tbody td{
+  padding: 8px 12px;
+  border-bottom: 1px solid rgba(170, 70, 70, 0.12);
+  white-space: nowrap;
+}
+
+.dn-table thead th:last-child{
+  text-align: center;
+  padding-right: 0px;
+}
+
+.dn-table tbody tr:hover{
+  background: rgba(141, 31, 31, 0.06);
+}
+
+.dn-table tbody tr:hover td{
+  background: #e3bdbd;
+}
+
+.dn-th-sno{ width: 70px; text-align:center; }
+.dn-td-action{
+  position: relative;
+  overflow: visible;
+}
+
+/* Wrapper (not required by current JS, kept as-is) */
+.dn-act{
+  display: inline-block;
+  position: relative;
+}
+
+/* =========================================================
+   STATUS BADGE
+========================================================= */
+.dn-badge{
+  display:inline-block;
+  padding: 5px 10px;
+  border-radius: 999px;
+  font-size: 11px;
+  font-weight: 700;
+  border: 1px solid rgba(0,0,0,0.06);
+}
+
+.dn-badge.draft{ background:#ffe28a; }
+.dn-badge.delivered{ background:#67c3ff; color:#0b2a3b; }
+.dn-badge.partially_delivered{ background:#ff8fb5; color:#3b0b1d; }
+.dn-badge.returned{ background:#ffb14a; color:#3b2000; }
+.dn-badge.cancelled{ background:#d6d6d6; color:#2b2b2b; }
+
+
+/* =========================================================
+   FOOTER / PAGER
+========================================================= */
+.dn-footer{
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
+  gap: 8px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(170, 70, 70, 0.12);
+  flex-wrap: nowrap;
+}
+
+.dn-showing{
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a1d1d;
+  white-space: nowrap;
+  flex: 1 1 auto;
+  overflow:hidden;
+  text-overflow: ellipsis;
+}
+
+.dn-pager{
+  display:flex;
+  align-items:center;
+  gap: 8px;
+  flex: 0 0 auto;
+}
+
+.dn-btn-page{
+  padding: 6px 18px;
+  border-radius: 4px;
+  background: linear-gradient(#a12828, #821f1f);
+  border:none;
+  color:white;
+  font-size: 13px;
+  min-width: 80px;
+  white-space: nowrap;
+  cursor:pointer;
+  box-shadow: 0 4px 0 #6d1717;
+  transition: 0.25s ease;
+}
+
+.dn-btn-page:hover:not(.disabled){
+  transform: translateY(-2px);
+}
+
+.dn-btn-page.disabled{
+  opacity: 0.5;
+  cursor: default;
+  pointer-events: none;
+  transform: none !important;
+}
+
+.dn-page-text{
+  font-size: 13px;
+  color: #7a1d1d;
+  font-weight: 500;
+}
+.dn-page-text strong{ font-weight: 800; }
+
+/* =========================================================
+   ERP STYLE 3-DOTS HOVER FLY MENU (attached to body)
+========================================================= */
+.dn-act-dots{
+  width: 38px;
+  height: 38px;
+  border: none;
+  background: transparent;
+  color: #a12828;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 900;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.dn-act-fly{
+  position: fixed;
+  z-index: 999999;
+  width: 160px;
+  background: #fff;
+  border-radius: 8px;
+  box-shadow: 0 12px 24px rgba(0,0,0,0.18);
+  padding: 4px 0;
+  overflow: hidden;
+}
+
+.dn-act-item{
+  width: 100%;
+  text-align: left;
+  padding: 8px 12px;
+  font-size: 12px;
+  font-weight: 700;
+  color: #111;
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.dn-act-item:hover{
+  background: #e3bdbd;
+}
+
+.dn-act-item:disabled,
+.dn-act-disabled{
+  color: #bfbfbf;
+  cursor: default;
+}
+.dn-act-item:disabled:hover{
+  background: transparent;
+}
+
+/* =========================================================
+   TITLE + STATUS PILL (used in your DN2/New page header)
+   Keeping as-is (does not affect this list page)
+========================================================= */
+.dn2-title-wrap{
+  display:flex;
+  align-items:center;
+  gap: 10px;
+}
+
+.dn2-status-pill{
+  padding: 6px 12px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 700;
+  border: 1px solid rgba(0,0,0,0.06);
+  box-shadow: 0 6px 14px rgba(0,0,0,0.08);
+}
+
+/* pill colors */
+.dn2-status-pill.draft{ background:#ffe28a; }
+.dn2-status-pill.partially_delivered{ background:#ff8fb5; color:#3b0b1d; }
+.dn2-status-pill.delivered{ background:#67c3ff; color:#0b2a3b; }
+.dn2-status-pill.returned{ background:#ffb14a; color:#3b2000; }
+.dn2-status-pill.cancelled{ background:#d6d6d6; color:#2b2b2b; }
+.dn2-status-pill.pending{ background:#e3d8ff; color:#3c2a7a; }
+.dn2-status-pill.in_transit{ background:#ffd6a5; color:#7a3e00; }
+
+/* checkbox column */
+.dn-th-check,
+.dn-td-check{
+  width:70px;
+  text-align:center;
+}
+
+.dn-th-check input,
+.dn-td-check input{
+  transform: scale(1.15);
+  cursor:pointer;
+}
+
+.dn-mark-text{
+  margin-left:6px;
+  font-size:13px;
+  color:#7a2c2c;
+  font-weight:800;
+}
+
+/* Mark heading style */
+.dn-table thead th.dn-th-check{
+  text-align: center !important;
+  font-weight: 700;
+  font-size: 14px;
+  padding: 8px 12px;
+  color: #7a1d1d;
+  background: rgba(170, 70, 70, 0.10);
+  border-bottom: 1px solid rgba(170, 70, 70, 0.2);
+}
+
+
+
+.dn2-title{
+  display:flex;
+  align-items:center;
+  gap:14px;
+  margin:0;
+  font-size:32px;
+  font-weight:700;
+  color:#a12828;
+  letter-spacing:0.5px;
+}

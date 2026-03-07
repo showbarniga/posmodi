@@ -1,0 +1,117 @@
+{% extends "menu.html" %}
+ 
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='sales-order.css') }}">
+{% endblock %}
+ 
+{% block content %}
+<div class="sales-order-page">
+ 
+  <!-- Toasts (same style as other modules) -->
+  <div id="successToast" class="success-notification">Saved successfully</div>
+  <div id="errorToast" class="error-notification">Something went wrong</div>
+ 
+  <!-- ================= HEADER ================= -->
+  <div class="header-row">
+    <h2 class="main-heading">Sales Order</h2>
+ 
+    <div class="header-actions">
+      <button class="btn-primary" type="button" id="newSalesOrderBtn">+ New Sales Order</button>
+    </div>
+  </div>
+ 
+  <div class="card">
+ 
+    <!-- ================= SEARCH + CLEAR FILTER ================= -->
+    <div class="top-controls">
+ 
+      <div class="search">
+        
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Search by ID number 🔍︎ "
+          autocomplete="off"
+        />
+      </div>
+ 
+      <button type="button" id="clearFilterBtn" class="clearfilter">Clear Filter</button>
+    </div>
+ 
+    <!-- ================= FILTERS (Heading Tabs) ================= -->
+    <div class="heading-tabs">
+ 
+      <div class="filter-group">
+        <label for="statusFilter">Status</label>
+        <select id="statusFilter">
+          <option value="">All</option>
+          <option value="Draft">Draft</option>
+          <option value="Submitted">Submitted</option>
+          <option value="Confirmed">Confirmed</option>
+          <option value="Cancelled">Cancelled</option>
+        </select>
+      </div>
+ 
+      <div class="filter-group">
+        <label for="orderTypeFilter">Order Type</label>
+        <select id="orderTypeFilter">
+          <option value="">All</option>
+          <option value="Standard">Standard</option>
+          <option value="Rush">Rush</option>
+        </select>
+      </div>
+ 
+      <div class="filter-group">
+        <label for="salesRepFilter">Sales Rep</label>
+        <select id="salesRepFilter">
+          <option value="">All</option>
+          <!-- will be filled by JS (optional) -->
+        </select>
+      </div>
+ 
+    </div>
+ 
+    <!-- ================= TABLE ================= -->
+    <div class="table-wrap">
+      <table class="table" id="salesOrderTable">
+        <thead>
+          <tr>
+            <th style="width:60px;">Mark</th>
+            <th>Sales Order ID</th>
+            <th>Order Type</th>
+            <th>Customer Name</th>
+            <th>Sales Rep</th>
+            <th>Order Date</th>
+            <th>Status</th>
+            <th>Stock Status</th>
+            <th>Grand Total</th>
+            <th style="text-align:right;">Action</th>
+          </tr>
+        </thead>
+ 
+        <tbody id="salesOrderTbody">
+          <!-- No Data Row -->
+          <tr id="noDataRow">
+            <td class="empty" colspan="10">No Sales Orders Found.</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+ 
+    <!-- ================= FOOTER (Showing + Pager) ================= -->
+    <div class="table-footer">
+      <div class="showing" id="showingText">Showing 0 Entries</div>
+ 
+      <div class="pager">
+        <button class="pager-btn" id="prevBtn" type="button" disabled>‹ Prev</button>
+        <div class="page-text" id="pageText">Page 1 of 1</div>
+        <button class="pager-btn" id="nextBtn" type="button" disabled>Next ›</button>
+      </div>
+    </div>
+ 
+  </div>
+</div>
+ 
+<script src="{{ url_for('static', filename='sales-order.js') }}"></script>
+{% endblock %}
