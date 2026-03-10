@@ -1,4 +1,28 @@
 // static/create-department.js
+// Simple Fetch/XHR integration for the Department & Roles → Create Department page.
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("create-department.js loaded ✅");
+
+  // Fire a Fetch/XHR call so this page shows activity in DevTools → Network → Fetch/XHR.
+  // We also log the number of existing roles for quick diagnostics.
+  // Include page name so the request name is unique in Network → Fetch/XHR.
+  fetch("/api/roles?page=create-department", { cache: "no-store" })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then((payload) => {
+      const total = Array.isArray(payload?.roles) ? payload.roles.length : 0;
+      console.log(`Loaded ${total} roles via /api/roles for Create Department page.`);
+      // Roles table is already rendered server-side; we only need the XHR + diagnostic info.
+    })
+    .catch((err) => {
+      console.error("Error fetching roles on Create Department page:", err);
+    });
+});
+
+// static/create-department.js
 (function () {
   // ============================
   // ✅ AUTO-FADE ERROR MESSAGE AFTER 3 SECONDS

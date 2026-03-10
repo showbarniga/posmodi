@@ -1,3 +1,29 @@
+// static/import-product.js
+// Ensure the Import Products page shows a clear Fetch/XHR entry named "import-product".
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname !== "/import") return;
+  // Prevent duplicate XHR if this script is ever loaded twice
+  if (window.__importProductFetched) return;
+  window.__importProductFetched = true;
+
+  fetch("/import-product", {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then((payload) => {
+      console.log("Import Products metadata:", payload);
+      // UI stays server-rendered; this is only to register an XHR for this page.
+    })
+    .catch((err) => {
+      console.error("Error fetching import-product metadata:", err);
+    });
+});
+
 document.addEventListener("DOMContentLoaded", () => {
 
   // ==============================

@@ -1,3 +1,29 @@
+// static/import-customer.js
+// Ensure the Import Customers page shows a clear Fetch/XHR entry named "import-customer".
+
+document.addEventListener("DOMContentLoaded", () => {
+  if (window.location.pathname !== "/import-customer") return;
+  // Prevent duplicate XHR if this script is ever loaded twice
+  if (window.__importCustomerFetched) return;
+  window.__importCustomerFetched = true;
+
+  fetch("/import-customer?mode=ajax", {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then((payload) => {
+      console.log("Import Customers metadata:", payload);
+      // UI stays server-rendered; this is only to register an XHR for this page.
+    })
+    .catch((err) => {
+      console.error("Error fetching import-customer metadata:", err);
+    });
+});
+
 document.addEventListener("DOMContentLoaded", () => {
   // ==============================
   // ELEMENTS

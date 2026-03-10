@@ -1,222 +1,560 @@
+
 document.addEventListener("DOMContentLoaded", () => {
-  /* =========================
-     1) ELEMENTS
-  ========================= */
-  const searchInput     = document.getElementById("searchInput");
-  const clearFilterBtn  = document.getElementById("clearFilterBtn");
- 
-  const statusFilter    = document.getElementById("statusFilter");
+  /* =========================================================
+     DOM ELEMENTS
+  ========================================================== */
+  const searchInput = document.getElementById("searchInput");
+  const clearFilterBtn = document.getElementById("clearFilterBtn");
+
+  const statusFilter = document.getElementById("statusFilter");
   const orderTypeFilter = document.getElementById("orderTypeFilter");
-  const salesRepFilter  = document.getElementById("salesRepFilter");
- 
-  const tbody           = document.getElementById("salesOrderTbody");
-  const noDataRow       = document.getElementById("noDataRow");
- 
-  const showingText     = document.getElementById("showingText");
-  const prevBtn         = document.getElementById("prevBtn");
-  const nextBtn         = document.getElementById("nextBtn");
-  const pageText        = document.getElementById("pageText");
- 
-  const successToast    = document.getElementById("successToast");
-  const errorToast      = document.getElementById("errorToast");
- 
-  /* =========================
-     2) STATE
-  ========================= */
+  const salesRepFilter = document.getElementById("salesRepFilter");
+
+  const tbody = document.getElementById("salesOrderTbody");
+  const noDataRow = document.getElementById("noDataRow");
+
+  const showingText = document.getElementById("showingText");
+  const prevBtn = document.getElementById("prevBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  const pageNow = document.getElementById("pageNow");
+const pageTotal = document.getElementById("pageTotal");
+  
+
+  const statusSortTh = document.getElementById("statusSortTh");
+  const statusSortMenu = document.getElementById("statusSortMenu");
+
+  const newSalesOrderBtn = document.getElementById("newSalesOrderBtn");
+
+  /* =========================================================
+     PAGE STATE
+  ========================================================== */
   const ROWS_PER_PAGE = 10;
+
   let currentPage = 1;
- 
-  // Load from API later. For now empty (NO demo data as you asked)
   let allOrders = [];
   let filteredOrders = [];
- 
-  /* =========================
-     3) HELPERS
-  ========================= */
-  function showToast(type, msg) {
-    const el = type === "success" ? successToast : errorToast;
-    el.textContent = msg;
-    el.classList.add("show");
-    setTimeout(() => el.classList.remove("show"), 2200);
+
+  let flyEl = null;
+  let hideTimer = null;
+
+  /* =========================================================
+     CONSTANTS
+  ========================================================== */
+  const STATUS_ORDER = [
+    "Draft",
+    "Submitted(PA)",
+    "Purchased",
+    "Partially Delivered",
+    "Delivered",
+    "Cancelled"
+  ];
+
+  /* =========================================================
+     COMMON HELPERS
+  ========================================================== */
+  function safeText(value) {
+    return value === null || value === undefined || value === ""
+      ? "—"
+      : String(value);
   }
- 
-  function safeText(v) {
-    return (v === null || v === undefined || v === "") ? "—" : String(v);
+
+  function getSalesStatusClass(status) {
+  const s = norm(status);
+
+  if (s === "draft") return "so-status-badge so-status-draft";
+  if (s === "submitted" || s === "submitted(pa)" || s === "submitted (pa)") {
+    return "so-status-badge so-status-submitted";
   }
- 
-  function formatMoney(v) {
-    const num = Number(v);
+  if (s === "purchased") return "so-status-badge so-status-purchased";
+  if (s === "delivered") return "so-status-badge so-status-delivered";
+  if (s === "partially delivered" || s === "partially_delivered") {
+    return "so-status-badge so-status-partial";
+  }
+  if (s === "returned") return "so-status-badge so-status-returned";
+  if (s === "cancelled") return "so-status-badge so-status-cancelled";
+
+  return "so-status-badge";
+}
+
+  function formatMoney(value) {
+    const num = Number(value);
     if (Number.isNaN(num)) return "—";
     return num.toLocaleString("en-IN", { maximumFractionDigits: 2 });
   }
- 
+
+  function norm(value) {
+    return (value ?? "").toString().trim().toLowerCase();
+  }
+
   function totalPages() {
     return Math.max(1, Math.ceil(filteredOrders.length / ROWS_PER_PAGE));
   }
- 
+
+  function parseDateAny(value) {
+    const v = (value || "").trim();
+
+    if (/^\d{4}-\d{2}-\d{2}/.test(v)) {
+      return new Date(v.slice(0, 10) + "T00:00:00").getTime();
+    }
+
+    const match = v.match(/^(\d{2})[-\/](\d{2})[-\/](\d{4})$/);
+    if (match) {
+      return new Date(
+        Number(match[3]),
+        Number(match[2]) - 1,
+        Number(match[1])
+      ).getTime();
+    }
+
+    return 0;
+  }
+
+  function statusRank(status) {
+    const index = STATUS_ORDER.indexOf(String(status || "").trim());
+    return index === -1 ? 999 : index;
+  }
+
+  /* =========================================================
+     PAGER UI
+  ========================================================== */
   function updatePagerUI() {
-    const tp = totalPages();
- 
-    // ✅ Prev disabled when page = 1
-    prevBtn.disabled = currentPage <= 1;
- 
-    // ✅ Next disabled when last page
-    nextBtn.disabled = currentPage >= tp;
- 
-    pageText.textContent = `Page ${currentPage} of ${tp}`;
-  }
- 
+  const tp = totalPages();
+
+  if (prevBtn) prevBtn.disabled = currentPage <= 1;
+  if (nextBtn) nextBtn.disabled = currentPage >= tp;
+  if (pageNow) pageNow.textContent = currentPage;
+  if (pageTotal) pageTotal.textContent = tp;
+}
+
   function updateShowing() {
-    showingText.textContent = `Showing ${filteredOrders.length} Entries`;
-  }
- 
-  function renderTable() {
-    // Clear tbody
-    tbody.innerHTML = "";
- 
-    if (filteredOrders.length === 0) {
-      tbody.appendChild(noDataRow);
-      updateShowing();
-      currentPage = 1;
-      updatePagerUI();
+    if (!showingText) return;
+
+    if (!filteredOrders.length) {
+      showingText.textContent = "Showing 0 Entries";
       return;
     }
- 
-    const tp = totalPages();
-    if (currentPage > tp) currentPage = tp;
-    if (currentPage < 1) currentPage = 1;
- 
-    const start = (currentPage - 1) * ROWS_PER_PAGE;
-    const end = start + ROWS_PER_PAGE;
-    const pageRows = filteredOrders.slice(start, end);
- 
-    // Hide no-data row
-    if (noDataRow.parentNode) noDataRow.remove();
- 
-    pageRows.forEach((o) => {
-      const tr = document.createElement("tr");
- 
-      tr.innerHTML = `
-        <td><input type="checkbox" class="row-mark" data-id="${safeText(o.so_id)}"></td>
-        <td>${safeText(o.so_id)}</td>
-        <td>${safeText(o.order_type)}</td>
-        <td>${safeText(o.customer_name)}</td>
-        <td>${safeText(o.sales_rep)}</td>
-        <td>${safeText(o.order_date)}</td>
-        <td>${safeText(o.status)}</td>
-        <td>${safeText(o.stock_status)}</td>
-        <td>${formatMoney(o.grand_total)}</td>
-        <td>
-          <div class="action-wrap">
-            <button class="action-btn view-btn" data-id="${safeText(o.so_id)}" type="button">View</button>
-            <button class="action-btn edit-btn" data-id="${safeText(o.so_id)}" type="button">Edit</button>
-          </div>
-        </td>
-      `;
-      tbody.appendChild(tr);
-    });
- 
-    updateShowing();
-    updatePagerUI();
+
+    const start = (currentPage - 1) * ROWS_PER_PAGE + 1;
+    const end = Math.min(currentPage * ROWS_PER_PAGE, filteredOrders.length);
+    const total = filteredOrders.length;
+
+    showingText.textContent = `Showing ${start}-${end} of ${total} Entries`;
   }
- 
-  function applyFilters() {
-    const q = (searchInput.value || "").trim().toLowerCase();
-    const status = statusFilter.value;
-    const orderType = orderTypeFilter.value;
-    const salesRep = salesRepFilter.value;
- 
-    filteredOrders = allOrders.filter((o) => {
-      const idMatch = safeText(o.so_id).toLowerCase().includes(q);
- 
-      const statusMatch = !status || safeText(o.status) === status;
-      const typeMatch = !orderType || safeText(o.order_type) === orderType;
-      const repMatch = !salesRep || safeText(o.sales_rep) === salesRep;
- 
-      return idMatch && statusMatch && typeMatch && repMatch;
-    });
- 
+
+  /* =========================================================
+     SORTING
+  ========================================================== */
+  function applyStatusSort(mode) {
+    if (!filteredOrders.length) return;
+
+    if (mode === "newest") {
+      filteredOrders.sort(
+        (a, b) => parseDateAny(b.order_date) - parseDateAny(a.order_date)
+      );
+    } else if (mode === "oldest") {
+      filteredOrders.sort(
+        (a, b) => parseDateAny(a.order_date) - parseDateAny(b.order_date)
+      );
+    } else if (mode === "progress") {
+      filteredOrders.sort((a, b) => statusRank(a.status) - statusRank(b.status));
+    } else if (mode === "reverse") {
+      filteredOrders.sort((a, b) => statusRank(b.status) - statusRank(a.status));
+    }
+
     currentPage = 1;
     renderTable();
   }
- 
-  function fillSalesRepsDropdown() {
-    // Optional: build dropdown from data (when you connect API)
-    const reps = [...new Set(allOrders.map(o => safeText(o.sales_rep)).filter(v => v !== "—"))].sort();
-    salesRepFilter.innerHTML = `<option value="">All</option>` + reps.map(r => `<option value="${r}">${r}</option>`).join("");
+
+  /* =========================================================
+     ROUTING ACTIONS
+  ========================================================== */
+  function goSalesOrderForm(soId, mode) {
+    const id = String(soId || "").trim();
+
+    if (!id || id === "—") {
+      alert("SO ID missing. Cannot open View/Edit.");
+      return;
+    }
+
+    if (mode === "edit") {
+      window.location.href = `/sales-order/edit/${encodeURIComponent(id)}`;
+    } else {
+      window.location.href = `/sales-order/edit/${encodeURIComponent(id)}?mode=view`;
+    }
   }
- 
-  /* =========================
-     4) EVENTS
-  ========================= */
-  searchInput.addEventListener("input", applyFilters);
-  statusFilter.addEventListener("change", applyFilters);
-  orderTypeFilter.addEventListener("change", applyFilters);
-  salesRepFilter.addEventListener("change", applyFilters);
- 
-  clearFilterBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    statusFilter.value = "";
-    orderTypeFilter.value = "";
-    salesRepFilter.value = "";
-    applyFilters();
-  });
- 
-  prevBtn.addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderTable();
+
+  function generatePurchaseOrder(soId) {
+    console.log("Generate Purchase Order:", soId);
+  }
+
+  function generateDeliveryNote(soId) {
+    console.log("Generate Delivery Note:", soId);
+  }
+
+  function generateInvoice(soId) {
+    console.log("Generate Invoice:", soId);
+  }
+
+  /* =========================================================
+     ACTION STATE
+  ========================================================== */
+  function getSOActionState(status, stockStatus) {
+    const s = norm(status);
+    const st = norm(stockStatus);
+    const stock = st === "" ? "-" : st;
+
+    const state = {
+      firstLabel: "View details",
+      firstMode: "view",
+      canPO: false,
+      canDN: false,
+      canInvoice: false
+    };
+
+    if (s === "draft") {
+      state.firstLabel = "Edit details";
+      state.firstMode = "edit";
+
+      if (stock === "waiting for stock" || stock === "insufficient stock") {
+        state.canPO = true;
+      }
+
+      return state;
     }
-  });
- 
-  nextBtn.addEventListener("click", () => {
+
+    if (s === "submitted(pa)" || s === "submitted (pa)") {
+      state.firstLabel = "View details";
+      state.firstMode = "view";
+      state.canPO = true;
+      state.canDN = true;
+      state.canInvoice = false;
+      return state;
+    }
+
+    if (s === "submitted") {
+      state.firstLabel = "View details";
+      state.firstMode = "view";
+      state.canPO = true;
+      state.canDN = true;
+      state.canInvoice = true;
+      return state;
+    }
+
+    return state;
+  }
+
+  /* =========================================================
+     HOVER ACTION MENU
+  ========================================================== */
+  function removeFly() {
+    if (flyEl) {
+      flyEl.remove();
+      flyEl = null;
+    }
+  }
+
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => removeFly(), 120);
+  }
+
+  function keepOpen() {
+    clearTimeout(hideTimer);
+  }
+
+  function buildFlyMenuForSO(row, anchorBtn) {
+    const soId = String(row.so_id || "").trim();
+    if (!soId) return;
+
+    const { firstLabel, firstMode, canPO, canDN, canInvoice } =
+      getSOActionState(row.status, row.stock_status);
+
+    flyEl = document.createElement("div");
+    flyEl.className = "so-act-fly";
+
+    const mkItem = (label, onClick, disabled) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "so-act-item";
+      button.textContent = label;
+      button.disabled = !!disabled;
+
+      if (!disabled) {
+        button.addEventListener("click", onClick);
+      }
+
+      return button;
+    };
+
+    flyEl.appendChild(
+      mkItem(firstLabel, () => goSalesOrderForm(soId, firstMode), false)
+    );
+
+    flyEl.appendChild(
+      mkItem("Generate Purchase order", () => generatePurchaseOrder(soId), !canPO)
+    );
+
+    flyEl.appendChild(
+      mkItem("Generate Delivery Note", () => generateDeliveryNote(soId), !canDN)
+    );
+
+    flyEl.appendChild(
+      mkItem("Generate Invoice", () => generateInvoice(soId), !canInvoice)
+    );
+
+    flyEl.addEventListener("mouseenter", keepOpen);
+    flyEl.addEventListener("mouseleave", scheduleHide);
+
+    document.body.appendChild(flyEl);
+
+    const btnRect = anchorBtn.getBoundingClientRect();
+
+    flyEl.style.visibility = "hidden";
+    flyEl.style.left = "0px";
+    flyEl.style.top = "0px";
+
+    const popRect = flyEl.getBoundingClientRect();
+    const gap = 8;
+    const dropY = 25;
+
+    let top = btnRect.top - popRect.height - gap + dropY;
+    if (top < 8) {
+      top = btnRect.bottom + gap + dropY;
+    }
+
+    let left = btnRect.right - popRect.width;
+    const maxLeft = window.innerWidth - popRect.width - 8;
+
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
+
+    flyEl.style.left = `${Math.round(left)}px`;
+    flyEl.style.top = `${Math.round(top)}px`;
+    flyEl.style.visibility = "visible";
+  }
+
+  function attachHoverMenu(btn, row) {
+    btn.addEventListener("mouseenter", () => {
+      removeFly();
+      keepOpen();
+      buildFlyMenuForSO(row, btn);
+    });
+
+    btn.addEventListener("mouseleave", scheduleHide);
+  }
+
+  /* =========================================================
+     TABLE RENDERING
+  ========================================================== */
+  function renderTable() {
+
+
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!filteredOrders.length) {
+      if (noDataRow) tbody.appendChild(noDataRow);
+      currentPage = 1;
+      updateShowing();
+      updatePagerUI();
+      return;
+    }
+
     const tp = totalPages();
-    if (currentPage < tp) {
-      currentPage++;
-      renderTable();
+    currentPage = Math.min(Math.max(1, currentPage), tp);
+
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    const end = start + ROWS_PER_PAGE;
+    const pageRows = filteredOrders.slice(start, end);
+
+    if (noDataRow?.parentNode) {
+      noDataRow.remove();
     }
-  });
- 
-  tbody.addEventListener("click", (e) => {
-    const viewBtn = e.target.closest(".view-btn");
-    const editBtn = e.target.closest(".edit-btn");
- 
-    if (viewBtn) {
-      const id = viewBtn.dataset.id;
-      // later: window.location.href = `/sales-order/${id}`;
-      showToast("success", `View: ${id}`);
-    }
- 
-    if (editBtn) {
-      const id = editBtn.dataset.id;
-      // later: open edit modal
-      showToast("success", `Edit: ${id}`);
-    }
-  });
- 
-  /* =========================
-     5) LOAD DATA (API hook)
-  ========================= */
+
+    pageRows.forEach((order) => {
+      const soIdRaw = String(order.so_id || "").trim();
+      const soIdTxt = safeText(soIdRaw);
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td class="so-check-td">
+          <input type="checkbox" class="so-row-check" data-id="${soIdRaw}">
+        </td>
+
+        <td>${soIdTxt}</td>
+        <td>${safeText(order.order_type)}</td>
+        <td>${safeText(order.customer_name)}</td>
+        <td>${safeText(order.sales_rep)}</td>
+        <td>${safeText(order.order_date)}</td>
+        <td>
+  <span class="${getSalesStatusClass(order.status)}">
+    ${safeText(order.status)}
+  </span>
+</td>
+        <td>${safeText(order.stock_status)}</td>
+        <td>${formatMoney(order.grand_total)}</td>
+
+        <td class="so-td-action">
+          <button
+            type="button"
+            class="so-act-dots"
+            aria-label="Actions"
+            ${soIdRaw ? "" : "disabled"}
+          >
+            ⋮
+          </button>
+        </td>
+      `;
+
+      const dots = tr.querySelector(".so-act-dots");
+      if (dots && soIdRaw) {
+        attachHoverMenu(dots, order);
+      }
+
+      tbody.appendChild(tr);
+    });
+
+    updateShowing();
+    updatePagerUI();
+  }
+
+  /* =========================================================
+     FILTERS
+  ========================================================== */
+  function applyFilters() {
+    const q = (searchInput?.value || "").trim().toLowerCase();
+    const status = statusFilter?.value || "";
+    const orderType = orderTypeFilter?.value || "";
+    const salesRep = salesRepFilter?.value || "";
+
+    filteredOrders = allOrders.filter((order) => {
+      const idMatch = safeText(order.so_id).toLowerCase().includes(q);
+      const statusMatch = !status || safeText(order.status) === status;
+      const typeMatch = !orderType || safeText(order.order_type) === orderType;
+      const repMatch = !salesRep || safeText(order.sales_rep) === salesRep;
+
+      return idMatch && statusMatch && typeMatch && repMatch;
+    });
+
+    currentPage = 1;
+    renderTable();
+  }
+
+  function fillSalesRepsDropdown() {
+    if (!salesRepFilter) return;
+
+    const reps = [
+      ...new Set(
+        allOrders
+          .map((order) => safeText(order.sales_rep))
+          .filter((value) => value !== "—")
+      )
+    ].sort();
+
+    salesRepFilter.innerHTML =
+      `<option value="">All</option>` +
+      reps.map((rep) => `<option value="${rep}">${rep}</option>`).join("");
+  }
+
+  /* =========================================================
+     API LOADING
+  ========================================================== */
   async function loadSalesOrders() {
     try {
-      // ✅ When backend ready, just enable this:
-      // const res = await fetch("/api/sales-orders");
-      // const data = await res.json();
-      // allOrders = Array.isArray(data) ? data : [];
- 
-      allOrders = []; // ✅ no demo data
+      const res = await fetch("/api/sales-orders/all", { cache: "no-store" });
+      if (!res.ok) throw new Error("API failed");
+
+      const data = await res.json();
+      const list = Array.isArray(data) ? data : (data.orders || []);
+
+      allOrders = list.map((order) => ({
+        ...order,
+        so_id: order.so_id || order.soId || order.sales_order_id || order.id || "",
+        customer_name:
+          order.customer_name || order.customer || order.customerName || "",
+        sales_rep: order.sales_rep || order.salesRep || "",
+        order_type: order.order_type || order.orderType || "",
+        order_date: order.order_date || order.orderDate || "",
+        status: order.status || "",
+        stock_status: order.stock_status || order.stockStatus || "",
+        grand_total: order.grand_total ?? order.grandTotal ?? 0
+      }));
+
       filteredOrders = [...allOrders];
- 
       fillSalesRepsDropdown();
       renderTable();
-    } catch (err) {
-      console.error(err);
+    } catch (error) {
+      console.error(error);
       allOrders = [];
       filteredOrders = [];
       renderTable();
-      showToast("error", "Unable to load sales orders");
     }
   }
- 
+
+  /* =========================================================
+     EVENTS
+  ========================================================== */
+  searchInput?.addEventListener("input", applyFilters);
+  statusFilter?.addEventListener("change", applyFilters);
+  orderTypeFilter?.addEventListener("change", applyFilters);
+  salesRepFilter?.addEventListener("change", applyFilters);
+
+  clearFilterBtn?.addEventListener("click", () => {
+    if (searchInput) searchInput.value = "";
+    if (statusFilter) statusFilter.value = "";
+    if (orderTypeFilter) orderTypeFilter.value = "";
+    if (salesRepFilter) salesRepFilter.value = "";
+    applyFilters();
+  });
+
+  prevBtn?.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage -= 1;
+      renderTable();
+    }
+  });
+
+  nextBtn?.addEventListener("click", () => {
+    const tp = totalPages();
+
+    if (currentPage < tp) {
+      currentPage += 1;
+      renderTable();
+    }
+  });
+
+  if (statusSortTh && statusSortMenu) {
+    statusSortTh.addEventListener("click", (e) => {
+      if (e.target.closest("#statusSortMenu")) return;
+      statusSortTh.classList.toggle("open");
+    });
+
+    document.addEventListener("click", (e) => {
+      if (!e.target.closest("#statusSortTh")) {
+        statusSortTh.classList.remove("open");
+      }
+    });
+
+    statusSortMenu.addEventListener("click", (e) => {
+      const btn = e.target.closest("[data-sort]");
+      if (!btn) return;
+
+      applyStatusSort(btn.dataset.sort);
+      statusSortTh.classList.remove("open");
+    });
+  }
+
+  newSalesOrderBtn?.addEventListener("click", () => {
+    window.location.href = "/sales-order/new";
+  });
+
+  window.addEventListener("scroll", () => removeFly(), true);
+  window.addEventListener("resize", () => removeFly());
+
+  /* =========================================================
+     INITIAL LOAD
+  ========================================================== */
   loadSalesOrders();
 });

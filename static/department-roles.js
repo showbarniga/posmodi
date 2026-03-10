@@ -52,7 +52,8 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function fetchDepartments() {
-    return fetch("/api/departments")
+    // Add a page identifier so Network → Fetch/XHR shows a unique name
+    return fetch("/api/departments?page=department-roles")
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();

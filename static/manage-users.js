@@ -87,7 +87,10 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function fetchUsers() {
-    return fetch("/api/users")
+    // Use the page path so Network → Fetch/XHR shows \"manage-users\" as the request name
+    return fetch("/manage-users?mode=ajax", {
+      headers: { Accept: "application/json" },
+    })
       .then((res) => {
         if (!res.ok) throw new Error("HTTP " + res.status);
         return res.json();

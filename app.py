@@ -2055,6 +2055,18 @@ def create_user():
             user_role = u.get("role") or "User"
             break
 
+    # JSON metadata for Fetch/XHR on Create User page
+    if request.method == "GET" and wants_json():
+        return jsonify({
+            "success": True,
+            "page": "create-user",
+            "current_user": {
+                "email": user_email,
+                "name": user_name,
+                "role": user_role,
+            },
+        }), 200
+
     if request.method == "GET":
         return render_template(
             "create-user.html",
@@ -2064,6 +2076,8 @@ def create_user():
             user_email=user_email,
             user_name=user_name,
             user_role=user_role,
+            departments=load_departments(),
+            roles=load_roles(),
         )
 
     # -----------------------------------------
@@ -3546,6 +3560,31 @@ def import_products():
         user_name=user_name,
     )
 
+
+@app.get("/import-product")
+def import_product_metadata():
+    """Small JSON endpoint so /import page has a named Fetch/XHR entry."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify(
+            {"success": False, "message": "Session expired. Please login first."}
+        ), 401
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
+    return jsonify(
+        {
+            "success": True,
+            "page": "import-product",
+            "current_user": {"email": user_email, "name": user_name},
+        }
+    ), 200
+
 @app.route("/upload", methods=["POST"])
 def upload_file():
     file = request.files.get("file")
@@ -4102,6 +4141,16 @@ def import_customer():
         if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
             user_name = u.get("name") or "User"
             break
+
+    # JSON metadata for Fetch/XHR on Import Customers page
+    if request.method == "GET" and wants_json():
+        return jsonify(
+            {
+                "success": True,
+                "page": "import-customer",
+                "current_user": {"email": user_email, "name": user_name},
+            }
+        ), 200
 
     return render_template(
         "import-customer.html",
@@ -6361,6 +6410,19 @@ def enquiry_list():
                 "items": enq_data.get("items", {})
             })
 
+    # JSON API variant for Fetch/XHR (same pattern as manage users)
+    if wants_json():
+        return jsonify({
+            "success": True,
+            "data": enquiries,
+            "total": len(enquiries),
+            "current_user": {
+                "email": user_email,
+                "name": user_name,
+                "role": user_role,
+            },
+        }), 200
+
     return render_template(
         "enquiry-list.html",
         title="Enquiry List - Stackly",
@@ -7202,6 +7264,21 @@ def save_quotation():
                 existing_index = i
                 break
         
+        # Prevent duplicate Customer PO Reference (case-insensitive)
+        customer_po = (data.get('customer_po') or '').strip()
+        if customer_po:
+            customer_po_lower = customer_po.lower()
+            for i, q in enumerate(quotations):
+                if existing_index is not None and i == existing_index:
+                    continue
+                existing_po = (q.get('customer_po') or '').strip()
+                if existing_po and existing_po.lower() == customer_po_lower:
+                    return jsonify({
+                        'success': False,
+                        'error': 'Customer PO Reference already exists. Please use a unique value.',
+                        'duplicate_field': 'customer_po'
+                    }), 400
+        
         if existing_index is not None:
             quotations[existing_index] = data
             message = f'Quotation {quotation_id} updated with status: {status}'
@@ -7226,6 +7303,44 @@ def save_quotation():
             'success': False,
             'error': str(e)
         }), 500
+
+# ===================================================
+# CHECK CUSTOMER PO REFERENCE (LIVE DUPLICATE CHECK)
+# ===================================================
+
+@app.route('/check-customer-po', methods=['GET'])
+def check_customer_po():
+    """
+    GET /check-customer-po?value=CP-0001&exclude_quotation_id=QA-0012
+    Returns { "duplicate": true/false } (case-insensitive).
+    exclude_quotation_id: when editing, exclude this quotation from the check.
+    """
+    try:
+        value = (request.args.get('value') or '').strip()
+        exclude_quotation_id = (request.args.get('exclude_quotation_id') or '').strip()
+
+        if not value:
+            return jsonify({'success': True, 'duplicate': False}), 200
+
+        quotations = load_quotations()
+        value_lower = value.lower()
+
+        for q in quotations:
+            if exclude_quotation_id and q.get('quotation_id') == exclude_quotation_id:
+                continue
+            existing_po = (q.get('customer_po') or '').strip()
+            if existing_po and existing_po.lower() == value_lower:
+                return jsonify({
+                    'success': True,
+                    'duplicate': True,
+                    'message': 'Customer PO Reference already exists. Please use a unique value.'
+                }), 200
+
+        return jsonify({'success': True, 'duplicate': False}), 200
+    except Exception as e:
+        print(f"Error in check_customer_po: {e}")
+        return jsonify({'success': False, 'duplicate': False, 'error': str(e)}), 500
+
 
 # ===================================================
 # GET SINGLE QUOTATION
@@ -9546,6 +9661,33 @@ def quick_billing_deleted():
     )
 
 
+@app.get("/removed-items")
+def removed_items_metadata():
+    """Small JSON endpoint so /quick-billing/deleted page has a named Fetch/XHR entry."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify(
+            {"success": False, "message": "Session expired. Please login first."}
+        ), 401
+
+    users = load_users()
+    user_name = "User"
+    role = session.get("role", "")
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            role = (u.get("role") or role or "").strip()
+            break
+
+    return jsonify(
+        {
+            "success": True,
+            "page": "removed-items",
+            "current_user": {"email": user_email, "name": user_name, "role": role},
+        }
+    ), 200
+
+
 # ---------- Quick Billing: load/save helpers (used by API and save-quick-bill) ----------
 def load_bills():
     """Read bills from bills.json; return list (empty if missing/invalid)."""
@@ -9880,13 +10022,13 @@ def api_quick_billing_new_id():
     return jsonify({"billId": next_id}), 200
 
 
-@app.route("/sales_order")
-def sales_order():
-    return render_template("sales-order.html", page="sales_order")
-
 # ---------- Helpers ----------
 def load_sales_orders():
-    """Read sales orders JSON safely."""
+    """
+    Load all sales orders from JSON storage.
+    Creates the file if it does not exist.
+    Returns an empty list if the file is invalid.
+    """
     if not os.path.exists(SALES_ORDERS_FILE):
         with open(SALES_ORDERS_FILE, "w", encoding="utf-8") as f:
             json.dump([], f)
@@ -9898,6 +10040,792 @@ def load_sales_orders():
             return data if isinstance(data, list) else []
         except json.JSONDecodeError:
             return []
+
+def save_sales_orders(data):
+    """
+    Save all sales orders back to JSON storage.
+    """
+    with open(SALES_ORDERS_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
+
+def find_sales_order_by_id(so_id: str):
+    """
+    Find a sales order by SO ID.
+    """
+    orders = load_sales_orders()
+    so_id = (so_id or "").strip()
+
+    return next(
+        (order for order in orders if str(order.get("so_id", "")).strip() == so_id),
+        None
+    )
+
+def generate_sales_order_id():
+    """
+    Generate the next Sales Order ID in SO-0001 format.
+    Supports older formats like SO0001 or SO_0001.
+    """
+    orders = load_sales_orders()
+    last_num = 0
+
+    for order in orders:
+        so = str(
+            order.get("so_id") or
+            order.get("order_id") or
+            order.get("id") or
+            ""
+        ).strip()
+
+        cleaned = so.replace("SO-", "").replace("SO_", "").replace("SO", "")
+        match = re.search(r"(\d+)$", cleaned)
+
+        if match:
+            try:
+                last_num = max(last_num, int(match.group(1)))
+            except Exception:
+                pass
+
+    return f"SO-{last_num + 1:04d}"
+
+def upsert_sales_order(payload: dict, status_value: str):
+    """
+    Insert a new sales order or update an existing one.
+    Supports older key names like order_id for backward compatibility.
+    """
+    orders = load_sales_orders()
+
+    so_id = (payload.get("so_id") or payload.get("order_id") or "").strip()
+    if not so_id:
+        so_id = generate_sales_order_id()
+
+    existing = next(
+        (
+            order for order in orders
+            if str(order.get("so_id") or order.get("order_id") or "").strip() == so_id
+        ),
+        None
+    )
+
+    # Ignore placeholder customer names
+    customer_name = (payload.get("customer_name") or "").strip()
+    if customer_name.lower() in ["select customer", "—", "-", ""]:
+        customer_name = ""
+
+    # Autofill customer details from master
+    customer = find_customer_by_name(customer_name) if customer_name else None
+    if customer:
+        payload["customer_id"] = customer.get("customer_id", "")
+        payload["email"] = customer.get("email", "")
+        payload["phone"] = customer.get("phone", "")
+        payload["billing_address"] = customer.get("billingAddress", "")
+        payload["shipping_address"] = customer.get("shippingAddress", "")
+
+    now_iso = datetime.now().isoformat(timespec="seconds")
+
+    base = {
+        "so_id": so_id,
+        "order_date": "",
+        "sales_rep": "",
+        "order_type": "",
+        "status": status_value,
+        "stock_status": "",
+
+        "customer_name": "",
+        "customer_id": "",
+        "billing_address": "",
+        "shipping_address": "",
+        "email": "",
+        "phone": "",
+
+        "payment_method": "",
+        "currency": "",
+        "due_date": "",
+        "terms": "",
+
+        "shipping_method": "",
+        "delivery_date": "",
+        "tracking_number": "",
+        "internal_notes": "",
+        "customer_notes": "",
+
+        "items": [],
+
+        "subtotal": 0,
+        "tax_total": 0,
+        "rounding": 0,
+        "global_discount": 0,
+        "shipping_charges": 0,
+        "grand_total": 0,
+
+        "comments": [],
+        "status_history": [],
+
+        "cancel_reason": "",
+        "cancelled_by": "",
+        "cancelled_at": "",
+
+        "created_at": existing.get("created_at") if existing else now_iso,
+        "updated_at": now_iso,
+    }
+
+    # Merge in the correct order:
+    # defaults -> existing data -> incoming payload -> forced system fields
+    doc = {**base, **(existing or {}), **payload}
+    doc["so_id"] = so_id
+    doc["status"] = status_value
+    doc["updated_at"] = now_iso
+
+    if not doc.get("created_at"):
+        doc["created_at"] = now_iso
+
+    # Remove older key if present
+    doc.pop("order_id", None)
+
+    # Ensure expected list types
+    if not isinstance(doc.get("items"), list):
+        doc["items"] = []
+
+    if not isinstance(doc.get("comments"), list):
+        doc["comments"] = []
+
+    if not isinstance(doc.get("status_history"), list):
+        doc["status_history"] = []
+
+    # Update existing or insert new
+    if existing:
+        idx = orders.index(existing)
+        orders[idx] = doc
+    else:
+        orders.insert(0, doc)
+
+    save_sales_orders(orders)
+    return so_id
+
+
+# =========================================
+# SALES ORDER - PAGE ROUTES
+# =========================================
+@app.get("/sales-order")
+def sales_order():
+    return render_template("sales-order.html", page="sales_order")
+
+
+@app.get("/sales_order")
+def sales_order_compat():
+    return redirect("/sales-order", code=302)
+
+
+@app.get("/sales-order/new")
+def sales_order_new():
+    so_id = generate_sales_order_id()
+
+    users = load_users()
+    sales_reps = [u for u in users if u.get("role") in ["Admin", "User", "Sales"]]
+
+    customers = load_customer()
+
+    response = make_response(render_template(
+        "sales-new.html",
+        mode="new",
+        so_id=so_id,
+        sales_reps=sales_reps,
+        customers=customers,
+        page="sales_order"
+    ))
+
+    # Prevent browser cache from reusing an old SO page
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+    return response
+
+
+@app.get("/sales-order/edit/<so_id>")
+def sales_order_edit(so_id):
+    users = load_users()
+    sales_reps = [u for u in users if u.get("role") in ["Admin", "User", "Sales"]]
+
+    customers = load_customer()
+
+    return render_template(
+        "sales-new.html",
+        mode="edit",
+        so_id=so_id,
+        sales_reps=sales_reps,
+        customers=customers,
+        page="sales_order"
+    )
+
+
+# =========================================
+# SALES ORDER - API ROUTES
+# =========================================
+@app.get("/api/sales-orders/next-id")
+def api_sales_orders_next_id():
+    return jsonify({
+        "success": True,
+        "so_id": generate_sales_order_id()
+    })
+
+
+@app.get("/api/sales-orders/all")
+def api_sales_orders_all():
+    orders = load_sales_orders()
+    return jsonify({"orders": orders})
+
+
+@app.get("/api/sales-orders/<so_id>")
+def get_one_sales_order(so_id):
+    so = find_sales_order_by_id(so_id)
+
+    if not so:
+        return jsonify({
+            "success": False,
+            "message": "Not found"
+        }), 404
+
+    return jsonify({
+        "success": True,
+        "order": so
+    })
+
+
+@app.post("/api/sales-orders/save-draft")
+def api_sales_orders_save_draft():
+    payload = request.get_json(force=True) or {}
+    so_id = upsert_sales_order(payload, "Draft")
+
+    return jsonify({
+        "success": True,
+        "so_id": so_id,
+        "status": "Draft"
+    })
+
+
+@app.post("/api/sales-orders/submit")
+def api_sales_orders_submit():
+    payload = request.get_json(force=True) or {}
+    so_id = upsert_sales_order(payload, "Submitted")
+
+    return jsonify({
+        "success": True,
+        "so_id": so_id,
+        "status": "Submitted"
+    })
+
+
+@app.get("/api/sales-products")
+def api_sales_products():
+    products = load_products()
+    return jsonify({
+        "success": True,
+        "products": products
+    })
+
+
+# =========================================
+# SALES ORDER - PDF
+# =========================================
+@app.get("/api/sales-orders/<so_id>/pdf")
+def sales_order_pdf(so_id):
+    so = find_sales_order_by_id(so_id)
+
+    if not so:
+        return jsonify({
+            "success": False,
+            "message": "Sales Order not found"
+        }), 404
+
+    try:
+        pdf_bytes = generate_sales_order_pdf_bytes(so)
+
+        response = make_response(pdf_bytes)
+        response.headers["Content-Type"] = "application/pdf"
+        response.headers["Content-Disposition"] = f'inline; filename="{so_id}.pdf"'
+        return response
+
+    except Exception as e:
+        print("Sales Order PDF error:", e)
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+def generate_sales_order_pdf_bytes(so):
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=36,
+        leftMargin=36,
+        topMargin=36,
+        bottomMargin=32
+    )
+
+    elements = []
+    styles = getSampleStyleSheet()
+
+    # =========================================
+    # PDF STYLES
+    # =========================================
+    title_style = ParagraphStyle(
+        "SOTitle",
+        parent=styles["Heading1"],
+        fontSize=24,
+        leading=28,
+        alignment=1,
+        textColor=colors.HexColor("#8c1f1f"),
+        spaceAfter=8,
+        fontName="Helvetica-Bold"
+    )
+
+    company_style = ParagraphStyle(
+        "SOCompany",
+        parent=styles["Normal"],
+        fontSize=9,
+        leading=12,
+        textColor=colors.black,
+        alignment=1,
+        spaceAfter=2,
+        fontName="Helvetica"
+    )
+
+    status_style = ParagraphStyle(
+        "SOStatus",
+        parent=styles["Heading2"],
+        fontSize=14,
+        leading=18,
+        alignment=1,
+        textColor=colors.HexColor("#148a08"),
+        spaceAfter=14,
+        fontName="Helvetica-Bold"
+    )
+
+    heading_style = ParagraphStyle(
+        "SOHeading",
+        parent=styles["Heading2"],
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor("#8c1f1f"),
+        spaceBefore=8,
+        spaceAfter=8,
+        fontName="Helvetica-Bold"
+    )
+
+    table_cell_style = ParagraphStyle(
+        "SOTableCell",
+        parent=styles["Normal"],
+        fontSize=7.6,
+        leading=9,
+        fontName="Helvetica",
+        wordWrap="CJK"
+    )
+
+    table_label_style = ParagraphStyle(
+        "SOTableLabel",
+        parent=styles["Normal"],
+        fontSize=7.6,
+        leading=9,
+        fontName="Helvetica-Bold",
+        textColor=colors.HexColor("#5f2d2d"),
+        wordWrap="CJK"
+    )
+
+    terms_heading_style = ParagraphStyle(
+        "SOTermsHeading",
+        parent=styles["Heading2"],
+        fontSize=10,
+        leading=13,
+        textColor=colors.HexColor("#8c1f1f"),
+        spaceAfter=6,
+        fontName="Helvetica-Bold"
+    )
+
+    terms_style = ParagraphStyle(
+        "SOTerms",
+        parent=styles["Normal"],
+        fontSize=7.4,
+        leading=10,
+        fontName="Helvetica"
+    )
+
+    footer_style = ParagraphStyle(
+        "SOFooter",
+        parent=styles["Normal"],
+        fontSize=7.5,
+        textColor=colors.HexColor("#555555"),
+        alignment=0
+    )
+
+    # =========================================
+    # CURRENCY MAPPING
+    # =========================================
+    currency_code = so.get("currency", "INR")
+    currency_map = {
+        "USD": "$",
+        "EUR": "€",
+        "GBP": "£",
+        "INR": "₹",
+        "IND": "₹",
+        "SGD": "S$"
+    }
+    currency_symbol = currency_map.get(currency_code, currency_code)
+
+    # =========================================
+    # PDF HEADER
+    # =========================================
+    elements.append(Paragraph("STACKLY", title_style))
+    elements.append(Paragraph(
+        "MMR Complex, Chinna Thirupathi, near Chinna Muniyappan Kovil, Salem, Tamil Nadu - 636008",
+        company_style
+    ))
+    elements.append(Paragraph("Phone: +91 7010792745", company_style))
+    elements.append(Paragraph("Email: info@stackly.com", company_style))
+    elements.append(Spacer(1, 10))
+
+    status_text = (so.get("status") or "Submitted").upper()
+    elements.append(Paragraph(f"SALES ORDER - {status_text}", status_style))
+    elements.append(Spacer(1, 4))
+
+    # =========================================
+    # SALES ORDER INFO TABLE
+    # =========================================
+    info_data = [
+        [
+            Paragraph("Sales Order Number:", table_label_style),
+            Paragraph(str(so.get("so_id", "") or "-"), table_cell_style),
+            Paragraph("Date:", table_label_style),
+            Paragraph(str(so.get("order_date", "") or "-"), table_cell_style),
+        ],
+        [
+            Paragraph("Customer:", table_label_style),
+            Paragraph(str(so.get("customer_name", "") or "-"), table_cell_style),
+            Paragraph("Delivery Date:", table_label_style),
+            Paragraph(str(so.get("delivery_date", "") or "-"), table_cell_style),
+        ],
+        [
+            Paragraph("Sales Rep:", table_label_style),
+            Paragraph(str(so.get("sales_rep", "") or "-"), table_cell_style),
+            Paragraph("Currency:", table_label_style),
+            Paragraph(str(currency_code or "-"), table_cell_style),
+        ],
+        [
+            Paragraph("Order Type:", table_label_style),
+            Paragraph(str(so.get("order_type", "") or "-"), table_cell_style),
+            Paragraph("Payment Terms:", table_label_style),
+            Paragraph(str(so.get("terms", "N/A") or "N/A"), table_cell_style),
+        ],
+    ]
+
+    info_table = Table(info_data, colWidths=[110, 145, 95, 130])
+    info_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#efefef")),
+        ("BACKGROUND", (2, 0), (2, -1), colors.HexColor("#efefef")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 6),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+    ]))
+    elements.append(info_table)
+    elements.append(Spacer(1, 14))
+
+    # =========================================
+    # ITEMS TABLE
+    # =========================================
+    elements.append(Paragraph("SALES ORDER ITEMS", heading_style))
+
+    items = so.get("items", [])
+    product_map = {
+        str(p.get("product_id", "")).strip(): p
+        for p in load_products()
+    }
+
+    table_data = [[
+        "S.No", "Product Name", "Qty", "UOM", "Unit Price", "Tax %", "Disc %", "Total"
+    ]]
+
+    subtotal_calc = 0.0
+    total_tax_calc = 0.0
+    total_discount_calc = 0.0
+
+    for idx, item in enumerate(items, start=1):
+        pid = str(item.get("product_id", "")).strip()
+        product = product_map.get(pid, {})
+
+        qty = float(item.get("qty", 0) or 0)
+        uom = item.get("uom", "") or "Nos"
+
+        unit_price = float(
+            item.get("price")
+            or item.get("unit_price")
+            or product.get("unit_price")
+            or product.get("price")
+            or product.get("selling_price")
+            or 0
+        )
+
+        tax_pct = float(item.get("tax_pct", 0) or 0)
+        disc_pct = float(item.get("disc_pct", 0) or 0)
+
+        line_subtotal = qty * unit_price
+        discount_amt = line_subtotal * (disc_pct / 100)
+        after_discount = line_subtotal - discount_amt
+        tax_amt = after_discount * (tax_pct / 100)
+        line_total = float(item.get("line_total", 0) or (after_discount + tax_amt))
+
+        subtotal_calc += line_subtotal
+        total_tax_calc += tax_amt
+        total_discount_calc += discount_amt
+
+        table_data.append([
+            str(idx),
+            str(item.get("product_name", "") or "-"),
+            f"{qty:.2f}",
+            str(uom),
+            f"{currency_symbol}{unit_price:.2f}",
+            f"{tax_pct:.1f}%",
+            f"{disc_pct:.1f}%",
+            f"{currency_symbol}{line_total:.2f}"
+        ])
+
+    items_table = Table(table_data, colWidths=[32, 170, 42, 40, 60, 44, 44, 58])
+    items_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#a12828")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 4),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+    ]))
+    elements.append(items_table)
+    elements.append(Spacer(1, 14))
+
+    # =========================================
+    # TOTALS SUMMARY
+    # =========================================
+    elements.append(Paragraph("TAX AND TOTALS SUMMARY", heading_style))
+
+    shipping_charge = float(so.get("shipping_charges", 0) or 0)
+    global_discount = float(so.get("global_discount", 0) or 0)
+    rounding = float(so.get("rounding", 0) or 0)
+
+    grand_total = float(
+        so.get("grand_total", 0)
+        or (subtotal_calc - global_discount + total_tax_calc + shipping_charge + rounding)
+    )
+
+    summary_data = [
+        ["Subtotal:", f"{currency_symbol}{subtotal_calc:.2f}"],
+        ["Total Discount (Item Level):", f"{currency_symbol}{total_discount_calc:.2f}"],
+        ["Total Tax:", f"{currency_symbol}{total_tax_calc:.2f}"],
+        ["Shipping Charge:", f"{currency_symbol}{shipping_charge:.2f}"],
+        ["Global Discount:", f"-{currency_symbol}{global_discount:.2f}"],
+    ]
+
+    if rounding != 0:
+        sign = "+" if rounding > 0 else "-"
+        summary_data.append(["Rounding Adjustment:", f"{sign}{currency_symbol}{abs(rounding):.2f}"])
+
+    summary_data.append(["GRAND TOTAL:", f"{currency_symbol}{grand_total:.2f}"])
+
+    summary_table = Table(summary_data, colWidths=[300, 200])
+    summary_table.setStyle(TableStyle([
+        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -2), 8),
+        ("FONTSIZE", (0, -1), (-1, -1), 9),
+        ("ALIGN", (0, 0), (0, -1), "LEFT"),
+        ("ALIGN", (1, 0), (1, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#a12828")),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.whitesmoke),
+        ("LINEABOVE", (0, -1), (-1, -1), 0.8, colors.HexColor("#7f1f1f")),
+    ]))
+
+    elements.append(summary_table)
+    elements.append(Spacer(1, 18))
+
+    # =========================================
+    # TERMS AND CONDITIONS
+    # =========================================
+    elements.append(Paragraph("Terms and Conditions", terms_heading_style))
+
+    terms_lines = [
+        "1. This Sales Order is issued based on the confirmed order details.",
+        "2. Delivery will be made as per the agreed schedule.",
+        "3. Payment should be completed as per agreed terms.",
+        "4. Shipping charges extra if applicable.",
+        "5. Goods once sold will not be taken back.",
+        "6. All taxes and duties as applicable.",
+        f"7. Internal Notes: {so.get('internal_notes', '') or 'N/A'}",
+        f"8. Customer Notes: {so.get('customer_notes', '') or 'N/A'}",
+    ]
+
+    for line in terms_lines:
+        elements.append(Paragraph(line, terms_style))
+
+    elements.append(Spacer(1, 18))
+
+    # =========================================
+    # FOOTER
+    # =========================================
+    generated_on = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    elements.append(Paragraph(f"Generated on: {generated_on}", footer_style))
+
+    doc.build(elements)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
+
+
+# =========================================
+# SALES ORDER - EMAIL API
+# =========================================
+@app.post("/api/sales-orders/<so_id>/email")
+def sales_order_email(so_id):
+    so = find_sales_order_by_id(so_id)
+
+    if not so:
+        return jsonify({
+            "success": False,
+            "message": "Sales Order not found"
+        }), 404
+
+    customer_email = (so.get("email") or "").strip()
+    if not customer_email:
+        return jsonify({
+            "success": False,
+            "message": "Customer email not found"
+        }), 400
+
+    try:
+        pdf_bytes = generate_sales_order_pdf_bytes(so)
+
+        customer_name = so.get("customer_name", "Customer")
+        so_no = so.get("so_id", "")
+        order_date = so.get("order_date", "")
+        grand_total = so.get("grand_total", 0)
+        currency = so.get("currency", "INR")
+
+        subject = f"Sales Order {so_no} from Stackly"
+
+        body = f"""
+Dear {customer_name},
+
+Greetings from Stackly.
+
+Please find attached the Sales Order document for your reference.
+
+Sales Order Details:
+- Sales Order No : {so_no}
+- Order Date     : {order_date}
+- Grand Total    : {currency} {grand_total}
+
+Kindly review the attached document and let us know if any clarification is required.
+
+Thanks & Regards,
+Stackly Team
+Email: {SENDER_EMAIL}
+""".strip()
+
+        msg = EmailMessage()
+        msg["Subject"] = subject
+        msg["From"] = SENDER_EMAIL
+        msg["To"] = customer_email
+        msg.set_content(body)
+
+        msg.add_attachment(
+            pdf_bytes,
+            maintype="application",
+            subtype="pdf",
+            filename=f"{so_no}.pdf"
+        )
+
+        context = ssl.create_default_context()
+        with smtplib.SMTP(SMTP_SERVER, SMTP_PORT) as server:
+            server.starttls(context=context)
+            server.login(SENDER_EMAIL, SENDER_PASSWORD)
+            server.send_message(msg)
+
+        return jsonify({
+            "success": True,
+            "message": "Email sent successfully"
+        })
+
+    except Exception as e:
+        print("Sales Order email error:", e)
+        return jsonify({
+            "success": False,
+            "message": str(e)
+        }), 500
+
+
+# =========================================
+# SALES ORDER - CANCEL API
+# =========================================
+@app.post("/api/sales-orders/<so_id>/cancel")
+def cancel_sales_order(so_id):
+    data = request.get_json(silent=True) or {}
+    reason = (data.get("reason") or "").strip()
+    cancelled_by = (data.get("cancelled_by") or "Admin").strip()
+
+    if not reason:
+        return jsonify({
+            "success": False,
+            "message": "Cancellation reason is required"
+        }), 400
+
+    orders = load_sales_orders()
+    so = next((x for x in orders if str(x.get("so_id")) == str(so_id)), None)
+
+    if not so:
+        return jsonify({
+            "success": False,
+            "message": "Sales Order not found"
+        }), 404
+
+    now = datetime.now().isoformat(timespec="seconds")
+
+    so["status"] = "Cancelled"
+    so["cancel_reason"] = reason
+    so["cancelled_by"] = cancelled_by
+    so["cancelled_at"] = now
+    so["updated_at"] = now
+
+    history = so.get("status_history", [])
+    if not isinstance(history, list):
+        history = []
+
+    history.append({
+        "status": "Cancelled",
+        "date": now,
+        "user": cancelled_by,
+        "notes": f"Order cancelled. Reason: {reason}"
+    })
+    so["status_history"] = history
+
+    save_sales_orders(orders)
+
+    return jsonify({
+        "success": True,
+        "message": "Sales Order cancelled successfully",
+        "so_id": so_id
+    })
 
 
 @app.route("/save_sales", methods=["POST"])
@@ -9950,16 +10878,21 @@ def save_sales():
 # Find customer by name (customer.json)
 # -----------------------------------------
 def find_customer_by_name(name: str):
+    """
+    Find a customer by name from customer.json.
+    Returns the full customer object if found, else None.
+    """
     if not name:
         return None
 
-    name = name.strip().lower()
-    customers = load_customer()  # reads customer.json
+    target_name = str(name).strip().lower()
+    customers = load_customer()
 
-    for c in customers:
-        cname = str(c.get("name", "")).strip().lower()   # key is "name"
-        if cname == name:
-            return c
+    for customer in customers:
+        customer_name = str(customer.get("name", "")).strip().lower()
+        if customer_name == target_name:
+            return customer
+
     return None
 
 
@@ -10063,7 +10996,7 @@ def delivery_note_new():
     sales_orders = load_sales_orders()
     return render_template(
         "deliverynote-new.html",
-        page="delivery_note_new",
+        page="delivery_note",
         sales_orders=sales_orders,
     )
 
@@ -10075,7 +11008,7 @@ def delivery_note_form():
     sales_orders = load_sales_orders()
     return render_template(
         "deliverynote-new.html",
-        page="delivery_note_new",
+        page="delivery_note",
         dn_id=dn_id,
         mode=mode,
         sales_orders=sales_orders,

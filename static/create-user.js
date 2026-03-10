@@ -1,4 +1,29 @@
 // static/create-user.js
+// Minimal Fetch/XHR integration for the Create New Branch Users page.
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("create-user.js loaded ✅");
+
+  // Single XHR so Network → Fetch/XHR shows \"create-user\" as the request name.
+  // We call the same /create-user route with JSON Accept header to get metadata only.
+  fetch("/create-user?mode=ajax", {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  })
+    .then((res) => {
+      if (!res.ok) throw new Error("HTTP " + res.status);
+      return res.json();
+    })
+    .then((payload) => {
+      console.log("Create User metadata:", payload);
+      // The form is still rendered server-side; this XHR is only for diagnostics/DevTools.
+    })
+    .catch((err) => {
+      console.error("Error fetching create-user metadata:", err);
+    });
+});
+
+// static/create-user.js
 document.addEventListener("DOMContentLoaded", () => {
   const form = document.querySelector(".create-form");
   if (!form) return;
@@ -394,61 +419,44 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // ============================
-  // Load Department dropdown from departments.json via /api/departments
+  // Load Department dropdown from data embedded in the page (no extra XHR)
   // ============================
   function loadDepartmentOptions() {
     if (!department) return;
-    fetch("/api/departments")
-      .then((res) => res.json())
-      .then((data) => {
-        const list = (data && data.departments) ? data.departments : [];
-        // Keep only "Select Department" placeholder
-        department.innerHTML = '<option value="">Select Department</option>';
-        list.forEach((d) => {
-          if (!d || typeof d !== "object") return;
-          const name = (d.name || d.department_name || "").trim();
-          if (!name) return;
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          department.appendChild(opt);
-        });
-        validateAllFields();
-      })
-      .catch((err) => {
-        console.error("Error loading departments:", err);
-        validateAllFields();
-      });
+    const list = Array.isArray(window.initialDepartments) ? window.initialDepartments : [];
+    department.innerHTML = '<option value="">Select Department</option>';
+    list.forEach((d) => {
+      if (!d || typeof d !== "object") return;
+      const name = (d.name || d.department_name || "").trim();
+      if (!name) return;
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      department.appendChild(opt);
+    });
+    validateAllFields();
   }
   loadDepartmentOptions();
 
   // ============================
-  // Load Role dropdown from roles.json via /api/roles
+  // Load Role dropdown from data embedded in the page (no extra XHR)
   // ============================
   function loadRoleOptions() {
     if (!role) return;
-    fetch("/api/roles")
-      .then((res) => res.json())
-      .then((data) => {
-        const list = (data && data.roles) ? data.roles : [];
-        role.innerHTML = '<option value="">Select Designation</option>';
-        const seen = new Set();
-        list.forEach((r) => {
-          if (!r || typeof r !== "object") return;
-          const name = (r.role || r.role_name || "").trim();
-          if (!name || seen.has(name)) return;
-          seen.add(name);
-          const opt = document.createElement("option");
-          opt.value = name;
-          opt.textContent = name;
-          role.appendChild(opt);
-        });
-        validateAllFields();
-      })
-      .catch((err) => {
-        console.error("Error loading roles:", err);
-        validateAllFields();
-      });
+    const list = Array.isArray(window.initialRoles) ? window.initialRoles : [];
+    role.innerHTML = '<option value="">Select Designation</option>';
+    const seen = new Set();
+    list.forEach((r) => {
+      if (!r || typeof r !== "object") return;
+      const name = (r.role || r.role_name || "").trim();
+      if (!name || seen.has(name)) return;
+      seen.add(name);
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      role.appendChild(opt);
+    });
+    validateAllFields();
   }
   loadRoleOptions();
 

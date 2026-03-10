@@ -139,29 +139,45 @@ color: #d18a84;
 .reject-btn {
   min-width: 90px;
   padding: 8px 14px;
-  border-radius: 8px;
+  border-radius: 10px;
   border: none;
   font-size: 14px;
   font-weight: 600;
   cursor: pointer;
+  transition: filter 0.2s ease, transform 0.25s, box-shadow 0.25s;
 }
 
 .reject-btn.cancel {
-  background: #ffffff;
-  color: #333333;
-  border: 1px solid #d0d0d0;
+  background: #f6f6f7;
+  color: #1d2430;
+  border: 1.5px solid #cfcfd4;
   box-shadow: 0 2px 4px rgba(0,0,0,0.08);
 }
 
+.reject-btn.cancel:hover {
+  filter: brightness(0.95);
+}
+
 .reject-btn.delete {
-  background: #d9534f;
+  background: linear-gradient(#a12828, #8c1f1f);
   color: #ffffff;
+  box-shadow: 0 5px 0 #6d1717;
+}
+
+.reject-btn.delete:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 0 #6d1717;
 }
 
 .reject-btn.delete:disabled {
   background: #cccccc;
   color: #666666;
   cursor: not-allowed;
+  box-shadow: 0 2px 0 #999999;
+}
+
+.reject-btn.delete:disabled:hover {
+  transform: none;
   box-shadow: 0 2px 0 #999999;
 }
 

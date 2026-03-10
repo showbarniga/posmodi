@@ -88,7 +88,7 @@
           </button>
 
           <div id="crm-submenu"
-               class="submenu{% if page in ['enquiry_list','new_enquiry','quotation','sales','delivery_note','invoice','dn_return','inv_return'] %} open{% endif %}">
+               class="submenu{% if page in ['enquiry_list','new_enquiry','quotation','sales','sales_order','delivery_note','invoice','dn_return','inv_return'] %} open{% endif %}">
             <a href="{{ url_for('enquiry_list') }}"
                class="submenu-item{% if page in ['enquiry_list', 'new_enquiry'] %} active{% endif %}">
               <span class="submenu-icon">📋</span>
@@ -202,6 +202,9 @@
   </div>
 
   <script src="{{ url_for('static', filename='menu.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='import-product.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='import-customer.js') }}" defer></script>
+  <script src="{{ url_for('static', filename='removed-items.js') }}" defer></script>
   {% block extra_js %}{% endblock %}
 </body>
 </html>

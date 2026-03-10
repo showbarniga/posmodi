@@ -293,7 +293,7 @@ function applyNumberRestrictions() {
         shippingCharge.addEventListener('paste', validatePaste);
         
         shippingCharge.addEventListener('input', function(e) {
-            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 10);
+            this.value = this.value.replace(/[^0-9]/g, '').substring(0, 5);
         });
     }
     
@@ -722,8 +722,53 @@ function setExpiryDate() {
 
 
 // ===================================================
-// DATE VALIDATION (EXPIRY & EXPECTED >= QUOTATION DATE)
+// DATE VALIDATION (FORMAT + EXPIRY & EXPECTED >= QUOTATION DATE)
 // ===================================================
+
+/** Check if value is a valid date string (YYYY-MM-DD) and within reasonable year range (1900-2100). */
+function isValidDateString(value) {
+    if (!value || typeof value !== 'string') return false;
+    var trimmed = value.trim();
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(trimmed)) return false;
+    var parts = trimmed.split('-');
+    var y = parseInt(parts[0], 10);
+    var m = parseInt(parts[1], 10) - 1;
+    var d = parseInt(parts[2], 10);
+    if (y < 1900 || y > 2100) return false;
+    var date = new Date(y, m, d);
+    if (date.getFullYear() !== y || date.getMonth() !== m || date.getDate() !== d) return false;
+    return true;
+}
+
+/** Validate format of all three date fields when typed manually. Returns true if all are valid or empty. */
+function validateDateFormats() {
+    var ids = ['quotationDate', 'expiryDate', 'expectedDate'];
+    var allValid = true;
+    ids.forEach(function(id) {
+        var field = document.getElementById(id);
+        if (!field) return;
+        var val = (field.value || '').trim();
+        var errEl = document.getElementById(id + 'Error');
+        if (!val) {
+            if (errEl) errEl.remove();
+            field.style.borderColor = '';
+            return;
+        }
+        if (!isValidDateString(val)) {
+            allValid = false;
+            if (!errEl) {
+                showDateError(id, 'Invalid date. Use format YYYY-MM-DD (e.g. 2026-03-09).');
+            } else {
+                errEl.textContent = 'Invalid date. Use format YYYY-MM-DD (e.g. 2026-03-09).';
+            }
+            field.style.borderColor = '#dc3545';
+        } else {
+            if (errEl) errEl.remove();
+            field.style.borderColor = '';
+        }
+    });
+    return allValid;
+}
 
 function validateDates() {
     const quotationDate = document.getElementById('quotationDate')?.value;
@@ -733,6 +778,9 @@ function validateDates() {
 
     // Clear previous errors
     clearDateErrors();
+
+    // Validate manual date format first (YYYY-MM-DD, valid day/month/year)
+    if (!validateDateFormats()) return false;
 
     if (quotationDate) {
         const qDate = new Date(quotationDate);
@@ -780,7 +828,7 @@ function showDateError(fieldId, message) {
 }
 
 function clearDateErrors() {
-    ['expiryDate', 'expectedDate'].forEach(id => {
+    ['quotationDate', 'expiryDate', 'expectedDate'].forEach(id => {
         const error = document.getElementById(`${id}Error`);
         if (error) error.remove();
         const field = document.getElementById(id);
@@ -832,8 +880,102 @@ function calculateAutoRounding(amount, currency = 'IND') {
 // ===================================================
 // INITIALIZE ALL COMPONENTS
 // ===================================================
+// ===================================================
+// CUSTOMER PO REFERENCE – LIVE DUPLICATE CHECK
+// ===================================================
+
+var _customerPoCheckDebounceTimer = null;
+var _customerPoDuplicateShown = false;
+
+function checkCustomerPoDuplicate() {
+    const input = document.getElementById('customerPo');
+    if (!input) return;
+    const value = (input.value || '').trim();
+    input.classList.remove('customer-po-duplicate');
+    input.style.borderColor = '';
+    input.style.boxShadow = '';
+    _customerPoDuplicateShown = false;
+    if (!value) return;
+
+    const quotationId = document.getElementById('quotationNumber')?.value || '';
+    const params = new URLSearchParams({ value: value });
+    if (quotationId) params.set('exclude_quotation_id', quotationId);
+
+    fetch('/check-customer-po?' + params.toString())
+        .then(function(res) { return res.json(); })
+        .then(function(data) {
+            if (!data.success) return;
+            if (data.duplicate) {
+                input.classList.add('customer-po-duplicate');
+                input.style.borderColor = '#c00';
+                input.style.boxShadow = '0 0 0 1px #c00';
+                if (!_customerPoDuplicateShown) {
+                    _customerPoDuplicateShown = true;
+                    showToast('Customer PO Reference already exists. Please use a unique value.', 'warning');
+                }
+            } else {
+                input.classList.remove('customer-po-duplicate');
+                input.style.borderColor = '';
+                input.style.boxShadow = '';
+            }
+        })
+        .catch(function() {});
+}
+
+function setupCustomerPoDuplicateCheck() {
+    const input = document.getElementById('customerPo');
+    if (!input) return;
+
+    // Restrict to letters, numbers, hyphen, and single space only
+    input.addEventListener('keydown', function(e) {
+        var key = e.key;
+        if (key.length === 1 && !/^[a-zA-Z0-9- ]$/.test(key) && !e.ctrlKey && !e.metaKey && !e.altKey) {
+            e.preventDefault();
+        }
+    });
+    input.addEventListener('input', function() {
+        var allowed = input.value.replace(/[^a-zA-Z0-9- ]/g, '');
+        if (input.value !== allowed) input.value = allowed;
+        input.classList.remove('customer-po-duplicate');
+        input.style.borderColor = '';
+        input.style.boxShadow = '';
+        _customerPoDuplicateShown = false;
+        if (_customerPoCheckDebounceTimer) clearTimeout(_customerPoCheckDebounceTimer);
+        var value = (input.value || '').trim();
+        if (!value) return;
+        _customerPoCheckDebounceTimer = setTimeout(function() {
+            _customerPoCheckDebounceTimer = null;
+            checkCustomerPoDuplicate();
+        }, 500);
+    });
+    input.addEventListener('paste', function(e) {
+        var pasted = (e.clipboardData || window.clipboardData).getData('text');
+        var allowed = pasted.replace(/[^a-zA-Z0-9- ]/g, '');
+        if (pasted !== allowed) {
+            e.preventDefault();
+            var start = input.selectionStart, end = input.selectionEnd;
+            var val = input.value || '';
+            input.value = val.slice(0, start) + allowed + val.slice(end);
+            input.setSelectionRange(start + allowed.length, start + allowed.length);
+        }
+    });
+
+    input.addEventListener('blur', function() {
+        checkCustomerPoDuplicate();
+    });
+}
+
 function initializeAllComponents() {
-    
+
+    // Start tab navigation inside the form: focus first form field
+    const form = document.querySelector('.form-grid');
+    if (form) {
+        const firstField = form.querySelector('input, select, textarea');
+        if (firstField && typeof firstField.focus === 'function') {
+            try { firstField.focus(); } catch (e) {}
+        }
+    }
+
     // 1️⃣ FIRST: Create all UI elements (totals, tabs, buttons, etc.)
     loadDropdowns();
     initializeCurrencyListener();
@@ -850,6 +992,7 @@ function initializeAllComponents() {
     initializeSaveDraftButton();
     setupDraftButtonClick();
     initializeInputDisableOnProductSelect();
+    setupCustomerPoDuplicateCheck();
     setTimeout(validateDraftButton, 500);
     
     const addItemBtn = document.getElementById('addItemBtn');
@@ -931,23 +1074,54 @@ function loadDropdowns() {
             .then(response => response.json())
             .then(data => {
                 console.log("📋 Customers loaded:", data.length);
+                var customerNames = [];
+                var salesRepValues = [];
+                var paymentTermsValues = [];
+                var seenCustomer = {};
+                var seenSalesRep = {};
+                var seenPaymentTerms = {};
+
                 data.forEach(customer => {
-                    if (customer.status === "Active") {
-                        const customerOption = document.createElement("option");
-                        customerOption.value = customer.name;
-                        customerOption.textContent = customer.name;
-                        customerSelect.appendChild(customerOption);
+                    if (customer.status !== "Active") return;
 
-                        const salesOption = document.createElement("option");
-                        salesOption.value = customer.sales_rep;
-                        salesOption.textContent = customer.sales_rep;
-                        salesRep.appendChild(salesOption);
-
-                        const paymentOption = document.createElement("option");
-                        paymentOption.value = customer.paymentTerms;
-                        paymentOption.textContent = customer.paymentTerms;
-                        paymentTerms.appendChild(paymentOption);
+                    var name = (customer.name || "").trim();
+                    if (name && !seenCustomer[name]) {
+                        seenCustomer[name] = true;
+                        customerNames.push(name);
                     }
+
+                    var rep = (customer.sales_rep || "").trim();
+                    if (rep && !seenSalesRep[rep]) {
+                        seenSalesRep[rep] = true;
+                        salesRepValues.push(rep);
+                    }
+
+                    var terms = (customer.paymentTerms || "").trim();
+                    if (terms && !seenPaymentTerms[terms]) {
+                        seenPaymentTerms[terms] = true;
+                        paymentTermsValues.push(terms);
+                    }
+                });
+
+                customerNames.forEach(function(name) {
+                    var opt = document.createElement("option");
+                    opt.value = name;
+                    opt.textContent = name;
+                    customerSelect.appendChild(opt);
+                });
+
+                salesRepValues.forEach(function(rep) {
+                    var opt = document.createElement("option");
+                    opt.value = rep;
+                    opt.textContent = rep;
+                    salesRep.appendChild(opt);
+                });
+
+                paymentTermsValues.forEach(function(terms) {
+                    var opt = document.createElement("option");
+                    opt.value = terms;
+                    opt.textContent = terms;
+                    paymentTerms.appendChild(opt);
                 });
             })
             .catch(error => console.error("❌ Error loading dropdowns:", error));
@@ -1010,7 +1184,7 @@ function initializeTotalsStructure() {
     shippingRow.innerHTML = `
         <span>Shipping Charge</span>
         <span>
-            <input type="text" id="shippingCharge" class="shipping-input" value="0" min="0" step="0.01" oninput="handleGlobalInput()" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; text-align: right;">
+            <input type="text" id="shippingCharge" class="shipping-input" value="0" min="0" maxlength="5" step="0.01" oninput="handleGlobalInput()" style="width: 80px; padding: 5px; border: 1px solid #ddd; border-radius: 4px; text-align: right;">
         </span>
     `;
     totalsDiv.appendChild(shippingRow);
@@ -1159,19 +1333,27 @@ function initializeFormValidation() {
         customerSelect, currency, paymentTerms, expectedDate
     ];
     
-     // Date validation listeners
-[quotationDate, expiryDate, expectedDate].forEach(field => {
-    if (field) {
-        field.addEventListener('change', function() {
-            validateDates();
-            checkAndUpdateButtons();
-            checkAndUpdateEditableButtons();
-        });
-        field.addEventListener('input', function() {
-            // Optionally validate on input, but change is enough
-        });
-    }
-});
+     // Date validation listeners (format + relative dates; validate on blur when typed manually)
+    [quotationDate, expiryDate, expectedDate].forEach(field => {
+        if (field) {
+            field.addEventListener('blur', function() {
+                validateDateFormats();
+                validateDates();
+                checkAndUpdateButtons();
+                checkAndUpdateEditableButtons();
+            });
+            field.addEventListener('change', function() {
+                validateDates();
+                checkAndUpdateButtons();
+                checkAndUpdateEditableButtons();
+            });
+            field.addEventListener('input', function() {
+                validateDateFormats();
+                checkAndUpdateButtons();
+                checkAndUpdateEditableButtons();
+            });
+        }
+    });
 
 
     formFields.forEach(field => {

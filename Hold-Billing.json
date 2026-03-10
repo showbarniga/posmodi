@@ -1,0 +1,14 @@
+{
+  "items": [
+    {
+      "code": "P134",
+      "qty": 1
+    },
+    {
+      "code": "P135",
+      "qty": 1
+    }
+  ],
+  "paymentMode": "UPI",
+  "paymentDetail": null
+}

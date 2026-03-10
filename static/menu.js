@@ -6,16 +6,35 @@ document.addEventListener("DOMContentLoaded", () => {
   // PATTERN A: .menu-toggle + data-target
   // ==========================
   const legacyToggles = document.querySelectorAll(".menu-toggle[data-target]");
+  const sidebarForToggles = document.querySelector(".sidebar");
 
   legacyToggles.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const targetId = btn.dataset.target;         // e.g. "masters-submenu"
-      const submenu  = document.getElementById(targetId);
+    btn.addEventListener("click", (e) => {
+      e.preventDefault();
 
+      const targetId = btn.dataset.target; // e.g. "masters-submenu"
+      const submenu = document.getElementById(targetId);
       if (!submenu) return;
 
-      // toggle .open on that submenu
-      submenu.classList.toggle("open");
+      // Always ensure sidebar is expanded when opening a submenu (desktop)
+      if (
+        sidebarForToggles &&
+        sidebarForToggles.classList.contains("sidebar-collapsed")
+      ) {
+        sidebarForToggles.classList.remove("sidebar-collapsed");
+      }
+
+      // Toggle open/close for this submenu (Masters and CRM behave the same)
+      const isOpen = submenu.classList.contains("open");
+      if (isOpen) {
+        submenu.classList.remove("open");
+        btn.classList.remove("open");
+        submenu.style.display = "";
+      } else {
+        submenu.classList.add("open");
+        btn.classList.add("open");
+        submenu.style.display = "flex";
+      }
     });
   });
 
@@ -36,18 +55,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   });
 
-  // ==========================
-  // SIDEBAR BURGER (3 lines circle)
-  // ==========================
-  const burgerBtn = document.getElementById("menuToggleBtn");
-  const sidebar   = document.querySelector(".sidebar");
-
-  if (burgerBtn && sidebar) {
-    burgerBtn.addEventListener("click", () => {
-      sidebar.classList.toggle("sidebar-open");      // mobile slide
-      sidebar.classList.toggle("sidebar-collapsed"); // desktop collapse
-    });
-  }
+  // (old sidebar burger handler removed; unified logic is at the bottom)
   // 🔎 GLOBAL SEARCH HANDLER
 const searchInput = document.querySelector(".search-input");
 const searchResultsBox = document.getElementById("searchResults");
@@ -245,46 +253,52 @@ document.addEventListener("DOMContentLoaded", () => {
   const menuBtn = document.getElementById("menuToggleBtn");
   const sidebar = document.querySelector(".sidebar");
 
-  // create overlay
+  // create overlay (used for mobile slide-in)
   const overlay = document.createElement("div");
   overlay.className = "sidebar-overlay";
   document.body.appendChild(overlay);
 
-  function openSidebar() {
+  function openSidebarMobile() {
     sidebar.classList.add("open");
     overlay.classList.add("show");
   }
 
-  function closeSidebar() {
+  function closeSidebarMobile() {
     sidebar.classList.remove("open");
     overlay.classList.remove("show");
   }
 
   if (menuBtn && sidebar) {
     menuBtn.addEventListener("click", () => {
-      if (sidebar.classList.contains("open")) {
-        closeSidebar();     // ✅ CLOSE
+      const isDesktop = window.innerWidth >= 1025;
+      if (isDesktop) {
+        // Desktop: collapse / expand sidebar width
+        sidebar.classList.toggle("sidebar-collapsed");
       } else {
-        openSidebar();      // ✅ OPEN
+        // Mobile: slide in/out with overlay
+        if (sidebar.classList.contains("open")) {
+          closeSidebarMobile();
+        } else {
+          openSidebarMobile();
+        }
       }
     });
   }
 
-  overlay.addEventListener("click", closeSidebar);
+  overlay.addEventListener("click", closeSidebarMobile);
 
   // auto close when clicking menu link (mobile)
   document.querySelectorAll(".sidebar a").forEach(link => {
-    link.addEventListener("click", closeSidebar);
+    link.addEventListener("click", closeSidebarMobile);
   });
 
   const closeBtn = document.getElementById("sidebarCloseBtn");
 
-if (closeBtn) {
-  closeBtn.addEventListener("click", () => {
-    sidebar.classList.remove("open");
-    overlay.classList.remove("show");
-  });
-}
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => {
+      closeSidebarMobile();
+    });
+  }
 
 });
 

@@ -1,3 +1,148 @@
+// static/create-role.js
+// Fetch/XHR integration + basic behaviour for the Department & Roles → Create Role page.
+
+document.addEventListener("DOMContentLoaded", () => {
+  console.log("create-role.js loaded ✅");
+
+  const deptSelect = document.getElementById("department");
+  const branchSelect = document.getElementById("branch");
+  const roleInput = document.getElementById("role");
+  const descInput = document.getElementById("deptDesc");
+
+  const resetBtn = document.querySelector(".reset-btn");
+  const cancelBtn = document.querySelector(".cancel-btn");
+  const saveBtn = document.querySelector(".save-btn");
+
+  const confirmModal = document.getElementById("confirmModal");
+  const confirmCancel = document.getElementById("confirmCancel");
+  const confirmOk = document.getElementById("confirmOk");
+
+  function showConfirm() {
+    if (confirmModal) confirmModal.style.display = "flex";
+  }
+
+  function hideConfirm() {
+    if (confirmModal) confirmModal.style.display = "none";
+  }
+
+  // Load departments via Fetch/XHR (so this page also appears under Network → Fetch/XHR)
+  if (deptSelect) {
+    // Include page name so the request name is unique in Network → Fetch/XHR.
+    fetch("/api/departments?page=create-role-init", { cache: "no-store" })
+      .then((res) => {
+        if (!res.ok) throw new Error("HTTP " + res.status);
+        return res.json();
+      })
+      .then((payload) => {
+        const departments = Array.isArray(payload?.departments) ? payload.departments : [];
+        console.log(`Loaded ${departments.length} departments via /api/departments for Create Role page.`);
+
+        // Populate department dropdown with codes + names
+        departments.forEach((d) => {
+          const code = (d.code || "").trim();
+          const name = (d.name || "").trim();
+          const option = document.createElement("option");
+          option.value = name || code;
+          option.textContent = name && code ? `${name} (${code})` : name || code || "Unnamed";
+          deptSelect.appendChild(option);
+        });
+      })
+      .catch((err) => {
+        console.error("Error fetching departments on Create Role page:", err);
+      });
+  }
+
+  if (resetBtn) {
+    resetBtn.addEventListener("click", () => {
+      // Clear all permission checkboxes
+      document.querySelectorAll(".permission-table input[type='checkbox']").forEach((cb) => {
+        cb.checked = false;
+      });
+    });
+  }
+
+  if (cancelBtn) {
+    cancelBtn.addEventListener("click", () => {
+      // Navigate back to Department & Roles list
+      window.location.href = "/department-roles";
+    });
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", (e) => {
+      e.preventDefault();
+      showConfirm();
+    });
+  }
+
+  if (confirmCancel) {
+    confirmCancel.addEventListener("click", (e) => {
+      e.preventDefault();
+      hideConfirm();
+    });
+  }
+
+  if (confirmOk) {
+    confirmOk.addEventListener("click", (e) => {
+      e.preventDefault();
+
+      const department = (deptSelect?.value || "").trim();
+      const branch = (branchSelect?.value || "").trim();
+      const role = (roleInput?.value || "").trim();
+      const description = (descInput?.value || "").trim();
+
+      if (!department || !branch || !role || !description) {
+        alert("Department, Branch, Role, and Description are required.");
+        return;
+      }
+
+      // Collect permissions into a simple object (optional for backend; not required by save_role)
+      const permissions = {};
+      document.querySelectorAll(".permission-table tbody tr").forEach((row) => {
+        const menuKey = row.getAttribute("data-menu") || "";
+        if (!menuKey) return;
+        const rowPerms = {};
+        row.querySelectorAll("input[type='checkbox']").forEach((cb) => {
+          const name = cb.name || "";
+          rowPerms[name] = cb.checked;
+        });
+        permissions[menuKey] = rowPerms;
+      });
+
+      const payload = {
+        department,
+        branch,
+        role,
+        description,
+        permissions,
+      };
+
+      fetch("/save_role", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(payload),
+      })
+        .then((res) => res.json())
+        .then((data) => {
+          if (data.status === "success" || data.success) {
+            hideConfirm();
+            alert("Role saved successfully.");
+            window.location.href = "/department-roles";
+          } else {
+            const msg = data.message || data.error || "Failed to save role.";
+            alert(msg);
+          }
+        })
+        .catch((err) => {
+          console.error("Error saving role:", err);
+          alert("Error saving role. Please try again.");
+        });
+    });
+  }
+});
+
 document.addEventListener("DOMContentLoaded", () => {
 
     let isSaving = false;
@@ -77,7 +222,7 @@ document.addEventListener("DOMContentLoaded", () => {
     // --------------------
     function loadDepartmentOptions() {
         if (!department) return;
-        fetch("/api/departments")
+        fetch("/api/departments?page=create-role-options")
             .then((res) => res.json())
             .then((data) => {
                 const list = (data && data.departments) ? data.departments : [];

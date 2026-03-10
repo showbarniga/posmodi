@@ -1,23 +1,166 @@
-
-
 [
-  {
-    "so_id": "SO-0003",
-    "customer_name": "Praveen",
-    "order_date": "08-01-2026",
-    "shipping_address": "Madurai ...",
-    "items": [
-      { "product_id": "PRD-001", "product_name": "Rice Bag 25kg", "qty": 2, "uom": "Bag", "serials": "" },
-      { "product_id": "PRD-002", "product_name": "Sugar 1kg", "qty": 5, "uom": "Kg", "serials": "" }
-    ]
-  },
-  {
-    "so_id": "SO-0004",
-    "customer_name": "Anitha G",
-    "order_date": "26-02-2026",
-    "shipping_address": "Coimbatore, Tamil Nadu",
-    "items": [
-      { "product_id": "PRD-010", "product_name": "Oil 1L", "qty": 3, "uom": "Nos", "serials": "" }
-    ]
-  }
+    {
+        "so_id": "SO-0003",
+        "order_date": "2026-03-09",
+        "sales_rep": "Anithaganff",
+        "order_type": "Rush",
+        "status": "Submitted",
+        "stock_status": "",
+        "customer_name": "vvbvj",
+        "customer_id": "C103",
+        "billing_address": "",
+        "shipping_address": "",
+        "email": "bob@gmail.com",
+        "phone": "",
+        "payment_method": "Cash",
+        "currency": "USD",
+        "due_date": "2026-03-11",
+        "terms": "Goods once sold will not be taken back Payment due within 15 days",
+        "shipping_method": "DHL",
+        "delivery_date": "2026-03-27",
+        "tracking_number": "SD345434345",
+        "internal_notes": "trteteteter",
+        "customer_notes": "fgfgfhfhf",
+        "items": [
+            {
+                "product_id": "P133",
+                "product_name": "Ceiling Fan 48 inch (P133)",
+                "qty": 3,
+                "uom": "Nos",
+                "price": 2000,
+                "tax_pct": 18,
+                "disc_pct": 4,
+                "line_total": 6840
+            },
+            {
+                "product_id": "P137",
+                "product_name": "Saop (P137)",
+                "qty": 5,
+                "uom": "Nos",
+                "price": 26,
+                "tax_pct": 18,
+                "disc_pct": 1,
+                "line_total": 152.1
+            }
+        ],
+        "subtotal": 6130,
+        "tax_total": 1103.4,
+        "rounding": -0.4,
+        "global_discount": 12,
+        "shipping_charges": 234,
+        "grand_total": 7455,
+        "comments": [],
+        "status_history": [],
+        "cancel_reason": "",
+        "cancelled_by": "",
+        "cancelled_at": "",
+        "created_at": "2026-03-09T14:06:25",
+        "updated_at": "2026-03-09T14:06:25"
+    },
+    {
+        "so_id": "SO-0002",
+        "order_date": "2026-03-08",
+        "sales_rep": "VikramVedha",
+        "order_type": "Rush",
+        "status": "Submitted",
+        "stock_status": "",
+        "customer_name": "sheelavathi T",
+        "customer_id": "C1245",
+        "billing_address": "streethj",
+        "shipping_address": "asdfreee",
+        "email": "thaanig@gmail.com",
+        "phone": "9443624563",
+        "payment_method": "Card",
+        "currency": "EUR",
+        "due_date": "2026-03-13",
+        "terms": "Goods once sold will not be taken back. Payment due within 15 days.",
+        "shipping_method": "FedEx",
+        "delivery_date": "2026-03-25",
+        "tracking_number": "123456789012",
+        "internal_notes": "cxcvcxvcv",
+        "customer_notes": "cxvxcxc",
+        "items": [
+            {
+                "product_id": "P133",
+                "product_name": "Ceiling Fan 48 inch (P133)",
+                "qty": 1,
+                "uom": "Nos",
+                "price": 2000,
+                "tax_pct": 18,
+                "disc_pct": 5,
+                "line_total": 2260
+            }
+        ],
+        "subtotal": 2000,
+        "tax_total": 360,
+        "rounding": 0,
+        "global_discount": 0,
+        "shipping_charges": 0,
+        "grand_total": 2360,
+        "comments": [],
+        "status_history": [],
+        "cancel_reason": "",
+        "cancelled_by": "",
+        "cancelled_at": "",
+        "created_at": "2026-03-08T21:47:03",
+        "updated_at": "2026-03-09T14:07:49"
+    },
+    {
+        "so_id": "SO-0001",
+        "order_date": "2026-03-08",
+        "sales_rep": "Raghul",
+        "order_type": "Standard",
+        "status": "Submitted",
+        "stock_status": "",
+        "customer_name": "sheelavathi T",
+        "customer_id": "C1245",
+        "billing_address": "street",
+        "shipping_address": "asdfreee",
+        "email": "thaanig@gmail.com",
+        "phone": "9443624563",
+        "payment_method": "Cash",
+        "currency": "INR",
+        "due_date": "2026-03-11",
+        "terms": "Goods once sold will not be taken back. Payment due within 15 days.",
+        "shipping_method": "FedEx",
+        "delivery_date": "2026-03-24",
+        "tracking_number": "123456789012",
+        "internal_notes": "cxcvcxvcv",
+        "customer_notes": "cxvxcxc",
+        "items": [
+            {
+                "product_id": "P133",
+                "product_name": "Ceiling Fan 48 inch (P133)",
+                "qty": 1,
+                "uom": "Nos",
+                "price": 2000,
+                "tax_pct": 18,
+                "disc_pct": 5,
+                "line_total": 2260
+            },
+            {
+                "product_id": "P134",
+                "product_name": "Sunflower Cooking Oil 1L (P134)",
+                "qty": 1,
+                "uom": "Bottle",
+                "price": 160,
+                "tax_pct": 5,
+                "disc_pct": 3,
+                "line_total": 163.2
+            }
+        ],
+        "subtotal": 2160,
+        "tax_total": 368,
+        "rounding": 0,
+        "global_discount": 2160,
+        "shipping_charges": 0,
+        "grand_total": 368,
+        "comments": [],
+        "status_history": [],
+        "cancel_reason": "",
+        "cancelled_by": "",
+        "cancelled_at": "",
+        "created_at": "2026-03-08T19:53:52",
+        "updated_at": "2026-03-08T19:53:52"
+    }
 ]

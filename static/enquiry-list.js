@@ -1,3 +1,69 @@
+document.addEventListener("DOMContentLoaded", () => {
+  const tableBody = document.getElementById("enquiryTable");
+  const showingCount = document.getElementById("showingCount");
+  const pageInfo = document.getElementById("pageInfo");
+
+  if (!tableBody) return;
+
+  function renderRows(items) {
+    // Keep header/footer behaviour from server render; just replace body rows
+    tableBody.innerHTML = "";
+
+    if (!items || items.length === 0) {
+      const tr = document.createElement("tr");
+      tr.className = "no-data-row";
+      const td = document.createElement("td");
+      td.colSpan = 7;
+      td.className = "no-data-cell";
+      td.textContent = "No data Found";
+      tr.appendChild(td);
+      tableBody.appendChild(tr);
+      if (showingCount) showingCount.textContent = "0";
+      if (pageInfo) pageInfo.textContent = "Page 1 of 0";
+      return;
+    }
+
+    items.forEach((e) => {
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td><span class="enquiry-id-link" data-id="${e.enquiry_id}">${e.enquiry_id}</span></td>
+        <td>${e.first_name || ""}</td>
+        <td>${e.last_name || ""}</td>
+        <td>${e.email || ""}</td>
+        <td>${e.phone_number || ""}</td>
+        <td>${e.status || ""}</td>
+        <td class="action-cell">
+          <div class="action-buttons">
+            <button class="edit-btn action-btn" data-id="${e.enquiry_id}">Edit</button>
+            <button class="delete-btn action-btn" data-id="${e.enquiry_id}">Delete</button>
+          </div>
+        </td>
+      `;
+
+      tableBody.appendChild(tr);
+    });
+
+    if (showingCount) showingCount.textContent = String(items.length);
+    if (pageInfo) pageInfo.textContent = `Page 1 of 1`;
+  }
+
+  // Fetch using JSON Accept header so it appears under Fetch/XHR
+  fetch("/enquiry-list", {
+    headers: { Accept: "application/json" },
+    cache: "no-store",
+  })
+    .then((res) => res.json())
+    .then((payload) => {
+      if (payload && payload.success && Array.isArray(payload.data)) {
+        renderRows(payload.data);
+      }
+    })
+    .catch((err) => {
+      console.error("Error loading enquiries via XHR:", err);
+    });
+});
+
 // ==========================
 // ✅ GLOBAL VARIABLES & FUNCTIONS (outside DOMContentLoaded)
 // ==========================

@@ -160,5 +160,9 @@
 {% endblock %}
 
 {% block extra_js %}
+<script>
+  window.initialDepartments = {{ (departments or []) | tojson | safe }};
+  window.initialRoles = {{ (roles or []) | tojson | safe }};
+</script>
 <script src="{{ url_for('static', filename='create-user.js') }}"></script>
 {% endblock %}
