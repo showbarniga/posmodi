@@ -46,7 +46,7 @@
   font-size: 28px;
   font-weight: 600;
   color: #a12828;
-  margin-top: 18px;   /* pushes heading downward */
+  margin-top: 18px;   
   margin-bottom: 12px;
   text-shadow: 1px 1px 2px #d8b7b7;
   margin-right: 24px;
@@ -173,9 +173,6 @@ textarea:disabled {
 #trackingNumber {
   text-transform: uppercase;
 }
-
-
-
 
 /* =========================================
    VALIDATION
@@ -1044,38 +1041,54 @@ button {
 }
 
 .so-status-draft{
-  background:#ffe28a;
+  background:#f50505;
   color:#000;
 }
 
 .so-status-submitted{
-  background:#0b762e;
+  background:#f89704;
   color:#000;
 }
 
 .so-status-purchased{
-  background:#b65049;
+  background:#f5f906;
   color:#000;
 }
 
 .so-status-delivered{
-  background:#67c3ff;
+  background:#4bf104;
   color:#000;
 }
 
 .so-status-partial{
-  background:#ff8fb5;
+  background:#03e3f8;
   color:#000;
 }
 
 .so-status-returned{
-  background:#ffb14a;
+  background:#0453f0;
   color:#000;
 }
 
 .so-status-cancelled{
-  background:#d6d6d6; 
+  background:#8b06f1; 
   color:#000;
+}
+
+#genDNBtn:disabled{
+  opacity: 0.5;
+  cursor: default;
+  background-color: #d6d6d6;
+  color: #666;
+  border-color: #d6d6d6;
+  box-shadow: none;
+}
+/* =========================================
+   auto-selected rep highlighted
+========================================= */
+.dropdown-item.active{
+  background:#f3dada;
+  font-weight:600;
 }
 
 /* =========================================

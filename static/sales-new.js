@@ -1,6 +1,7 @@
 
 
 
+
 // =========================================
 // GLOBAL USER
 // =========================================
@@ -234,7 +235,56 @@ function selectCustomer(element) {
   if (phoneEl) phoneEl.value = element.dataset.phone || "";
   if (billEl) billEl.value = element.dataset.billing || "";
   if (shipEl) shipEl.value = element.dataset.shipping || "";
+
+
+
+
+
+
+
+
+ // =========================================
+// AUTO FILL SALES REP FROM CUSTOMER DATA
+// =========================================
+const salesRepValue =
+  (element.dataset.salesRep ||
+   element.dataset.salesrep ||
+   element.dataset.sales_rep ||
+   "").trim();
+
+const salesRepInput = document.getElementById("salesRep");
+const salesRepSelected = document.getElementById("salesRepSelected");
+
+if (salesRepInput) {
+  salesRepInput.value = salesRepValue;
 }
+
+if (salesRepSelected) {
+  salesRepSelected.textContent = salesRepValue || "Select Sales Rep";
+}
+
+// Highlight correct rep in dropdown
+document.querySelectorAll("#salesRepDropdown .dropdown-item").forEach(item => {
+  const name = (item.dataset.name || item.textContent || "").trim();
+
+  if (name === salesRepValue) {
+    item.classList.add("active");
+  } else {
+    item.classList.remove("active");
+  }
+});
+
+const salesRepDropdown = document.getElementById("salesRepDropdown");
+if (salesRepDropdown) {
+  salesRepDropdown.style.display = "none";
+}
+updateSubmitButton();
+}
+
+
+
+
+
 
 function isCustomerSelected() {
   const txt = (document.getElementById("customerSelected")?.textContent || "").trim().toLowerCase();
@@ -870,7 +920,7 @@ function collectSalesOrderPayload() {
     customer_notes: document.getElementById("customerNotes")?.value || "",
 
     payment_method: document.getElementById("paymentMethod")?.value || "",
-    currency: document.getElementById("currency")?.value || "",
+    currency: document.getElementById("currency")?.value || "INR",
     due_date: document.getElementById("dueDate")?.value || "",
     terms: document.getElementById("terms")?.value || "",
 
@@ -1297,7 +1347,7 @@ function normalizeSO(raw) {
   const phone = so.phone || so.mobile || "";
 
   const payment_method = so.payment_method || so.paymentMethod || "";
-  const currency = so.currency || "";
+  const currency = so.currency || "INR";
   const due_date = so.due_date || so.dueDate || "";
   const terms = so.terms || so.termsAndConditions || "";
 
@@ -1538,21 +1588,6 @@ document.getElementById("soTabHistory")?.addEventListener("click", () => setActi
 
 document.addEventListener("DOMContentLoaded", async () => {
   try {
-    // Ensure initial focus starts inside the Sales Order page content
-    // so that Tab navigation behaves like the quotation module.
-    const formScope =
-      document.querySelector(".so-page-body") ||
-      document.querySelector(".sales-wrapper") ||
-      document;
-    if (formScope) {
-      const firstField = formScope.querySelector("input, select, textarea, button");
-      if (firstField && typeof firstField.focus === "function") {
-        try {
-          firstField.focus();
-        } catch (e) {}
-      }
-    }
-
     await loadSOProducts();
     fillAllProductSelects();
     refreshProductDropdowns();
@@ -1643,21 +1678,24 @@ document.addEventListener("DOMContentLoaded", async () => {
       /SO[-_]\d+/i.test(window.location.pathname);
 
     if (!hasSoInUrl) {
-      const dateInput = document.getElementById("orderDate");
-      if (dateInput && !dateInput.value) {
-        const today = new Date();
-        dateInput.value = today.toISOString().split("T")[0];
-      }
+  const dateInput = document.getElementById("orderDate");
+  if (dateInput && !dateInput.value) {
+    const today = new Date();
+    dateInput.value = today.toISOString().split("T")[0];
+  }
 
-      const termsField =
-        document.getElementById("terms") ||
-        document.getElementById("termsAndConditions") ||
-        document.getElementById("tandc");
+  const currencyField = document.getElementById("currency");
+  if (currencyField) currencyField.value = "INR";
 
-      if (termsField && !termsField.value.trim()) {
-        termsField.value = "Goods once sold will not be taken back. Payment due within 15 days.";
-      }
-    }
+  const termsField =
+    document.getElementById("terms") ||
+    document.getElementById("termsAndConditions") ||
+    document.getElementById("tandc");
+
+  if (termsField && !termsField.value.trim()) {
+    termsField.value = "Goods once sold will not be taken back. Payment due within 15 days.";
+  }
+}
 
     const shippingMethod = document.getElementById("shippingMethod");
     const trackingInput = document.getElementById("trackingNumber");
@@ -1692,6 +1730,7 @@ if (!getSOIdSafe()) {
 }
 
 updateCancelButton();
+updateGenerateDNButton();
 
     if (!getSOIdSafe()) {
       document.querySelectorAll("#orderItemsBody tr").forEach((row) => {
@@ -1718,3 +1757,43 @@ updateCancelButton();
     console.error("Initialization failed:", e);
   }
 });
+
+
+
+
+
+
+
+
+
+function updateGenerateDNButton() {
+  const btn = document.getElementById("genDNBtn");
+  if (!btn) return;
+
+  const status = getCurrentSOStatus();
+
+  const allowed = [
+    "purchased",
+    "submitted",
+    "submitted(pa)",
+    "submitted (pa)",
+    "partially delivered",
+    "partially_delivered"
+  ];
+
+  btn.disabled = !allowed.includes(status);
+}
+
+function generateDeliveryNote() {
+  const btn = document.getElementById("genDNBtn");
+  if (btn?.disabled) return;
+
+  const soId = getCurrentSOId();
+
+  if (!soId) {
+    showToast("Sales Order ID missing", "error");
+    return;
+  }
+
+  window.location.href = `/delivery_note/new?so_id=${encodeURIComponent(soId)}`;
+}

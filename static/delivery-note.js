@@ -1,3 +1,6 @@
+
+
+
 document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
      CONFIG
@@ -43,10 +46,40 @@ document.addEventListener("DOMContentLoaded", () => {
      SMALL HELPERS
   ========================================================== */
   const titleCase = (s) => {
-    const t = String(s || "").replaceAll("_", " ");
-    return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
-  };
+  const t = String(s || "").replaceAll("_", " ");
+  return t ? t.charAt(0).toUpperCase() + t.slice(1) : "";
+};
 
+/* =========================================================
+   DELIVERY NOTE STATUS MASTER
+========================================================== */
+const DELIVERY_NOTE_STATUSES = [
+  "Draft",
+  "Pending",
+  "In Transit",
+  "Delivered",
+  "Partially Delivered",
+  "Returned",
+  "Cancelled"
+];
+
+function loadDnStatusFilterOptions() {
+  if (!statusFilter) return;
+
+  statusFilter.innerHTML = "";
+
+  const allOpt = document.createElement("option");
+  allOpt.value = "all";
+  allOpt.textContent = "All";
+  statusFilter.appendChild(allOpt);
+
+  DELIVERY_NOTE_STATUSES.forEach((status) => {
+    const opt = document.createElement("option");
+    opt.value = normalizeStatus(status);
+    opt.textContent = status;
+    statusFilter.appendChild(opt);
+  });
+}
   function normalizeStatus(v) {
     return String(v || "").trim().toLowerCase().replaceAll(" ", "_");
   }
@@ -54,16 +87,18 @@ document.addEventListener("DOMContentLoaded", () => {
   const statusBadgeClass = (status) => normalizeStatus(status);
 
   function statusLabel(v) {
-    const key = normalizeStatus(v);
-    const map = {
-      delivered: "Delivered",
-      partially_delivered: "Partially Delivered",
-      returned: "Returned",
-      cancelled: "Cancelled",
-      draft: "Draft",
-    };
-    return map[key] || "—";
-  }
+  const key = normalizeStatus(v);
+  const map = {
+    draft: "Draft",
+    pending: "Pending",
+    in_transit: "In Transit",
+    delivered: "Delivered",
+    partially_delivered: "Partially Delivered",
+    returned: "Returned",
+    cancelled: "Cancelled",
+  };
+  return map[key] || "—";
+}
 
   function setBtnDisabled(btn, disabled) {
     if (!btn) return;
@@ -310,18 +345,13 @@ document.addEventListener("DOMContentLoaded", () => {
       if (noDataRow) noDataRow.style.display = "none";
 
       pageItems.forEach((r, idx) => {
-        const sno = startIndex + idx + 1;
+        
         const tr = document.createElement("tr");
 
         // Checkbox cell
         const tdCheck = document.createElement("td");
         tdCheck.className = "dn-td-check";
         tdCheck.innerHTML = `<input type="checkbox" class="row-check" data-id="${r.dn_id}">`;
-
-        const tdSno = document.createElement("td");
-        tdSno.className = "dn-th-sno";
-        tdSno.style.textAlign = "center";
-        tdSno.textContent = sno;
 
         const tdDn = document.createElement("td");
         tdDn.textContent = r.dn_id;
@@ -358,7 +388,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
         // Append all cells in the exact table order
         tr.appendChild(tdCheck);
-        tr.appendChild(tdSno);
+        
         tr.appendChild(tdDn);
         tr.appendChild(tdSo);
         tr.appendChild(tdCus);
@@ -423,5 +453,6 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
      INIT
   ========================================================== */
+  loadDnStatusFilterOptions();
   loadData();
 });

@@ -71,7 +71,7 @@ body {
 }
 
 .sidebar{
-  width: 180px;
+  width: 250px;
   height: 100vh;              /* ✅ fixed height */
   flex-shrink: 0;
   background: #fff;

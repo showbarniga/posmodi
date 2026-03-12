@@ -1,6 +1,6 @@
 [
   {
-    "dn_id": "DN-8391",
+    "dn_id": "DN-0001",
     "delivery_date": "2026-02-25",
     "so_ref": "SO-0001",
     "customer_name": "Vasu",
@@ -25,7 +25,7 @@
     "cancelled_at": "2026-03-01 21:24:53"
   },
   {
-    "dn_id": "DN-6269",
+    "dn_id": "DN-0002",
     "delivery_date": "2026-02-25",
     "so_ref": "SO-0003",
     "customer_name": "Praveen",
@@ -55,7 +55,7 @@
     ]
   },
   {
-    "dn_id": "DN-8397",
+    "dn_id": "DN-0003",
     "delivery_date": "2026-02-25",
     "so_ref": "SO-0003",
     "customer_name": "Praveen",
@@ -85,7 +85,7 @@
     ]
   },
   {
-    "dn_id": "DN-9800",
+    "dn_id": "DN-0004",
     "delivery_date": "2026-02-27",
     "so_ref": "SO-0003",
     "customer_name": "Praveen",
@@ -115,7 +115,7 @@
     ]
   },
   {
-    "dn_id": "DN-8265",
+    "dn_id": "DN-0005",
     "delivery_date": "2026-02-27",
     "so_ref": "SO-0004",
     "customer_name": "Anitha G",
@@ -138,7 +138,7 @@
     ]
   },
   {
-    "dn_id": "DN-9774",
+    "dn_id": "DN-0006",
     "delivery_date": "2026-02-27",
     "so_ref": "SO-0004",
     "customer_name": "Anitha G",
@@ -161,7 +161,7 @@
     ]
   },
   {
-    "dn_id": "DN-6561",
+    "dn_id": "DN-0007",
     "delivery_date": "2026-02-27",
     "so_ref": "",
     "customer_name": "",
@@ -178,7 +178,7 @@
     "cancelled_at": "2026-02-27 16:46:39"
   },
   {
-    "dn_id": "DN-3709",
+    "dn_id": "DN-0008",
     "delivery_date": "2026-03-01",
     "so_ref": "SO-0004",
     "customer_name": "Anitha G",
@@ -201,203 +201,79 @@
     ]
   },
   {
-    "dn_id": "DN-3589",
-    "delivery_date": "2026-03-01",
-    "so_ref": "SO-0003",
-    "customer_name": "Praveen",
+    "dn_id": "DN-0009",
+    "delivery_date": "2026-03-12",
+    "so_ref": "SO-0002",
+    "customer_name": "sheelavathi T",
     "delivery_type": "urgent",
-    "destination_address": "Madurai ...",
-    "delivery_by": "Suji",
-    "delivery_status": "returned",
-    "vehicle_no": "3331",
-    "tracking_id": "4237",
-    "delivery_notes": "welcome",
+    "destination_address": "asdfreee",
+    "delivery_by": "Showbaringa",
+    "delivery_status": "delivered",
+    "vehicle_no": "7894",
+    "tracking_id": "123456789012",
+    "delivery_notes": "Successfully completed",
     "status": "Submitted",
     "items": [
       {
-        "product_id": "PRD-001",
-        "product_name": "Rice Bag 25kg",
-        "qty": 2,
-        "uom": "Bag",
-        "serials": ""
-      },
-      {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
-        "qty": 5,
-        "uom": "Kg",
-        "serials": ""
-      }
-    ]
-  },
-  {
-    "dn_id": "DN-6441",
-    "delivery_date": "2026-03-01",
-    "so_ref": "SO-0004",
-    "customer_name": "Anitha G",
-    "delivery_type": "regular",
-    "destination_address": "Coimbatore, Tamil Nadu",
-    "delivery_by": "aaa",
-    "delivery_status": "cancelled",
-    "vehicle_no": "12121",
-    "tracking_id": "111",
-    "delivery_notes": "ddsfsddsfd",
-    "status": "Cancelled",
-    "items": [
-      {
-        "product_id": "PRD-001",
-        "product_name": "Rice Bag 25kg",
-        "qty": 3,
-        "uom": "",
-        "serials": ""
-      }
-    ],
-    "customer_id": "C001",
-    "email": "thaanig@gmail.com",
-    "phone": "9443624563",
-    "billing_address": "street",
-    "shipping_address": "asdfreee",
-    "cancel_reason": "qwqwqwqw",
-    "cancelled_at": "2026-03-02 11:43:21"
-  },
-  {
-    "dn_id": "DN-6694",
-    "delivery_date": "2026-03-02",
-    "so_ref": "SO-0004",
-    "customer_name": "Anitha G",
-    "delivery_type": "regular",
-    "destination_address": "Coimbatore, Tamil Nadu",
-    "delivery_by": "aaa",
-    "delivery_status": "delivered",
-    "vehicle_no": "123",
-    "tracking_id": "111",
-    "delivery_notes": "ffddfgfg",
-    "status": "Draft",
-    "items": [],
-    "customer_id": "C001",
-    "email": "thaanig@gmail.com",
-    "phone": "9443624563",
-    "billing_address": "street",
-    "shipping_address": "asdfreee"
-  },
-  {
-    "dn_id": "DN-2041",
-    "delivery_date": "2026-03-02",
-    "so_ref": "",
-    "customer_name": "Anitha G",
-    "delivery_type": "urgent",
-    "destination_address": "Coimbatore, Tamil Nadu",
-    "delivery_by": "ani",
-    "delivery_status": "delivered",
-    "vehicle_no": "7894",
-    "tracking_id": "Q233",
-    "delivery_notes": "dgdgdddggg",
-    "status": "Draft",
-    "items": [
-      {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
-        "qty": 3,
-        "uom": "",
-        "serials": ""
-      }
-    ],
-    "customer_id": "C001",
-    "email": "thaanig@gmail.com",
-    "phone": "9443624563",
-    "billing_address": "street",
-    "shipping_address": "asdfreee"
-  },
-  {
-    "dn_id": "DN-7673",
-    "delivery_date": "2026-03-02",
-    "so_ref": "SO-0004",
-    "customer_name": "Anitha G",
-    "delivery_type": "urgent",
-    "destination_address": "Coimbatore, Tamil Nadu",
-    "delivery_by": "ani",
-    "delivery_status": "draft",
-    "vehicle_no": "7894",
-    "tracking_id": "SD2342",
-    "delivery_notes": "dgdgdddggg",
-    "status": "Draft",
-    "items": [
-      {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
-        "qty": 3,
-        "uom": "",
-        "serials": ""
-      }
-    ],
-    "customer_id": "C001",
-    "email": "thaanig@gmail.com",
-    "phone": "9443624563",
-    "billing_address": "street",
-    "shipping_address": "asdfreee"
-  },
-  {
-    "dn_id": "DN-3808",
-    "delivery_date": "2026-03-03",
-    "so_ref": "",
-    "customer_name": "sdfs",
-    "delivery_type": "urgent",
-    "destination_address": "assdad",
-    "delivery_by": "adsasdas",
-    "delivery_status": "returned",
-    "vehicle_no": "SDDFSFDSDF",
-    "tracking_id": "34534534SDFSDF",
-    "delivery_notes": "dgdfdfhdfhdfhd",
-    "status": "Draft",
-    "items": [
-      {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
+        "product_id": "P133",
+        "product_name": "Ceiling Fan 48 inch (P133)",
+        "uom": "Nos",
+        "rate": 2000,
         "qty": 1,
-        "uom": "Kg",
-        "serials": "sefsdfs"
+        "tax": 18,
+        "discount": 5,
+        "total": 2355
       },
       {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
-        "qty": 2,
-        "uom": "Kg",
-        "serials": "cvbcbcb"
+        "product_id": "P134",
+        "product_name": "Sunflower Cooking Oil 1L (P134)",
+        "uom": "Bottle",
+        "rate": 160,
+        "qty": 1,
+        "tax": 5,
+        "discount": 3,
+        "total": 165
       }
     ],
-    "customer_id": "",
-    "email": "",
-    "phone": "",
-    "billing_address": "",
-    "shipping_address": ""
+    "customer_id": "C1245",
+    "email": "thaanig@gmail.com",
+    "phone": "9443624563",
+    "billing_address": "street",
+    "shipping_address": "asdfreee"
   },
   {
-    "dn_id": "DN-1583",
-    "delivery_date": "2026-03-03",
-    "so_ref": "SO-0003",
-    "customer_name": "sdfdsfs",
-    "delivery_type": "urgent",
-    "destination_address": "hjgjghjg",
-    "delivery_by": "szdzdsd",
-    "delivery_status": "delivered",
-    "vehicle_no": "SFDSDFSDXCVXCVX34",
-    "tracking_id": "SACXCVD3453",
-    "delivery_notes": "sdfsdfsdgfsgsdg",
+    "dn_id": "DN-0010",
+    "delivery_date": "2026-03-12",
+    "so_ref": "SO-0002",
+    "customer_name": "sheelavathi T",
+    "delivery_type": "regular",
+    "destination_address": "asdfreee",
+    "delivery_by": "csdcsdc",
+    "delivery_status": "draft",
+    "vehicle_no": "DCSDCSDCSDCS",
+    "tracking_id": "123456789012",
+    "delivery_notes": "sdcscddsddc",
     "status": "Submitted",
     "items": [
       {
-        "product_id": "PRD-001",
-        "product_name": "Rice Bag 25kg",
+        "product_id": "P133",
+        "product_name": "Ceiling Fan 48 inch (P133)",
+        "uom": "Nos",
+        "rate": 2000,
         "qty": 2,
-        "uom": "Bag",
-        "serials": "sdfsf"
+        "tax": 18,
+        "discount": 3,
+        "total": 4717
       },
       {
-        "product_id": "PRD-002",
-        "product_name": "Sugar 1kg",
-        "qty": 2,
-        "uom": "Kg",
-        "serials": "cvcvc"
+        "product_id": "P134",
+        "product_name": "Sunflower Cooking Oil 1L (P134)",
+        "uom": "Bottle",
+        "rate": 160,
+        "qty": 1,
+        "tax": 5,
+        "discount": 3,
+        "total": 165
       }
     ],
     "customer_id": "",

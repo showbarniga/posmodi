@@ -1,3 +1,8 @@
+
+
+
+
+
 console.log("✅ deliverynote-new.js loaded v100");
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -12,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const cancelBtn = document.getElementById("cancelBtn");
   const cancelDnBtn = document.getElementById("cancelDnBtn"); // Cancel DN button
 
-  const addItemBtn = document.getElementById("addItemBtn");
+ 
   const itemsBody = document.getElementById("itemsBody");
 
   const saveDraftBtn = document.getElementById("saveDraftBtn");
@@ -68,14 +73,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const editId = qs("id");
   const mode = (qs("mode") || (editId ? "edit" : "new")).toLowerCase(); // new/edit/view
 
-  /* =========================================================
-     SAMPLE PRODUCT LIST (replace with API later)
-  ========================================================== */
-  const PRODUCTS = [
-    { id: "PRD-001", name: "Rice Bag 25kg", uoms: ["Bag", "Kg"] },
-    { id: "PRD-002", name: "Sugar 1kg", uoms: ["Kg", "Pack"] },
-    { id: "PRD-003", name: "Soap Bar", uoms: ["Nos", "Box"] },
-  ];
+
 
   /* =========================================================
      TOAST (custom)
@@ -293,10 +291,7 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
      GENERAL HELPERS
   ========================================================== */
-  function genDnId() {
-    const n = String(Math.floor(1000 + Math.random() * 9000));
-    return `DN-${n}`;
-  }
+ 
 
   function todayISO() {
     const d = new Date();
@@ -306,16 +301,60 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${yyyy}-${mm}-${dd}`;
   }
 
-  function productOptions() {
-    return [`<option value="">Select Product</option>`]
-      .concat(PRODUCTS.map((p) => `<option value="${p.id}">${p.name}</option>`))
-      .join("");
-  }
+  /* =========================================================
+   DELIVERY NOTE STATUS MASTER
+========================================================== */
+const DELIVERY_NOTE_STATUSES = [
+  "Draft",
+  "Pending",
+  "In Transit",
+  "Delivered",
+  "Partially Delivered",
+  "Returned",
+  "Cancelled"
+];
 
-  function uomOptions(uoms) {
-    const list = uoms?.length ? uoms : ["Nos"];
-    return list.map((x) => `<option value="${x}">${x}</option>`).join("");
+function loadDeliveryStatusOptions(selectedValue = "") {
+  if (!deliveryStatusEl) return;
+
+  const normalizedSelected = normalizeKey(selectedValue || "");
+  deliveryStatusEl.innerHTML = "";
+
+  DELIVERY_NOTE_STATUSES.forEach((status) => {
+    const opt = document.createElement("option");
+    opt.value = normalizeKey(status);
+    opt.textContent = status;
+
+    if (normalizeKey(status) === normalizedSelected) {
+      opt.selected = true;
+    }
+
+    deliveryStatusEl.appendChild(opt);
+  });
+
+  if (!selectedValue && DELIVERY_NOTE_STATUSES.length) {
+    deliveryStatusEl.value = normalizeKey(DELIVERY_NOTE_STATUSES[0]);
   }
+}
+
+ 
+
+function formatMoney(value) {
+  return Number(value || 0).toFixed(2);
+}
+
+function calcRowTotal(qty, rate, tax, discount) {
+  const q = Number(qty || 0);
+  const r = Number(rate || 0);
+  const t = Number(tax || 0);
+  const d = Number(discount || 0);
+
+  const subtotal = q * r;
+  const taxAmt = (subtotal * t) / 100;
+  const total = subtotal + taxAmt - d;
+
+  return total < 0 ? 0 : total;
+}
 
   function setDnIdValue(id) {
     if (dnId) dnId.value = id;
@@ -330,26 +369,25 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   function normalizeDeliveryStatus(v) {
-    const s = String(v || "").trim().toLowerCase();
-    const map = { submitted: "draft" };
-    return map[s] || s;
-  }
+  return normalizeKey(v || "draft");
+}
 
   function normalizeKey(v) {
     return String(v || "").trim().toLowerCase().replaceAll(" ", "_");
   }
 
   function statusText(key) {
-    const map = {
-      draft: "Draft",
-      partially_delivered: "Partially Delivered",
-      delivered: "Delivered",
-      returned: "Returned",
-      cancelled: "Cancelled",
-    };
-    return map[key] || "";
-  }
-
+  const map = {
+    draft: "Draft",
+    pending: "Pending",
+    in_transit: "In Transit",
+    partially_delivered: "Partially Delivered",
+    delivered: "Delivered",
+    returned: "Returned",
+    cancelled: "Cancelled",
+  };
+  return map[key] || "";
+}
   /* =========================================================
      ACK UI STATE + VALIDATION
   ========================================================== */
@@ -496,33 +534,26 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   emailBtn?.addEventListener("click", async () => {
-    console.log("Email button clicked");
+  console.log("Email button clicked");
 
-    const id = dnId?.value || dnIdView?.value || "";
-    if (!id) {
-      showToast("DN ID missing. Save the Delivery Note first.", "error");
-      return;
-    }
+  const id = dnId?.value || dnIdView?.value || "";
+  if (!id) {
+    showToast("DN ID missing. Save the Delivery Note first.", "error");
+    return;
+  }
 
-    try {
-      const res = await fetch(`/api/delivery-notes/${encodeURIComponent(id)}/email`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
+  // show instantly
+  showToast("Email sent successfully ✔", "success");
 
-      const data = await res.json();
-
-      if (data.success) {
-        showToast("Email sent successfully ✔", "success");
-      } else {
-        showToast(data.message || "Email sending failed", "error");
-      }
-    } catch (err) {
-      console.error(err);
-      showToast("Server not reachable", "error");
-    }
-  });
-
+  try {
+    await fetch(`/api/delivery-notes/${encodeURIComponent(id)}/email`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+    });
+  } catch (err) {
+    console.error(err);
+  }
+});
   /* =========================================================
      STATUS UI (title pill + ack enable + return enable)
   ========================================================== */
@@ -569,64 +600,72 @@ document.addEventListener("DOMContentLoaded", () => {
      LINE ITEMS (Add row)
   ========================================================== */
   function addRow(prefill = {}) {
-    const tr = document.createElement("tr");
-    tr.innerHTML = `
-      <td class="w-sno" style="text-align:center;"><span class="sno">1</span></td>
+  const tr = document.createElement("tr");
 
-      <td>
-        <select class="prodSel">
-          ${productOptions()}
-        </select>
-      </td>
+  const qty = Number(prefill.qty ?? 1);
+  const discount = Number(prefill.discount ?? 0);
+  const rate = Number(prefill.rate ?? 0);
+  const tax = Number(prefill.tax ?? 0);
+  const total = calcRowTotal(qty, rate, tax, discount);
 
-      <td><input class="prodId" type="text" value="${prefill.product_id || ""}" readonly></td>
+  tr.innerHTML = `
+<td class="w-sno" style="text-align:center;">
+  <span class="sno">1</span>
+</td>
 
-      <td><input class="qty" type="number" min="1" step="1" value="${prefill.qty ?? 1}"></td>
+<td class="productNameCell">${prefill.product_name || ""}</td>
+<td class="prodIdCell">${prefill.product_id || ""}</td>
+<td class="uomCell">${prefill.uom || ""}</td>
+<td class="rateCell">${formatMoney(rate)}</td>
 
-      <td>
-        <select class="uomSel">
-          ${uomOptions(prefill.uoms)}
-        </select>
-      </td>
+<td class="w-qty">
+  <input class="qtyInput" type="number" min="1" step="1" value="${qty}">
+</td>
 
-      <td><input class="serials" type="text" placeholder="Ex: S001,S002" value="${prefill.serials || ""}"></td>
+<td class="taxCell">${Number(tax || 0)}%</td>
 
-      <td class="w-act" style="text-align:center;">
-        <button type="button" class="dn2-trash" title="Delete">🗑</button>
-      </td>
-    `;
+<td class="w-discount">
+  <input class="discountInput" type="number" min="0" step="0.01" value="${discount}">
+</td>
 
-    const prodSel = tr.querySelector(".prodSel");
-    const prodIdInp = tr.querySelector(".prodId");
-    const uomSel = tr.querySelector(".uomSel");
-    const delBtn = tr.querySelector(".dn2-trash");
+<td class="rowTotal">${formatMoney(total)}</td>
+`;
+  const qtyInput = tr.querySelector(".qtyInput");
+  const discountInput = tr.querySelector(".discountInput");
+  const rateCell = tr.querySelector(".rateCell");
+  const taxCell = tr.querySelector(".taxCell");
+  const rowTotalCell = tr.querySelector(".rowTotal");
+ 
 
-    prodSel.value = prefill.product_id || "";
+  function updateRowTotal() {
+    const qtyVal = Number(qtyInput.value || 0);
+    const discountVal = Number(discountInput.value || 0);
+    const rateVal = Number(rateCell.textContent || 0);
+    const taxVal = Number(String(taxCell.textContent || "").replace("%", "")) || 0;
 
-    prodSel.addEventListener("change", () => {
-      const pid = prodSel.value;
-      const p = PRODUCTS.find((x) => x.id === pid);
-      prodIdInp.value = pid || "";
-      const uoms = p?.uoms || ["Nos"];
-      uomSel.innerHTML = uomOptions(uoms);
-      if (prefill.uom) uomSel.value = prefill.uom;
-      validateSubmit();
-    });
-
-    delBtn.addEventListener("click", () => {
-      tr.remove();
-      renumber();
-      validateSubmit();
-    });
-
-    itemsBody.appendChild(tr);
-
-    if (prodSel.value) prodSel.dispatchEvent(new Event("change"));
-    if (prefill.uom) uomSel.value = prefill.uom;
-
-    renumber();
-    validateSubmit();
+    rowTotalCell.textContent = formatMoney(
+      calcRowTotal(qtyVal, rateVal, taxVal, discountVal)
+    );
   }
+
+  qtyInput.addEventListener("input", () => {
+    if (Number(qtyInput.value) < 1) qtyInput.value = 1;
+    updateRowTotal();
+    validateSubmit();
+  });
+
+  discountInput.addEventListener("input", () => {
+    if (Number(discountInput.value) < 0) discountInput.value = 0;
+    updateRowTotal();
+    validateSubmit();
+  });
+
+ 
+
+  itemsBody.appendChild(tr);
+  renumber();
+  validateSubmit();
+}
 
   /* =========================================================
      SALES ORDER REF -> AUTO FILL
@@ -635,11 +674,14 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!soRefSel) return;
 
     try {
-      const res = await fetch("/api/sales-orders", { cache: "no-store" });
-      const list = await res.json();
+    const res = await fetch("/api/sales-orders", { cache: "no-store" });
+    const json = await res.json();
 
-      soRefSel.innerHTML = `<option value="">Select Order Reference</option>`;
-      (list || []).forEach((row) => {
+    // Support both plain list and wrapped { data: [...] } / { orders: [...] }
+    const list = Array.isArray(json) ? json : (json.data || json.orders || []);
+
+    soRefSel.innerHTML = `<option value="">Select Order Reference</option>`;
+    (list || []).forEach((row) => {
         const id = row.so_id || row.id;
         if (!id) return;
         const opt = document.createElement("option");
@@ -653,58 +695,68 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   async function onSORefChange() {
-    const soId = soRefSel?.value;
+  const soId = soRefSel?.value;
 
-    if (!soId) {
-      if (custNameEl) custNameEl.value = "";
-      if (destAddrEl) destAddrEl.value = "";
-      itemsBody.innerHTML = "";
-      addRow();
+  if (!soId) {
+    if (custNameEl) custNameEl.value = "";
+    if (destAddrEl) destAddrEl.value = "";
+    if (trackingIdEl) trackingIdEl.value = "";
+    itemsBody.innerHTML = "";
+    validateSubmit();
+    return;
+  }
+
+  try {
+    const res = await fetch(`/api/sales-orders/${encodeURIComponent(soId)}`, {
+      cache: "no-store"
+    });
+
+    if (!res.ok) {
+      showToast("Failed to fetch Sales Order details", "error");
+      return;
+    }
+
+    const json = await res.json();
+    const so = json.order || json.data || json;
+
+    console.log("Selected SO full data:", so);
+
+    if (custNameEl) custNameEl.value = so.customer_name || "";
+    if (destAddrEl) destAddrEl.value = so.shipping_address || "";
+    if (trackingIdEl) {
+      trackingIdEl.value =
+        so.tracking_number ||
+        so.tracking_id ||
+        so.trackingNo ||
+        "";
+    }
+
+    itemsBody.innerHTML = "";
+
+    const items = so.items || [];
+    if (!items.length) {
       validateSubmit();
       return;
     }
 
-    try {
-      const res = await fetch(`/api/sales-orders/${encodeURIComponent(soId)}`, { cache: "no-store" });
-      if (!res.ok) return;
+    items.forEach((it) => {
+  addRow({
+    product_id: it.product_id || "",
+    product_name: it.product_name || "",
+    qty: it.qty ?? it.quantity ?? 1,
+    uom: it.uom || "",
+    rate: it.rate ?? it.unit_price ?? it.price ?? 0,
+    tax: it.tax ?? it.tax_percent ?? it.tax_pct ?? it.taxPercent ?? 0,
+    discount: it.discount ?? it.disc_pct ?? it.discount_pct ?? 0,
+  });
+});
 
-      const data = await res.json();
-
-      if (custNameEl) custNameEl.value = data.customer_name || "";
-      if (destAddrEl) destAddrEl.value = data.shipping_address || "";
-
-      // Optional auto-fill Tracking ID from SO if available
-      if (trackingIdEl) {
-        trackingIdEl.value =
-          data.tracking_number ||
-          data.tracking_id ||
-          data.trackingNo ||
-          "";
-      }
-
-      itemsBody.innerHTML = "";
-      const items = data.items || [];
-      if (items.length === 0) {
-        addRow();
-        validateSubmit();
-        return;
-      }
-
-      items.forEach((it) => {
-        addRow({
-          product_id: it.product_id || "",
-          qty: it.qty ?? 1,
-          uom: it.uom || "Nos",
-          uoms: [it.uom || "Nos"],
-          serials: it.serials || "",
-        });
-      });
-
-      validateSubmit();
-    } catch (e) {
-      console.error("Failed to load SO detail:", e);
-    }
+    validateSubmit();
+  } catch (e) {
+    console.error("Failed to load SO detail:", e);
+    showToast("Error loading Sales Order details", "error");
   }
+}
 
   soRefSel?.addEventListener("change", onSORefChange);
 
@@ -712,17 +764,20 @@ document.addEventListener("DOMContentLoaded", () => {
      COLLECT + SAVE
   ========================================================== */
   function collectItems() {
-    const rows = [...itemsBody.querySelectorAll("tr")];
-    return rows
-      .map((tr) => ({
-        product_id: tr.querySelector(".prodId")?.value || "",
-        product_name: tr.querySelector(".prodSel option:checked")?.textContent || "",
-        qty: Number(tr.querySelector(".qty")?.value || 0),
-        uom: tr.querySelector(".uomSel")?.value || "",
-        serials: tr.querySelector(".serials")?.value || "",
-      }))
-      .filter((x) => x.product_id);
-  }
+  const rows = [...itemsBody.querySelectorAll("tr")];
+  return rows
+    .map((tr) => ({
+      product_id: tr.querySelector(".prodIdCell")?.textContent?.trim() || "",
+      product_name: tr.querySelector(".productNameCell")?.textContent?.trim() || "",
+      uom: tr.querySelector(".uomCell")?.textContent?.trim() || "",
+      rate: Number(tr.querySelector(".rateCell")?.textContent || 0),
+      qty: Number(tr.querySelector(".qtyInput")?.value || 0),
+      tax: Number((tr.querySelector(".taxCell")?.textContent || "").replace("%", "")) || 0,
+      discount: Number(tr.querySelector(".discountInput")?.value || 0),
+      total: Number(tr.querySelector(".rowTotal")?.textContent || 0),
+    }))
+    .filter((x) => x.product_id);
+}
 
   async function saveDN(status) {
     const payload = {
@@ -768,49 +823,67 @@ document.addEventListener("DOMContentLoaded", () => {
      LOAD FOR EDIT / VIEW
   ========================================================== */
   async function loadForEdit(dn_id) {
-    const res = await fetch(`/api/delivery-notes/${encodeURIComponent(dn_id)}`, { cache: "no-store" });
-    const json = await res.json();
+  const res = await fetch(`/api/delivery-notes/${encodeURIComponent(dn_id)}`, { cache: "no-store" });
+  const json = await res.json();
 
-    if (!json.success) {
-      showToast(json.message || "Not found", "error");
-      return;
-    }
-
-    const dn = json.data;
-
-    setDnIdValue(dn.dn_id || "");
-    if (dnDate) dnDate.value = dn.delivery_date || "";
-
-    if (soRefSel) soRefSel.value = dn.so_ref || "";
-
-    if (custNameEl) custNameEl.value = dn.customer_name || "";
-    if (dnTypeEl) dnTypeEl.value = String(dn.delivery_type || "").trim().toLowerCase();
-    if (destAddrEl) destAddrEl.value = dn.destination_address || "";
-
-    if (deliveryByEl) deliveryByEl.value = dn.delivery_by || "";
-    if (deliveryStatusEl) deliveryStatusEl.value = normalizeDeliveryStatus(dn.delivery_status || dn.status || "draft");
-    if (vehicleNoEl) vehicleNoEl.value = dn.vehicle_no || "";
-    if (trackingIdEl) trackingIdEl.value = dn.tracking_id || "";
-    if (deliveryNotesEl) deliveryNotesEl.value = dn.delivery_notes || "";
-
-    itemsBody.innerHTML = "";
-    (dn.items || []).forEach((it) => {
-      addRow({
-        product_id: it.product_id || "",
-        qty: it.qty ?? 1,
-        serials: it.serials || "",
-        uom: it.uom || "Nos",
-        uoms: [it.uom || "Nos"],
-      });
-    });
-    if (!itemsBody.querySelector("tr")) addRow();
-
-    const stKey = normalizeKey(deliveryStatusEl?.value || dn.delivery_status || dn.status || "draft");
-    applyStatusUI({ mode, statusKey: stKey, isFreshNew: false });
-
-    validateSubmit();
+  if (!json.success) {
+    showToast(json.message || "Not found", "error");
+    return;
   }
 
+  const dn = json.data;
+
+  setDnIdValue(dn.dn_id || "");
+  if (dnDate) dnDate.value = dn.delivery_date || "";
+
+  const soRefValue =
+    dn.so_ref ||
+    dn.sales_order_ref ||
+    dn.salesOrderRef ||
+    dn.so_id ||
+    "";
+
+  if (soRefSel) {
+    soRefSel.value = soRefValue;
+
+    if (soRefValue && soRefSel.value !== soRefValue) {
+      const opt = document.createElement("option");
+      opt.value = soRefValue;
+      opt.textContent = soRefValue;
+      soRefSel.appendChild(opt);
+      soRefSel.value = soRefValue;
+    }
+  }
+
+  if (custNameEl) custNameEl.value = dn.customer_name || "";
+  if (dnTypeEl) dnTypeEl.value = String(dn.delivery_type || "").trim().toLowerCase();
+  if (destAddrEl) destAddrEl.value = dn.destination_address || "";
+
+  if (deliveryByEl) deliveryByEl.value = dn.delivery_by || "";
+ loadDeliveryStatusOptions(normalizeDeliveryStatus(dn.delivery_status || dn.status || "draft"));
+  if (vehicleNoEl) vehicleNoEl.value = dn.vehicle_no || "";
+  if (trackingIdEl) trackingIdEl.value = dn.tracking_id || "";
+  if (deliveryNotesEl) deliveryNotesEl.value = dn.delivery_notes || "";
+
+  itemsBody.innerHTML = "";
+  (dn.items || []).forEach((it) => {
+  addRow({
+    product_id: it.product_id || "",
+    product_name: it.product_name || "",
+    qty: it.qty ?? it.quantity ?? 1,
+    uom: it.uom || "",
+    rate: it.rate ?? it.unit_price ?? it.price ?? 0,
+    tax: it.tax ?? it.tax_percent ?? it.tax_pct ?? it.taxPercent ?? 0,
+    discount: it.discount ?? it.disc_pct ?? it.discount_pct ?? 0,
+  });
+});
+  if (!itemsBody.querySelector("tr")) addRow();
+
+  const stKey = normalizeKey(deliveryStatusEl?.value || dn.delivery_status || dn.status || "draft");
+  applyStatusUI({ mode, statusKey: stKey, isFreshNew: false });
+
+  validateSubmit();
+}
   function setReadonlyView() {
     document
       .querySelectorAll(".dn2-page input, .dn2-page select, .dn2-page textarea, .dn2-page button")
@@ -821,7 +894,7 @@ document.addEventListener("DOMContentLoaded", () => {
         el.disabled = true;
       });
 
-    addItemBtn?.style.setProperty("display", "none");
+  
     saveDraftBtn?.style.setProperty("display", "none");
     submitBtn?.style.setProperty("display", "none");
   }
@@ -903,7 +976,7 @@ document.addEventListener("DOMContentLoaded", () => {
   ========================================================== */
   cancelBtn?.addEventListener("click", () => (window.location.href = "/delivery_note"));
 
-  addItemBtn?.addEventListener("click", () => addRow());
+ 
 
   saveDraftBtn?.addEventListener("click", () => saveDN("Draft"));
   submitBtn?.addEventListener("click", () => saveDN("Submitted"));
@@ -923,11 +996,12 @@ document.addEventListener("DOMContentLoaded", () => {
   /* =========================================================
      INIT
   ========================================================== */
-  (async function init() {
-    showAckSection();
-    renderAckFiles();
+ (async function init() {
+  showAckSection();
+  renderAckFiles();
+  loadDeliveryStatusOptions("draft");
 
-    await loadSORefs();
+  await loadSORefs();
 
     if (editId) {
       await loadForEdit(editId);
@@ -938,17 +1012,98 @@ document.addEventListener("DOMContentLoaded", () => {
         if (pageTitleEl) pageTitleEl.textContent = "New Delivery Note";
         if (submitBtn) submitBtn.textContent = "Update Delivery Note";
       }
-    } else {
-      const newId = genDnId();
-      setDnIdValue(newId);
-      if (dnDate) dnDate.value = todayISO();
+  } else {
+  if (dnDate) dnDate.value = todayISO();
 
-      applyStatusUI({ mode: "new", statusKey: "draft", isFreshNew: true });
+  loadDeliveryStatusOptions("draft");
 
-      addRow();
-      validateSubmit();
-    }
+  applyStatusUI({ mode: "new", statusKey: "draft", isFreshNew: true });
+
+  validateSubmit();
+}
 
     updatePdfEmailButtons();
   })();
+});
+
+
+// =========================================
+// GET SALES ORDER ID FROM DELIVERY NOTE PAGE
+// (Used to Prefill DN from Sales Order)
+// =========================================
+function getSoIdFromDnPage() {
+  const fromHidden = (document.getElementById("prefillSoId")?.value || "").trim();
+  if (fromHidden) return fromHidden;
+
+  const qp = new URLSearchParams(window.location.search);
+  return (qp.get("so_id") || "").trim();
+}
+
+
+async function prefillFromSalesOrder() {
+  const soId = getSoIdFromDnPage();
+  if (!soId) return;
+
+  try {
+    const res = await fetch(`/api/sales-orders/${encodeURIComponent(soId)}`, {
+      cache: "no-store"
+    });
+
+    const data = await res.json();
+    const so = data.order || data.data || data;
+
+    if (!so) {
+      showToast("Sales Order details not found", "error");
+      return;
+    }
+
+    // basic fields
+    const soRef = document.getElementById("soRef");
+    const custName = document.getElementById("custName");
+    const destAddr = document.getElementById("destAddr");
+    const dnType = document.getElementById("dnType");
+
+    if (soRef) soRef.value = so.so_id || soId;
+    if (custName) custName.value = so.customer_name || so.customer || "";
+    if (destAddr) destAddr.value = so.shipping_address || so.destination_address || "";
+    if (dnType) dnType.value = "Sales Order";
+
+    // line items
+    const itemsBody = document.getElementById("itemsBody");
+    if (itemsBody) {
+      itemsBody.innerHTML = "";
+
+      const items = Array.isArray(so.items) ? so.items : [];
+
+      items.forEach((item, index) => {
+        const tr = document.createElement("tr");
+        tr.innerHTML = `
+          <td>${index + 1}</td>
+          <td>
+            <input type="text" value="${item.product_name || ""}" readonly>
+          </td>
+          <td>${item.product_id || ""}</td>
+          <td>${item.uom || ""}</td>
+          <td>${item.price || item.rate || 0}</td>
+          <td>
+            <input type="number" value="${item.qty || 0}" min="1" class="qtyInput">
+          </td>
+          <td>${item.tax_pct || 0}</td>
+          <td>
+            <input type="number" value="${item.disc_pct || 0}" min="0" class="discInput">
+          </td>
+          <td>${item.line_total || 0}</td>
+          
+        `;
+        itemsBody.appendChild(tr);
+      });
+    }
+  } catch (err) {
+    console.error("Prefill from sales order failed:", err);
+    showToast("Failed to load Sales Order details", "error");
+  }
+}
+
+document.addEventListener("DOMContentLoaded", () => {
+  prefillFromSalesOrder();
 });

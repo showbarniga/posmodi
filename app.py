@@ -29,6 +29,9 @@ from reportlab.lib.pagesizes import A4  # type: ignore[import]
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer  # type: ignore[import]
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[import]
 from reportlab.lib.units import inch, mm  # type: ignore[import]
+from reportlab.pdfbase import pdfmetrics  # type: ignore[import]
+from reportlab.pdfbase.ttfonts import TTFont  # type: ignore[import]
+from reportlab.pdfbase.pdfmetrics import registerFontFamily  # type: ignore[import]
 from dotenv import load_dotenv
 
 # PDF
@@ -46,9 +49,32 @@ from email.mime.text import MIMEText
 import string
 from collections import defaultdict
 
+# Base directory for building absolute paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv()  # Load variables from .env if present
 
+
+# =========================================
+# PDF Font Setup (Supports ₹ Indian Rupee Symbol)
+# =========================================
+FONT_DIR = os.path.join(BASE_DIR, "static", "fonts")
+
+pdfmetrics.registerFont(
+    TTFont("DejaVuSans", os.path.join(FONT_DIR, "DejaVuSans.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("DejaVuSans-Bold", os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"))
+)
+
+registerFontFamily(
+    "DejaVuSans",
+    normal="DejaVuSans",
+    bold="DejaVuSans-Bold",
+    italic="DejaVuSans",
+    boldItalic="DejaVuSans-Bold"
+)
 
 # =========================================
 # ✅ EMAIL SENDER (SMTP / UNIVERSAL)
@@ -7849,7 +7875,7 @@ def generate_pdf(quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -7903,7 +7929,7 @@ def generate_pdf(quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8035,7 +8061,7 @@ def generate_pdf(quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -8517,7 +8543,7 @@ def generate_quotation_pdf(quotation, quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -8571,7 +8597,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8620,7 +8646,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -10268,6 +10294,16 @@ def api_sales_orders_next_id():
     })
 
 
+@app.get("/api/sales-orders")
+def api_sales_orders_list():
+    """
+    Return all sales orders from sales_orders.json.
+    Used by Delivery Note 'Sales Order Reference' dropdown.
+    """
+    orders = load_sales_orders()
+    return jsonify(orders)
+
+
 @app.get("/api/sales-orders/all")
 def api_sales_orders_all():
     orders = load_sales_orders()
@@ -10378,7 +10414,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=8,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     company_style = ParagraphStyle(
@@ -10389,7 +10425,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.black,
         alignment=1,
         spaceAfter=2,
-        fontName="Helvetica"
+        fontName="DejaVuSans"
     )
 
     status_style = ParagraphStyle(
@@ -10400,7 +10436,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#148a08"),
         spaceAfter=14,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     heading_style = ParagraphStyle(
@@ -10411,7 +10447,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.HexColor("#8c1f1f"),
         spaceBefore=8,
         spaceAfter=8,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     table_cell_style = ParagraphStyle(
@@ -10419,7 +10455,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="Helvetica",
+        fontName="DejaVuSans",
         wordWrap="CJK"
     )
 
@@ -10428,7 +10464,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="Helvetica-Bold",
+        fontName="DejaVuSans-Bold",
         textColor=colors.HexColor("#5f2d2d"),
         wordWrap="CJK"
     )
@@ -10440,7 +10476,7 @@ def generate_sales_order_pdf_bytes(so):
         leading=13,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=6,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     terms_style = ParagraphStyle(
@@ -10448,7 +10484,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.4,
         leading=10,
-        fontName="Helvetica"
+        fontName="DejaVuSans"
     )
 
     footer_style = ParagraphStyle(
@@ -10521,7 +10557,7 @@ def generate_sales_order_pdf_bytes(so):
 
     info_table = Table(info_data, colWidths=[110, 145, 95, 130])
     info_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#efefef")),
@@ -10596,7 +10632,7 @@ def generate_sales_order_pdf_bytes(so):
 
     items_table = Table(table_data, colWidths=[32, 170, 42, 40, 60, 44, 44, 58])
     items_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 7),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#a12828")),
@@ -10641,8 +10677,8 @@ def generate_sales_order_pdf_bytes(so):
 
     summary_table = Table(summary_data, colWidths=[300, 200])
     summary_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -2), "DejaVuSans"),
+        ("FONTNAME", (0, -1), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -2), 8),
         ("FONTSIZE", (0, -1), (-1, -1), 9),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
@@ -10892,7 +10928,6 @@ def find_customer_by_name(name: str):
         customer_name = str(customer.get("name", "")).strip().lower()
         if customer_name == target_name:
             return customer
-
     return None
 
 
@@ -10993,11 +11028,17 @@ def delivery_note():
 
 @app.route("/delivery_note/new")
 def delivery_note_new():
+    # Preload data needed for the New Delivery Note page
     sales_orders = load_sales_orders()
+    notes = load_delivery_notes()
+    next_id = next_dn_id(notes)
+
     return render_template(
         "deliverynote-new.html",
         page="delivery_note",
         sales_orders=sales_orders,
+        next_dn_id=next_id,
+        so_id=request.args.get("so_id", "").strip(),
     )
 
 

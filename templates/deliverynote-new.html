@@ -1,3 +1,6 @@
+
+
+
 {% extends "menu.html" %}
 
 {% block extra_css %}
@@ -7,7 +10,7 @@
 
 {% block content %}
 <div class="dn2-page">
-
+<input type="hidden" id="prefillSoId" value="{{ so_id or '' }}">
   <!-- =====================================================
        HEADER
   ====================================================== -->
@@ -43,10 +46,10 @@
       <!-- Row 1 -->
       <div class="dn2-row">
         <div class="dn2-field">
-          <label>Delivery Note ID (Auto Generate)</label>
-          <input type="text" id="dnIdView" class="dn2-input auto-field" readonly>
-          <input type="hidden" id="dnId" name="delivery_note_id">
-        </div>
+  <label>Delivery Note ID (Auto Generate)</label>
+  <input type="text" id="dnIdView" class="dn2-input auto-field" value="{{ next_dn_id or '' }}" readonly>
+  <input type="hidden" id="dnId" name="delivery_note_id" value="{{ next_dn_id or '' }}">
+</div>
 
         <div class="dn2-field">
           <label>Delivery Date</label>
@@ -60,11 +63,6 @@
           <label>Sales Order Reference</label>
           <select id="soRef">
             <option value="">Select Order Reference</option>
-            {% if sales_orders %}
-              {% for so in sales_orders %}
-                <option value="{{ so.so_id|e }}">{{ so.so_id|e }}</option>
-              {% endfor %}
-            {% endif %}
           </select>
         </div>
 
@@ -98,31 +96,31 @@
          LINE ITEMS
     ====================================================== -->
     <div class="dn2-section">
-      <h3>Line Items</h3>
+  <h3>Line Items</h3>
 
-      <div class="dn2-table-wrap">
-        <table class="dn2-table" id="itemsTable">
-          <thead>
-            <tr>
-              <th class="w-sno">S.No</th>
-              <th>Product Name</th>
-              <th class="w-id">Product ID</th>
-              <th class="w-qty">Quantity</th>
-              <th class="w-uom">UOM</th>
-              <th>Serial No(s)</th>
-              <th class="w-act">Action</th>
-            </tr>
-          </thead>
+  <div class="dn2-table-wrap">
+    <table class="dn2-table" id="itemsTable">
+      <thead>
+  <tr>
+    <th class="w-sno">S.No</th>
+    <th class="w-product">Product Name</th>
+    <th class="w-id">Product ID</th>
+    <th class="w-uom">UOM</th>
+    <th class="w-rate">Rate</th>
+    <th class="w-qty">Quantity</th>
+    <th class="w-tax">Tax</th>
+    <th class="w-discount">Discount</th>
+    <th class="w-total">Total</th>
+    
+  </tr>
+</thead>
 
-          <tbody id="itemsBody"></tbody>
-        </table>
+      <tbody id="itemsBody"></tbody>
+    </table>
 
-        <!-- Add item footer -->
-        <div class="dn2-table-footer">
-          <button type="button" class="dn2-btn dn2-btn-lite" id="addItemBtn">+ Add Item</button>
-        </div>
-      </div>
-    </div>
+    
+  </div>
+</div>
 
     <!-- =====================================================
          DELIVERY LOGISTICS
