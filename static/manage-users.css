@@ -389,6 +389,8 @@
   padding: 12px 14px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
   background: #f7f2f2;
+
+  flex-wrap: wrap; /* ✅ FIX: allow wrapping */
 }
 
 .pagination-controls{
@@ -396,11 +398,13 @@
   align-items: center;
   gap: 12px;
   margin-right: 20px;
+
+  flex-wrap: wrap; /* ✅ FIX */
 }
 
 .page-info{
   color: #7a1d1d !important;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -410,6 +414,8 @@
   font-weight: 600;
   color: #7a1d1d;
   white-space: nowrap;
+
+  flex: 1 1 auto; /* ✅ FIX */
 }
 
 /* Pagination buttons */
@@ -433,17 +439,41 @@
 .pager-btn:disabled {
   opacity: 0.5;
 }
-.page-info{
-  color: #7a1d1d !important;
-  font-size: 14px;
-  font-weight: 500;
-  white-space: nowrap;
-}
 
 .page-info .page-num{
   font-size: 12px;
   font-weight: 700;           
   color: #6a2a2a;    
+}
+
+/* =============================
+   ✅ RESPONSIVE FIX ONLY
+============================= */
+@media (max-width: 768px){
+
+  .table-footer{
+    flex-direction: column;   /* ✅ FIX: stack */
+    align-items: center;
+    text-align: center;
+  }
+
+  .entries-info{
+    width: 100%;
+  }
+
+  .pagination-controls{
+    width: 100%;
+    justify-content: center;
+    margin-right: 0; /* ✅ FIX */
+  }
+
+  .page-info{
+    width: 100%;
+  }
+
+  .pager-btn{
+    flex: 1; /* ✅ FIX: equal buttons */
+  }
 }
 
 /* "No users" row hidden by default */
