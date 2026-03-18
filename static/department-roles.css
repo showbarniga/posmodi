@@ -390,35 +390,47 @@
    FOOTER / PAGINATION
 ------------------------------------------ */
 .department-page .table-footer {
-  width: 95%;
-  background: #f3f3f3;
-  border-top: 1px solid #e0e0e0;
-  padding: 8px 18px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  border-radius: 0 0 12px 12px;
+width: 100%;
+max-width: 100%;
+background: #f3f3f3;
+border-top: 1px solid #e0e0e0;
+box-sizing: border-box;
+padding: 10px 14px;
+border-radius: 0 0 12px 12px;
+
+display: flex;
+flex-direction: row;            /* ✅ keep in one line */
+justify-content: space-between;/* ✅ left + right */
+align-items: center;           /* ✅ vertical center */
+flex-wrap: nowrap;             /* ❗ IMPORTANT (prevents break) */
+gap: 8px;
 }
+
 
 .department-page .entries-info {
-  font-size: 13px;
-  font-weight: 600;
-  color: #7a1d1d;
+flex: 1;                 /* ✅ takes left space */
+width: auto;             /* ❗ IMPORTANT (remove 100%) */
+font-size: 12px;         /* ✅ keep only one font-size */
+font-weight: 600;
+color: #7a1d1d;
+text-align: left;
 }
 
+
 .department-page .pagination-controls {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+display: flex; 
+justify-content: flex-end;   
+align-items: center;
+gap: 8px;
 }
 
 .department-page .pager-btn {
-  padding: 6px 18px;
+  padding: 6px 14px;
   border-radius: 4px;
   background: linear-gradient(#a12828, #821f1f);
   border: none;
   color: white;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
   box-shadow: 0 4px 0 #6d1717;
   transition: 0.25s ease;
@@ -600,30 +612,31 @@
     min-width: 600px;   /* force horizontal scroll if needed */
   }
 }
-
 @media (max-width: 768px) {
-  .department-page .dept-table {
-    min-width: 500px;  /* allow scroll on tablets */
-    /* margin-left: 20px; */
-  }
 
-  .department-page .manage-header-row {
-    flex-direction: column;
-    align-items: flex-start;
-  }
+/* ===== TABLE ===== */
+.department-page .dept-table {
+min-width: 500px;
+}
 
-  .department-page .manage-title {
-    font-size: 25px;
-  }
+/* ===== HEADER ===== */
+.department-page .manage-header-row {
+flex-direction: column;
+align-items: flex-start;
+gap: 10px;
+}
 
-  .department-page .mini-search,
-  .department-page .primary-btn {
-    width: 100%;
-  }
+.department-page .manage-title {
+font-size: 25px;
+}
 
-  .department-page .mini-search input {
-    width: 100%;
-  }
+.department-page .mini-search,
+.department-page .primary-btn {
+width: 100%;
+}
+.department-page .mini-search input {
+width: 100%;
+}
 
   .department-page .pager-btn {
     display: flex;
@@ -637,7 +650,7 @@
   .department-page .pagination-controls {
   display: flex;
   align-items: center;
-  justify-content: center;
+  justify-content: flex-end;
   flex-wrap: nowrap;          /* ✅ force single line */
   gap: 8px;
   white-space: nowrap;        /* ✅ prevent text wrap */
@@ -662,129 +675,121 @@
 /* 📱 Extra Small Mobiles (≤360px) – includes 320px */
 @media (max-width: 360px){
 
-  /* ===== Page padding smaller ===== */
-  .manage-page.department-page{
-    padding: 8px;
-    margin: 0 auto 20px;
-  }
-
-  /* ===== Title + subtitle center ===== */
-  .department-page .manage-title{
-    font-size: 20px;
-    text-align: center;
-    margin-bottom: 6px;
-  }
-
-  .department-page .manage-subtitle{
-    font-size: 11px;
-    text-align: center;
-    line-height: 1.3;
-    margin-bottom: 8px;
-  }
-
-  /* ===== Header stack ===== */
-  .department-page .manage-header-row{
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  /* ✅ Search + Button in SAME ROW */
-   .department-page .manage-header-right{
-    flex-direction: column;   /* ✅ stack */
-    gap: 10px;
-    align-items: stretch;
-  }
-
-  /* search full width */
-  .department-page .mini-search{
-    width: 90% !important;
-    flex: none !important;
-  }
-
-  /* input full width */
-  .department-page .mini-search input{
-    width: 95% !important;
-  }
-
-  /* button full width */
-  .department-page .primary-btn{
-    width: 100% !important;
-    flex: none !important;
-    text-align: center;
-  }
-
-
-  /* ===== Table: scroll only in wrapper/card ===== */
-  .department-page .table-wrapper{
-    overflow-x: auto;
-    overflow-y: hidden;
-  }
-
-  .department-page .card{
-    overflow-x: auto;  /* ✅ safety */
-    overflow-y: hidden;
-    border-radius: 12px;
-  }
-
-  /* force horizontal scroll (so columns don't squeeze badly) */
-  .department-page .dept-table{
-    min-width: 620px;  /* ✅ scroll on 320px */
-    table-layout: auto;
-  }
-
-  .department-page .dept-table th,
-  .department-page .dept-table td{
-    font-size: 12px;
-    padding: 8px 8px;
-    white-space: nowrap;
-  }
-
-  /* Description: keep readable (wrap allowed) */
-  .department-page .dept-table th:nth-child(3),
-  .department-page .dept-table td:nth-child(3){
-    white-space: normal;
-    line-height: 1.3;
-  }
-
-  /* ===== Action buttons smaller ===== */
-  .department-page .action-buttons{
-    gap: 6px;
-  }
-
-  .department-page .action-btn{
-    padding: 6px 10px;
-    font-size: 12px;
-    border-radius: 8px;
-  }
-
-  /* ===== Footer / pagination ===== */
-  .department-page .table-footer{
-    width: 100%;              /* ✅ remove 95% */
-    padding: 10px 10px;
-    flex-direction: column;   /* ✅ stack to avoid cut */
-    align-items: center;
-    gap: 8px;
-    white-space: nowrap;
-  }
-
-  .department-page .entries-info{
-    width: 100%;
-    text-align: center;
-    font-size: 12px;
-  }
-
-  .department-page .pagination-controls{
-    width: 100%;
-    justify-content: center;
-    gap: 8px;
-  }
-
-  .department-page .pager-btn{
-    padding: 6px 12px;
-    font-size: 12px;
-    min-width: 72px;
-  }
+/* ===== Page ===== */
+.manage-page.department-page{
+padding: 8px;
+margin: 0 auto 20px;
 }
 
+/* ===== Title ===== */
+.department-page .manage-title{
+font-size: 20px;
+text-align: center;
+margin-bottom: 6px;
+}
+
+.department-page .manage-subtitle{
+font-size: 11px;
+text-align: center;
+line-height: 1.3;
+margin-bottom: 8px;
+}
+
+/* ===== Header ===== */
+.department-page .manage-header-row{
+flex-direction: column;
+align-items: stretch;
+gap: 10px;
+margin-bottom: 12px;
+}
+
+.department-page .manage-header-right{
+flex-direction: column;
+gap: 10px;
+align-items: stretch;
+}
+
+.department-page .mini-search,
+.department-page .mini-search input,
+.department-page .primary-btn{
+width: 100% !important;
+}
+
+/* ===== Table ===== */
+.department-page .table-wrapper{
+overflow-x: auto;
+overflow-y: hidden;
+width: 100%;
+display: block;
+}
+
+.department-page .card{
+width: 100%;
+overflow: hidden;
+border-radius: 12px;
+}
+
+.department-page .dept-table{
+min-width: 620px;
+table-layout: auto;
+}
+
+.department-page .dept-table th,
+.department-page .dept-table td{
+font-size: 12px;
+padding: 8px;
+white-space: nowrap;
+}
+
+.department-page .dept-table th:nth-child(3),
+.department-page .dept-table td:nth-child(3){
+white-space: normal;
+line-height: 1.3;
+}
+
+/* ===== Buttons ===== */
+.department-page .action-buttons{
+gap: 6px;
+}
+
+.department-page .action-btn{
+padding: 6px 10px;
+font-size: 12px;
+}
+
+/* ===== FOOTER (FINAL FIX) ===== */
+.department-page .table-footer{
+width: 100%;
+box-sizing: border-box;
+padding: 10px;
+
+
+display: flex;
+flex-direction: row;              
+justify-content: space-between; 
+align-items: center;
+flex-wrap: nowrap;               
+
+
+}
+
+.department-page .entries-info{
+flex: 1;                         
+width: auto;
+font-size: 12px;
+text-align: left;
+}
+
+.department-page .pagination-controls{
+display: flex;
+justify-content: flex-end;       
+align-items: center;
+gap: 6px;
+}
+
+.department-page .pager-btn{
+padding: 6px 10px;
+font-size: 12px;
+min-width: 65px;
+}
+}
