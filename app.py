@@ -29,9 +29,6 @@ from reportlab.lib.pagesizes import A4  # type: ignore[import]
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer  # type: ignore[import]
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[import]
 from reportlab.lib.units import inch, mm  # type: ignore[import]
-from reportlab.pdfbase import pdfmetrics  # type: ignore[import]
-from reportlab.pdfbase.ttfonts import TTFont  # type: ignore[import]
-from reportlab.pdfbase.pdfmetrics import registerFontFamily  # type: ignore[import]
 from dotenv import load_dotenv
 
 # PDF
@@ -49,32 +46,9 @@ from email.mime.text import MIMEText
 import string
 from collections import defaultdict
 
-# Base directory for building absolute paths
-BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv()  # Load variables from .env if present
 
-
-# =========================================
-# PDF Font Setup (Supports ₹ Indian Rupee Symbol)
-# =========================================
-FONT_DIR = os.path.join(BASE_DIR, "static", "fonts")
-
-pdfmetrics.registerFont(
-    TTFont("DejaVuSans", os.path.join(FONT_DIR, "DejaVuSans.ttf"))
-)
-
-pdfmetrics.registerFont(
-    TTFont("DejaVuSans-Bold", os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"))
-)
-
-registerFontFamily(
-    "DejaVuSans",
-    normal="DejaVuSans",
-    bold="DejaVuSans-Bold",
-    italic="DejaVuSans",
-    boldItalic="DejaVuSans-Bold"
-)
 
 # =========================================
 # ✅ EMAIL SENDER (SMTP / UNIVERSAL)
@@ -107,10 +81,6 @@ def send_email_universal(to_email, subject, body, from_email, password, smtp_ser
 # =========================================
 app = Flask(__name__)
 CORS(app)
-
-@app.route('/')
-def home():
-    return render_template("index.html")
 
 
 # =========================================
@@ -173,9 +143,7 @@ OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "1"))
 # =========================================
 # ✅ FORGOT PASSWORD + LOCKOUT CONFIG
 # =========================================
-_raw_base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000")
-# Support multiple base URLs in APP_BASE_URL (comma-separated); use the first as primary
-BASE_URL = _raw_base_url.split(",")[0].strip() if _raw_base_url else "http://127.0.0.1:5000"
+BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000")
 RESET_SEND_COUNT = {}
 MAX_RESET_SENDS = 5
 LOCKOUT_THRESHOLD = 5
@@ -279,17 +247,10 @@ def auto_session_timeout():
         return
 
     # for all other pages → check session timeout
-    # Skip session check for some public pages above.
-    # Special handling for JSON/API clients: return JSON 401 instead of redirecting to /login.
-    is_api = request.path.startswith("/api/")
-
-    if wants_json():
-        # JSON clients (e.g. Postman) should get a JSON error, not an HTML redirect.
+    # Skip session check for API endpoints (they handle their own auth if needed)
+    # API endpoints can work with or without session (for AJAX calls from authenticated pages)
+    if not request.path.startswith("/api/"):
         if not check_session_timeout():
-            return jsonify({"success": False, "message": "session_expired"}), 401
-    else:
-        # Normal browser HTML navigation: redirect to login on timeout for non-API routes.
-        if not is_api and not check_session_timeout():
             return redirect(url_for("login", message="session_expired"))
 
     # =========================================
@@ -7881,7 +7842,7 @@ def generate_pdf(quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -7935,7 +7896,7 @@ def generate_pdf(quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8067,7 +8028,7 @@ def generate_pdf(quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -8549,7 +8510,7 @@ def generate_quotation_pdf(quotation, quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -8603,7 +8564,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8652,7 +8613,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
+                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -10239,24 +10200,7 @@ def upsert_sales_order(payload: dict, status_value: str):
 # =========================================
 @app.get("/sales-order")
 def sales_order():
-    user_email = session.get("user")
-    if not user_email:
-        return redirect(url_for("login", message="session_expired"))
-
-    users = load_users()
-    user_name = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            break
-
-    return render_template(
-        "sales-order.html",
-        page="sales_order",
-        title="Sales Order - Stackly",
-        user_email=user_email,
-        user_name=user_name,
-    )
+    return render_template("sales-order.html", page="sales_order")
 
 
 @app.get("/sales_order")
@@ -10266,21 +10210,10 @@ def sales_order_compat():
 
 @app.get("/sales-order/new")
 def sales_order_new():
-    user_email = session.get("user")
-    if not user_email:
-        return redirect(url_for("login", message="session_expired"))
-
     so_id = generate_sales_order_id()
 
     users = load_users()
     sales_reps = [u for u in users if u.get("role") in ["Admin", "User", "Sales"]]
-
-    # Resolve logged-in user's display name for profile dropdown
-    user_name = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            break
 
     customers = load_customer()
 
@@ -10290,9 +10223,7 @@ def sales_order_new():
         so_id=so_id,
         sales_reps=sales_reps,
         customers=customers,
-        page="sales_order",
-        user_email=user_email,
-        user_name=user_name,
+        page="sales_order"
     ))
 
     # Prevent browser cache from reusing an old SO page
@@ -10328,16 +10259,6 @@ def api_sales_orders_next_id():
         "success": True,
         "so_id": generate_sales_order_id()
     })
-
-
-@app.get("/api/sales-orders")
-def api_sales_orders_list():
-    """
-    Return all sales orders from sales_orders.json.
-    Used by Delivery Note 'Sales Order Reference' dropdown.
-    """
-    orders = load_sales_orders()
-    return jsonify(orders)
 
 
 @app.get("/api/sales-orders/all")
@@ -10450,7 +10371,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=8,
-        fontName="DejaVuSans-Bold"
+        fontName="Helvetica-Bold"
     )
 
     company_style = ParagraphStyle(
@@ -10461,7 +10382,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.black,
         alignment=1,
         spaceAfter=2,
-        fontName="DejaVuSans"
+        fontName="Helvetica"
     )
 
     status_style = ParagraphStyle(
@@ -10472,7 +10393,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#148a08"),
         spaceAfter=14,
-        fontName="DejaVuSans-Bold"
+        fontName="Helvetica-Bold"
     )
 
     heading_style = ParagraphStyle(
@@ -10483,7 +10404,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.HexColor("#8c1f1f"),
         spaceBefore=8,
         spaceAfter=8,
-        fontName="DejaVuSans-Bold"
+        fontName="Helvetica-Bold"
     )
 
     table_cell_style = ParagraphStyle(
@@ -10491,7 +10412,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="DejaVuSans",
+        fontName="Helvetica",
         wordWrap="CJK"
     )
 
@@ -10500,7 +10421,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="DejaVuSans-Bold",
+        fontName="Helvetica-Bold",
         textColor=colors.HexColor("#5f2d2d"),
         wordWrap="CJK"
     )
@@ -10512,7 +10433,7 @@ def generate_sales_order_pdf_bytes(so):
         leading=13,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=6,
-        fontName="DejaVuSans-Bold"
+        fontName="Helvetica-Bold"
     )
 
     terms_style = ParagraphStyle(
@@ -10520,7 +10441,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.4,
         leading=10,
-        fontName="DejaVuSans"
+        fontName="Helvetica"
     )
 
     footer_style = ParagraphStyle(
@@ -10593,7 +10514,7 @@ def generate_sales_order_pdf_bytes(so):
 
     info_table = Table(info_data, colWidths=[110, 145, 95, 130])
     info_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#efefef")),
@@ -10668,7 +10589,7 @@ def generate_sales_order_pdf_bytes(so):
 
     items_table = Table(table_data, colWidths=[32, 170, 42, 40, 60, 44, 44, 58])
     items_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
+        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
         ("FONTSIZE", (0, 0), (-1, -1), 7),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#a12828")),
@@ -10713,8 +10634,8 @@ def generate_sales_order_pdf_bytes(so):
 
     summary_table = Table(summary_data, colWidths=[300, 200])
     summary_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -2), "DejaVuSans"),
-        ("FONTNAME", (0, -1), (-1, -1), "DejaVuSans-Bold"),
+        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
+        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
         ("FONTSIZE", (0, 0), (-1, -2), 8),
         ("FONTSIZE", (0, -1), (-1, -1), 9),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
@@ -10900,6 +10821,48 @@ def cancel_sales_order(so_id):
     })
 
 
+@app.route("/save_sales", methods=["POST"])
+def save_sales():
+    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
+    SALES_FILE = os.path.join(BASE_DIR, "sales_orders.json")
+
+    data = request.get_json() or {}   # ✅ safer than request.json
+
+    # ✅ AUTO FETCH CUSTOMER DETAILS into sales order
+    customer_name = (data.get("customer_name") or data.get("name") or "").strip()
+    customer = find_customer_by_name(customer_name)
+
+    if customer:
+        data["customer_id"] = customer.get("customer_id", "")
+        data["email"] = customer.get("email", "")
+        data["phone"] = customer.get("phone", "")
+        data["billing_address"] = customer.get("billingAddress", "")
+        data["shipping_address"] = customer.get("shippingAddress", "")
+    else:
+        data["customer_id"] = ""
+        data["email"] = ""
+        data["phone"] = ""
+
+    # create file if missing
+    if not os.path.exists(SALES_FILE):
+        with open(SALES_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f, ensure_ascii=False, indent=4)
+
+    # load existing
+    with open(SALES_FILE, "r", encoding="utf-8") as f:
+        try:
+            orders = json.load(f)
+        except json.JSONDecodeError:
+            orders = []
+
+    # append + save
+    orders.append(data)
+
+    with open(SALES_FILE, "w", encoding="utf-8") as f:
+        json.dump(orders, f, ensure_ascii=False, indent=4)
+
+    return jsonify({"success": True, "message": "Saved"})
+
 # =========================================
 # DELIVERY NOTE - UTILITIES / HELPERS
 # =========================================
@@ -10922,6 +10885,7 @@ def find_customer_by_name(name: str):
         customer_name = str(customer.get("name", "")).strip().lower()
         if customer_name == target_name:
             return customer
+
     return None
 
 
@@ -11022,17 +10986,11 @@ def delivery_note():
 
 @app.route("/delivery_note/new")
 def delivery_note_new():
-    # Preload data needed for the New Delivery Note page
     sales_orders = load_sales_orders()
-    notes = load_delivery_notes()
-    next_id = next_dn_id(notes)
-
     return render_template(
         "deliverynote-new.html",
         page="delivery_note",
         sales_orders=sales_orders,
-        next_dn_id=next_id,
-        so_id=request.args.get("so_id", "").strip(),
     )
 
 
@@ -11275,5 +11233,4 @@ def delivery_note_print(dn_id):
 # ✅ RUN APP
 # =========================================
 if __name__ == "__main__":
-    print("Application is running successfully")
     app.run(debug=True)
