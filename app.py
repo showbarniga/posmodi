@@ -108,6 +108,10 @@ def send_email_universal(to_email, subject, body, from_email, password, smtp_ser
 app = Flask(__name__)
 CORS(app)
 
+@app.route('/')
+def home():
+    return render_template("index.html")
+
 
 # =========================================
 # ✅ SESSION SETTINGS & GLOBAL CONSTANTS
