@@ -390,7 +390,7 @@
   border-top: 1px solid rgba(170, 70, 70, 0.12);
   background: #f7f2f2;
 
-  flex-wrap: wrap; /* ✅ FIX: allow wrapping */
+  flex-wrap: nowrap; /* ✅ FIX: allow wrapping */
 }
 
 .pagination-controls{
@@ -415,7 +415,7 @@
   color: #7a1d1d;
   white-space: nowrap;
 
-  flex: 1 1 auto; /* ✅ FIX */
+  flex: 0 0 auto; /* ✅ FIX */
 }
 
 /* Pagination buttons */
@@ -475,57 +475,6 @@ overflow-x: auto;
 .user-table {
 min-width: 650px;
 }
-
-@media (max-width: 768px){
-
-/* ===== FOOTER ===== */
-.table-footer{
-display: flex;
-align-items: center;
-justify-content: space-between;
-padding: 10px;
-width: 100%;
-box-sizing: border-box;
-gap: 6px;
-flex-wrap: nowrap;         
-overflow: hidden;          
-
-
-}
-
-/* ===== LEFT TEXT ===== */
-.entries-info{
-font-size: 11px;           
-white-space: nowrap;
-overflow: hidden;
-text-overflow: ellipsis;   
-max-width: 40%;            
-}
-
-/* ===== PAGINATION ===== */
-.pagination-controls{
-display: flex;
-align-items: center;
-gap: 4px;
-flex-shrink: 0;            /* ❗ don't shrink */
-}
-
-/* ===== PAGE INFO ===== */
-.page-info{
-font-size: 11px;
-white-space: nowrap;
-}
-
-/* ===== BUTTONS ===== */
-.pager-btn{
-padding: 4px 6px;
-font-size: 10px;
-white-space: nowrap;
-min-width: auto;
-}
-
-}
-
 
 /* =============================
 SUCCESS NOTIFICATION (FIXED)
