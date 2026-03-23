@@ -146,8 +146,9 @@
   background: #ffffff;
   border-radius: 12px;
   box-shadow: 0 10px 20px rgba(0, 0, 0, 0.12);
-  overflow: hidden; /* ✅ keep clean edges */
+  overflow: visible;
   transition: 0.3s ease;
+  margin-bottom: 20px;
 }
 
 .card:hover {
@@ -382,13 +383,16 @@
    ✅ stays normal (NOT inside scroll)
 ============================= */
 .table-footer {
-  display:flex;
+  display: flex;
   justify-content: space-between;
-  align-items:center;
+  align-items: center;
   gap: 8px;
   padding: 12px 14px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
   background: #f7f2f2;
+  min-height: 60px;
+  position: relative;
+  z-index: 1;
 }
 
 .pagination-controls{
@@ -516,8 +520,8 @@
   }
 
   .table-footer {
-    flex-direction: column;
-    justify-content: center;
+    flex-direction: row;
+    justify-content: space-between;
     align-items: center;
     gap: 12px;
     padding: 16px 14px;
@@ -525,13 +529,13 @@
 
   .entries-info {
     order: 1;
-    text-align: center;
+    text-align: left;
   }
 
   .pagination-controls {
     order: 2;
     margin-right: 0;
-    justify-content: center;
+    justify-content: flex-end;
   }
 }
 
