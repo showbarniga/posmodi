@@ -481,10 +481,10 @@ min-width: 650px;
 
 .table-footer{
 display: flex;
-flex-direction: row;              
-justify-content: space-between;   
+flex-direction: row;              /* ✅ SAME AS DESKTOP */
+justify-content: space-between;
 align-items: center;
-flex-wrap: nowrap;                
+flex-wrap: nowrap;                /* ❗ NO BREAK */
 }
 
 .entries-info{
@@ -497,7 +497,7 @@ white-space: nowrap;
 
 .pagination-controls{
 display: flex;
-justify-content: flex-end;        /* ✅ RIGHT SIDE */
+justify-content: flex-end;        /* ✅ RIGHT */
 align-items: center;
 gap: 6px;
 width: auto;
