@@ -545,16 +545,34 @@
     min-width: 650px;
   }
 
-  .table-footer{
-    flex-direction: row;
-    flex-wrap: wrap;
-    gap: 10px;
-  }
-
-  .pagination-controls{
-    margin-right: 0;
-  }
+.table-footer{
+display: flex;
+flex-direction: row; 
+justify-content: space-between;
+align-items: center;
+flex-wrap: nowrap; 
+gap: 8px;
 }
+.entries-info{
+flex: 1; /* ✅ PUSH BUTTONS RIGHT */
+width: auto;
+text-align: left;
+}
+
+.pagination-controls{
+display: flex;
+justify-content: flex-end; /* ✅ RIGHT SIDE */
+align-items: center;
+gap: 6px;
+margin-right: 0;
+}
+
+.pager-btn{
+min-width: auto;
+padding: 6px 10px;
+}
+}
+
 
 @media (max-width: 480px){
   .manage-users-page{ padding: 10px; }
