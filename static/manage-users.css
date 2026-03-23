@@ -497,10 +497,9 @@ white-space: nowrap;
 
 .pagination-controls{
 display: flex;
-justify-content: flex-end;        /* ✅ RIGHT */
+justify-content: flex-end;       
 align-items: center;
 gap: 6px;
-width: auto;
 }
 
 .pager-btn{
