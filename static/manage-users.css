@@ -490,51 +490,53 @@
    RESPONSIVE (keep your layout safe)
 ============================= */
 @media (max-width: 768px) {
-  .dept-table {
-    min-width: 500px;  /* allow scroll on tablets */
-    /* margin-left: 20px; */
-  }
-
-   .manage-header-row {
+  .manage-header-row {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 8px;
   }
 
-  .manage-title {
-    font-size: 25px;
-  }
-
-   .mini-search  {
+  .manage-header-right {
     width: 100%;
-   }
-   .primary-btn {
-    width: 100%;
-  }
-
-   .mini-search input {
-    width: 100%;
-  }
-
- .pager-btn {
     display: flex;
-    padding: 6px 14px;        /* smaller buttons */
-    font-size: 12px;
+    gap: 10px;
+    padding-top: 0;
   }
 
-  .page-info {
-    font-size: 12px;
+  .mini-search { flex: 1; }
+  .mini-search input { width: 100%; }
+  .primary-btn { white-space: nowrap; }
+
+  /* Table scroll: force horizontal scroll when viewport is narrow */
+  .table-scroll {
+    overflow-x: auto;
   }
+  .user-table {
+    min-width: 650px;
+  }
+
+  /* ✅ Footer correction */
+  .table-footer {
+    flex-direction: row;          /* keep entries left, pagination right */
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;              /* allow wrapping if space is tight */
+    gap: 10px;
+    padding: 12px 14px;
+    text-align: center;
+  }
+
   .pagination-controls {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-wrap: nowrap;          /* ✅ force single line */
-  gap: 8px;
-  white-space: nowrap;        /* ✅ prevent text wrap */
-}
+    margin-right: 0;
+    flex-shrink: 0;               /* prevent collapsing */
+    justify-content: flex-end;    /* keep buttons aligned right */
+  }
 
+  .entries-info {
+    flex-shrink: 0;
+    text-align: left;
+  }
 }
-
 
 
 @media (max-width: 480px){
