@@ -383,9 +383,11 @@
    ✅ stays normal (NOT inside scroll)
 ============================= */
 .table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  align-items: center !important;
+  flex-wrap: nowrap !important;
   gap: 8px;
   padding: 12px 14px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
@@ -396,7 +398,8 @@
 }
 
 .pagination-controls{
-  display: flex;
+  display: flex !important;
+  justify-content: flex-end !important;
   align-items: center;
   gap: 12px;
   margin-right: 20px;
@@ -410,6 +413,8 @@
 }
 
 .entries-info{
+  flex: 1 !important;
+  text-align: left !important;
   font-size: 13px;
   font-weight: 600;
   color: #7a1d1d;
