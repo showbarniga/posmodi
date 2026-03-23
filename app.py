@@ -11157,12 +11157,9 @@ def delivery_note_pdf(dn_id):
         return {"success": False, "message": "Delivery Note not found"}, 404
 
     html = render_template("delivery-note-pdf.html", dn=dn)
-    pdf_bytes = HTML(string=html, base_url=request.root_url).write_pdf()
 
-    response = make_response(pdf_bytes)
-    response.headers["Content-Type"] = "application/pdf"
-    response.headers["Content-Disposition"] = f'inline; filename="DN-{dn_id}.pdf"'
-    return response
+    
+
 
 
 # =========================================
@@ -11199,7 +11196,7 @@ def email_delivery_note(dn_id):
         return jsonify({"success": False, "message": "Customer email not available"}), 400
 
     html = render_template("delivery-note-pdf.html", dn=dn)
-    pdf_bytes = HTML(string=html, base_url=request.root_url).write_pdf()
+
 
     ok = send_email_with_attachments(
         to_email=customer_email,
@@ -11207,9 +11204,6 @@ def email_delivery_note(dn_id):
         body=f"Dear {dn.get('customer_name','')},\n\nPlease find attached Delivery Note {dn_id}.",
         from_email=EMAIL_ADDRESS,
         password=EMAIL_PASSWORD,
-        attachments=[
-            {"filename": f"{dn_id}.pdf", "content_bytes": pdf_bytes}
-        ],
     )
 
     if not ok:
