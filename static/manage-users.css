@@ -459,31 +459,32 @@
 ============================= */
 @media (max-width: 768px){
 
-/* ===== HEADER ===== */
-.manage-header-row{
-flex-direction: column;
-align-items: stretch;
-gap: 8px;
-}
+.table-footer{
+display: flex !important;
+flex-direction: row !important;
+justify-content: space-between !important;
+align-items: center !important;
 
-.manage-header-right{
+flex-wrap: nowrap !important;
+overflow: visible !important;   /* ❗ important */
+
 width: 100%;
-display: flex;
-gap: 10px;
+padding: 10px;
+
 }
 
-.mini-search{ flex: 1; }
-.mini-search input{ width: 100%; }
-
-/* ===== TABLE SCROLL ===== */
-.table-scroll {
-overflow-x: auto;
+.entries-info{
+display: block !important;
+font-size: 12px;
+white-space: nowrap;
 }
 
-.user-table {
-min-width: 650px;
+.pagination-controls{
+display: flex !important;
+gap: 6px;
 }
 
+}
 /* =============================
 SUCCESS NOTIFICATION (FIXED)
 ============================= */
@@ -577,5 +578,4 @@ pointer-events: auto;
 content: "✕";
 font-size: 16px;
 font-weight: bold;
-}
 }
