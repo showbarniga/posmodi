@@ -480,20 +480,23 @@ min-width: 650px;
 @media (max-width: 768px){
 
 .table-footer{
+width: 100%;
+box-sizing: border-box;
+padding: 10px;
+
+
 display: flex;
-flex-direction: row;              /* ✅ SAME AS DESKTOP */
-justify-content: space-between;
+flex-direction: row;              
+justify-content: space-between; 
 align-items: center;
-flex-wrap: nowrap;                /* ❗ NO BREAK */
-overflow: hidden; 
+flex-wrap: nowrap;    
 }
 
 .entries-info{
-flex: 1;
+flex: 1;                         
 width: auto;
 font-size: 12px;
 text-align: left;
-white-space: nowrap;
 }
 
 .pagination-controls{
@@ -501,15 +504,12 @@ display: flex;
 justify-content: flex-end;       
 align-items: center;
 gap: 6px;
-flex-wrap: wrap; 
-max-width: 100%;
 }
 
 .pager-btn{
 padding: 6px 10px;
 font-size: 12px;
-min-width: auto;
-white-space: nowrap;
+min-width: 65px;
 }
 
 }
