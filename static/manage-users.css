@@ -476,51 +476,55 @@ overflow-x: auto;
 min-width: 650px;
 }
 
+@media (max-width: 768px){
+
 /* ===== FOOTER ===== */
 .table-footer{
+display: flex;
+align-items: center;
+justify-content: space-between;
+padding: 10px;
 width: 100%;
 box-sizing: border-box;
-padding: 10px;
-
-
-display: flex;
-flex-direction: row;
-justify-content: space-between;
-align-items: center;
-flex-wrap: nowrap;
-gap: 8px;
+gap: 6px;
+flex-wrap: nowrap;         
+overflow: hidden;          
 
 
 }
 
-/* ===== ENTRIES TEXT ===== */
+/* ===== LEFT TEXT ===== */
 .entries-info{
-flex: 0 0 auto;         
-font-size: 12px;
+font-size: 11px;           
 white-space: nowrap;
+overflow: hidden;
+text-overflow: ellipsis;   
+max-width: 40%;            
 }
 
 /* ===== PAGINATION ===== */
 .pagination-controls{
 display: flex;
 align-items: center;
-gap: 6px;
-flex: 0 0 auto;         
+gap: 4px;
+flex-shrink: 0;            /* ❗ don't shrink */
 }
 
 /* ===== PAGE INFO ===== */
 .page-info{
-font-size: 12px;
+font-size: 11px;
 white-space: nowrap;
 }
 
 /* ===== BUTTONS ===== */
 .pager-btn{
-padding: 5px 8px;
-font-size: 11px;
+padding: 4px 6px;
+font-size: 10px;
 white-space: nowrap;
+min-width: auto;
 }
 
+}
 
 
 /* =============================
