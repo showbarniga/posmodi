@@ -477,28 +477,25 @@ min-width: 650px;
 }
 
 /* ===== FOOTER (FINAL FIX) ===== */
-.department-page .table-footer{
-width: 100%;
-box-sizing: border-box;
-padding: 10px;
+@media (max-width: 768px){
 
+.table-footer{
 display: flex;
 flex-direction: row;              
 justify-content: space-between;   
 align-items: center;
 flex-wrap: nowrap;                
-
 }
 
-.department-page .entries-info{
-flex: 1;                          
+.entries-info{
+flex: 1;
 width: auto;
 font-size: 12px;
 text-align: left;
 white-space: nowrap;
 }
 
-.department-page .pagination-controls{
+.pagination-controls{
 display: flex;
 justify-content: flex-end;        /* ✅ RIGHT SIDE */
 align-items: center;
@@ -506,13 +503,14 @@ gap: 6px;
 width: auto;
 }
 
-.department-page .pager-btn{
+.pager-btn{
 padding: 6px 10px;
 font-size: 12px;
 min-width: 65px;
 }
 
 }
+
 /* =============================
 SUCCESS NOTIFICATION (FIXED)
 ============================= */
@@ -606,4 +604,5 @@ pointer-events: auto;
 content: "✕";
 font-size: 16px;
 font-weight: bold;
+}
 }
