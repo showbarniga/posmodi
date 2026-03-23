@@ -167,7 +167,6 @@
   border-radius: 10px;
   /* Keep scrollbar visible (classic bar below table, like Product Master) */
   scrollbar-gutter: stable;
-  min-height: 200px; 
 }
 /* Visible horizontal scrollbar for table (shows at bottom when content overflows) */
 .table-scroll::-webkit-scrollbar {
@@ -383,31 +382,25 @@
    ✅ stays normal (NOT inside scroll)
 ============================= */
 .table-footer {
-  display:flex !important;
-  justify-content: space-between !important;
-  align-items:center !important;
-  justify-content: space-between !important;
+  display:flex;
+  justify-content: space-between;
+  align-items:center;
   gap: 8px;
   padding: 12px 14px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
   background: #f7f2f2;
-
-  flex-wrap: nowrap; /* ✅ FIX: allow wrapping */
 }
 
 .pagination-controls{
-  display: flex !important;
-  align-items: center !important;
-  gap: 6px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
   margin-right: 20px;
-  flex-direction: row !important; 
-
-  flex-wrap: nowrap; /* ✅ FIX */
 }
 
 .page-info{
   color: #7a1d1d !important;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
 }
@@ -417,15 +410,12 @@
   font-weight: 600;
   color: #7a1d1d;
   white-space: nowrap;
-
-  flex: 0 0 auto; /* ✅ FIX */
 }
 
 /* Pagination buttons */
 .pager-btn {
   padding: 6px 18px;
   border-radius: 4px;
-  min-width: 70px;
   background: linear-gradient(#a12828, #821f1f);
   border: none;
   color: #fff;
@@ -434,10 +424,6 @@
   box-shadow: 0 4px 0 #6d1717;
   transition: 0.25s ease;
   min-width: 80px;
-    display: inline-flex !important;
-  align-items: center;
-  justify-content: center;
-  white-space: nowrap;
 }
 
 .pager-btn:hover:not(:disabled) {
@@ -447,6 +433,12 @@
 .pager-btn:disabled {
   opacity: 0.5;
 }
+.page-info{
+  color: #7a1d1d !important;
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+}
 
 .page-info .page-num{
   font-size: 12px;
@@ -454,128 +446,126 @@
   color: #6a2a2a;    
 }
 
-/* =============================
-✅ RESPONSIVE FIX (FINAL CLEAN)
-============================= */
-@media (max-width: 768px){
+/* "No users" row hidden by default */
+#noUserRow { display: none; }
+#noUserRow td { text-align: center; }
 
-.table-footer{
-display: flex !important;
-flex-direction: row !important;
-justify-content: space-between !important;
-align-items: center !important;
-
-flex-wrap: nowrap !important;
-overflow: visible !important;   /* ❗ important */
-
-width: 100%;
-padding: 10px;
-
-}
-
-.entries-info{
-display: block !important;
-font-size: 12px;
-white-space: nowrap;
-}
-
-.pagination-controls{
-display: flex !important;
-gap: 6px;
-}
-
-}
-/* =============================
-SUCCESS NOTIFICATION (FIXED)
-============================= */
+/* SUCCESS NOTIFICATION */
 .success-notification {
-position: fixed;
-top: 20px;
-left: 50%;
-transform: translateX(-50%) translateY(-100px);
-
-background: linear-gradient(135deg, #fff4f4, #ffe8e8);
-color: #a12828;
-
-padding: 12px 16px;
-border-radius: 10px;
-box-shadow: 0 8px 24px rgba(161, 40, 40, 0.25);
-
-font-size: 14px;
-font-weight: 600;
-
-z-index: 10000;
-opacity: 0;
-border: 1.5px solid #a12828;
-
-transition: all 0.4s ease;
-pointer-events: none;
-
-display: flex;
-align-items: center;
-gap: 8px;
-
-max-width: 90%;          /* ✅ FIX FOR MOBILE */
-text-align: center;
-word-wrap: break-word;   /* ✅ PREVENT OVERFLOW */
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100px);
+  background: linear-gradient(135deg, #fff4f4, #ffe8e8);
+  color: #a12828;
+  padding: 14px 28px;
+  border-radius: 10px;
+  box-shadow: 0 8px 24px rgba(161, 40, 40, 0.25);
+  font-size: 15px;
+  font-weight: 600;
+  z-index: 10000;
+  opacity: 0;
+  border: 1.5px solid #a12828;
+  transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+  pointer-events: none;
+  white-space: nowrap;
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 
-/* show animation */
 .success-notification.show {
-opacity: 1;
-transform: translateX(-50%) translateY(0);
-pointer-events: auto;
+  opacity: 1;
+  transform: translateX(-50%) translateY(0);
+  pointer-events: auto;
 }
 
 .success-notification::before {
-content: "✓";
-font-size: 16px;
-font-weight: bold;
+  content: "✓";
+  font-size: 18px;
+  font-weight: bold;
 }
 
 /* =============================
-ERROR NOTIFICATION (SAME FIX)
+   RESPONSIVE (keep your layout safe)
 ============================= */
-.error-notification {
-position: fixed;
-top: 20px;
-left: 50%;
-transform: translateX(-50%) translateY(-100px);
+@media (max-width: 768px){
+  .manage-header-row{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
 
-background: linear-gradient(135deg, #fff4f4, #ffe8e8);
-color: #a12828;
+  .manage-header-right{
+    width: 100%;
+    display: flex;
+    gap: 10px;
+    padding-top: 0;
+  }
 
-padding: 12px 16px;
-border-radius: 10px;
-box-shadow: 0 8px 24px rgba(161, 40, 40, 0.25);
+  .mini-search{ flex: 1; }
+  .mini-search input{ width: 100%; }
+  .primary-btn{ white-space: nowrap; }
 
-font-size: 14px;
-font-weight: 600;
+  /* Table scroll (same as Product Master): force horizontal scroll when viewport is narrow */
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .user-table {
+    min-width: 650px;
+  }
 
-z-index: 10000;
-opacity: 0;
-border: 1.5px solid #a12828;
+  .table-footer{
+    flex-direction: row;
+    display: flex;
+    justify-content: space-between; /* Keep entries info left, pagination right */
+    align-items: center;
+    flex-wrap: nowrap;              /* Prevent breaking into multiple rows */
+     gap: 12px;
+     padding: 12px 14px;
+    border-top: 1px solid rgba(170, 70, 70, 0.12);
+    background: #f7f2f2;
 
-transition: all 0.4s ease;
-pointer-events: none;
+  }
 
-display: flex;
-align-items: center;
-gap: 8px;
-
-max-width: 90%;
-text-align: center;
-word-wrap: break-word;
+  .pagination-controls{
+    
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-right: 0;                /* Avoid pushing too far */
+  flex-shrink: 0;                 /* Prevent shrinking */
 }
 
-.error-notification.show {
-opacity: 1;
-transform: translateX(-50%) translateY(0);
-pointer-events: auto;
-}
+  }
 
-.error-notification::before {
-content: "✕";
-font-size: 16px;
-font-weight: bold;
+
+@media (max-width: 480px){
+  .manage-users-page{ padding: 10px; }
+
+  .manage-header-right{
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .primary-btn{ width: 100%; }
+
+  /* Keep table scroll on small screens (same as Product Master) */
+  .table-scroll {
+    overflow-x: auto;
+  }
+  .user-table {
+    min-width: 650px;
+  }
+
+  .table-footer{
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+  }
+
+  .pagination-controls{
+    width: 100%;
+    justify-content: center;
+  }
 }
