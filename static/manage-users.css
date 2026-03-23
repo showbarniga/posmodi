@@ -215,10 +215,13 @@
 .user-table td {
   padding: 14px 10px;
   border-bottom: 1px solid #f0eaea;
-  font-size: 14px;
+  font-size: 13px;   /* ✅ REDUCED from 14px */
   background: #ffffff;
   transition: 0.25s;
   white-space: nowrap;
+  vertical-align: middle;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Row hover 3D lift */
