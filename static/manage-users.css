@@ -2,11 +2,14 @@
    PAGE WRAPPER
 ============================= */
 .manage-users-page {
-  padding: 20px;
+  max-width: 1200px;       
+  margin: 0 auto 40px;     
+  padding: 20px;           
+  box-sizing: border-box;
   font-family: "Poppins", sans-serif;
-  color: #4a1f1a;
   background: #f6f1f1;
-}
+  color: #4a1f1a;
+
 
 /* =============================
    TITLE
@@ -190,7 +193,7 @@
 ============================= */
 .user-table {
   width: 100%;
-  min-width: 900px; /* Force horizontal overflow so scrollbar appears (like Product Master) */
+  min-width: 500px; /* Force horizontal overflow so scrollbar appears (like Product Master) */
   border-collapse: collapse;
   font-size: 14px;
 }
@@ -390,7 +393,7 @@
   background: #f3f3f3;
   border-top: 1px solid #e0e0e0;
   box-sizing: border-box;
-  padding: 10px 14px;
+  padding: 14px 12px;
   border-radius: 0 0 12px 12px;
   
   display: flex !important;
@@ -398,7 +401,7 @@
   justify-content: space-between !important; /* ✅ left + right */
   align-items: center !important;           /* ✅ vertical center */
   flex-wrap: nowrap !important;             /* ✅ prevent wrapping */
-  gap: 8px;
+  gap: 12px;
 }
 
 .pagination-controls {
@@ -549,7 +552,9 @@
 
 
 @media (max-width: 480px){
-  .manage-users-page{ padding: 10px; }
+.manage-users-page{ 
+  padding: 10px;
+ }
 
   .manage-header-right{
     flex-direction: column;
@@ -581,4 +586,5 @@
     justify-content: center;
     margin-right: 0;
   }
+}
 }
