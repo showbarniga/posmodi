@@ -479,6 +479,7 @@ min-width: 650px;
 /* ===== FOOTER (FINAL FIX) ===== */
 @media (max-width: 768px){
 
+/* ===== FOOTER ===== */
 .table-footer{
 width: 100%;
 box-sizing: border-box;
@@ -486,33 +487,51 @@ padding: 10px;
 
 
 display: flex;
-flex-direction: row;              
-justify-content: space-between; 
+flex-direction: row;
+justify-content: space-between;  
 align-items: center;
-flex-wrap: nowrap;    
+flex-wrap: nowrap;               
+gap: 8px;
+
+
 }
 
+/* ===== ENTRIES TEXT ===== */
 .entries-info{
 flex: 1;                         
 width: auto;
 font-size: 12px;
 text-align: left;
+white-space: nowrap;
 }
 
+/* ===== PAGINATION CONTAINER ===== */
 .pagination-controls{
 display: flex;
-justify-content: flex-end;       
 align-items: center;
+justify-content: space-between;  
 gap: 6px;
+width: 100%;
 }
 
+/* ===== PAGE INFO ===== */
+.page-info{
+flex: 0 1 auto;                 
+white-space: nowrap;
+font-size: 12px;
+}
+
+/* ===== BUTTONS ===== */
 .pager-btn{
+flex: 0 0 auto;               
 padding: 6px 10px;
 font-size: 12px;
-min-width: 65px;
+min-width: auto;               
+white-space: nowrap;
 }
 
 }
+
 
 /* =============================
 SUCCESS NOTIFICATION (FIXED)
