@@ -489,55 +489,52 @@
 /* =============================
    RESPONSIVE (keep your layout safe)
 ============================= */
-@media (max-width: 768px){
-  .manage-header-row{
+@media (max-width: 768px) {
+  .dept-table {
+    min-width: 500px;  /* allow scroll on tablets */
+    /* margin-left: 20px; */
+  }
+
+   .manage-header-row {
     flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
+    align-items: flex-start;
   }
 
-  .manage-header-right{
+  .manage-title {
+    font-size: 25px;
+  }
+
+   .mini-search  {
     width: 100%;
+   }
+   .primary-btn {
+    width: 100%;
+  }
+
+   .mini-search input {
+    width: 100%;
+  }
+
+ .pager-btn {
     display: flex;
-    gap: 10px;
-    padding-top: 0;
+    padding: 6px 14px;        /* smaller buttons */
+    font-size: 12px;
   }
 
-  .mini-search{ flex: 1; }
-  .mini-search input{ width: 100%; }
-  .primary-btn{ white-space: nowrap; }
-
-  /* Table scroll (same as Product Master): force horizontal scroll when viewport is narrow */
-  .table-scroll {
-    overflow-x: auto;
+  .page-info {
+    font-size: 12px;
   }
-  .user-table {
-    min-width: 650px;
-  }
-
-  .table-footer{
-    flex-direction: row;
-    display: flex;
-    justify-content: space-between; /* Keep entries info left, pagination right */
-    align-items: center;
-    flex-wrap: nowrap;              /* Prevent breaking into multiple rows */
-     gap: 12px;
-     padding: 12px 14px;
-    border-top: 1px solid rgba(170, 70, 70, 0.12);
-    background: #f7f2f2;
-
-  }
-
-  .pagination-controls{
-    
+  .pagination-controls {
   display: flex;
   align-items: center;
-  gap: 12px;
-  margin-right: 0;                /* Avoid pushing too far */
-  flex-shrink: 0;                 /* Prevent shrinking */
+  justify-content: center;
+  flex-wrap: nowrap;          /* ✅ force single line */
+  gap: 8px;
+  white-space: nowrap;        /* ✅ prevent text wrap */
 }
 
-  }
+}
+
 
 
 @media (max-width: 480px){
