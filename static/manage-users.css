@@ -544,36 +544,44 @@
   .user-table {
     min-width: 650px;
   }
+/* ===== FOOTER (FINAL FIX) ===== */
+.department-page .table-footer{
+width: 100%;
+box-sizing: border-box;
+padding: 10px;
 
-.table-footer{
-display: flex !important;
-flex-direction: row !important; 
-justify-content: space-between !important;
-align-items: center !important;
-flex-wrap: nowrap !important; 
-gap: 8px;
-}
-.entries-info{
-flex: 1 !important; /* ✅ PUSH BUTTONS RIGHT */
-width: auto !important;
-text-align: left !important;
+
+display: flex;
+flex-direction: row;              
+justify-content: space-between; 
+align-items: center;
+flex-wrap: nowrap;               
+
+
 }
 
-.pagination-controls{
-display: flex !important;
-justify-content: flex-end !important; /* ✅ RIGHT SIDE */
-align-items: center !important;
+.department-page .entries-info{
+flex: 1;                         
+width: auto;
+font-size: 12px;
+text-align: left;
+}
+
+.department-page .pagination-controls{
+display: flex;
+justify-content: flex-end;       
+align-items: center;
 gap: 6px;
-margin-right: 0;
-width: auto !important;
 }
 
-.pager-btn{
-min-width: auto;
+.department-page .pager-btn{
 padding: 6px 10px;
+font-size: 12px;
+min-width: 65px;
+}
+}
 
-}
-}
+
 
 
 @media (max-width: 480px){
