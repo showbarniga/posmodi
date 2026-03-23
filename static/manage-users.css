@@ -380,29 +380,29 @@
 
 /* =============================
    FOOTER / PAGINATION
-   ✅ stays normal (NOT inside scroll)
 ============================= */
 .table-footer {
-  display: flex !important;
-  flex-direction: row !important;
-  justify-content: space-between !important;
-  align-items: center !important;
-  flex-wrap: nowrap !important;
+  width: 100%;
+  max-width: 100%;
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 0 0 12px 12px;
+  
+  display: flex;
+  flex-direction: row;            /* ✅ keep in one line */
+  justify-content: space-between; /* ✅ left + right */
+  align-items: center;           /* ✅ vertical center */
+  flex-wrap: nowrap;             /* ❗ IMPORTANT (prevents break) */
   gap: 8px;
-  padding: 12px 14px;
-  border-top: 1px solid rgba(170, 70, 70, 0.12);
-  background: #f7f2f2;
-  min-height: 60px;
-  position: relative;
-  z-index: 1;
 }
 
-.pagination-controls{
-  display: flex !important;
-  justify-content: flex-end !important;
+.pagination-controls {
+  display: flex;
+  justify-content: flex-end;
   align-items: center;
-  gap: 12px;
-  margin-right: 20px;
+  gap: 8px;
 }
 
 .page-info{
@@ -412,27 +412,26 @@
   white-space: nowrap;
 }
 
-.entries-info{
-  flex: 1 !important;
-  text-align: left !important;
-  font-size: 13px;
+.entries-info {
+  flex: 1;                 /* ✅ takes left space */
+  width: auto;             /* ❗ IMPORTANT (remove 100%) */
+  font-size: 12px;         /* ✅ keep only one font-size */
   font-weight: 600;
   color: #7a1d1d;
-  white-space: nowrap;
+  text-align: left;
 }
 
 /* Pagination buttons */
 .pager-btn {
-  padding: 6px 18px;
+  padding: 6px 14px;
   border-radius: 4px;
   background: linear-gradient(#a12828, #821f1f);
   border: none;
-  color: #fff;
-  font-size: 14px;
+  color: white;
+  font-size: 12px;
   cursor: pointer;
   box-shadow: 0 4px 0 #6d1717;
   transition: 0.25s ease;
-  min-width: 80px;
 }
 
 .pager-btn:hover:not(:disabled) {
@@ -442,9 +441,10 @@
 .pager-btn:disabled {
   opacity: 0.5;
 }
-.page-info{
+
+.page-info {
   color: #7a1d1d !important;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 500;
   white-space: nowrap;
 }
