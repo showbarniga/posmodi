@@ -485,6 +485,7 @@ flex-direction: row;              /* ✅ SAME AS DESKTOP */
 justify-content: space-between;
 align-items: center;
 flex-wrap: nowrap;                /* ❗ NO BREAK */
+overflow: hidden; 
 }
 
 .entries-info{
@@ -500,12 +501,15 @@ display: flex;
 justify-content: flex-end;       
 align-items: center;
 gap: 6px;
+flex-wrap: wrap; 
+max-width: 100%;
 }
 
 .pager-btn{
 padding: 6px 10px;
 font-size: 12px;
-min-width: 65px;
+min-width: auto;
+white-space: nowrap;
 }
 
 }
