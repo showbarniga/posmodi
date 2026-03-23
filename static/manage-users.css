@@ -515,24 +515,23 @@
     min-width: 650px;
   }
 
-  /* ✅ Footer correction */
   .table-footer {
     flex-direction: column;
     justify-content: center;
     align-items: center;
     gap: 12px;
     padding: 16px 14px;
-    text-align: center;
-  }
-
-  .pagination-controls {
-    margin-right: 0;
-    order: 2;
   }
 
   .entries-info {
     order: 1;
     text-align: center;
+  }
+
+  .pagination-controls {
+    order: 2;
+    margin-right: 0;
+    justify-content: center;
   }
 }
 
@@ -555,22 +554,19 @@
     min-width: 650px;
   }
 
-  .table-footer{
+  .table-footer {
     flex-direction: column;
     align-items: center;
-    text-align: center;
     gap: 15px;
     padding: 18px 14px;
   }
 
-  .pagination-controls{
-    width: 100%;
-    justify-content: center;
-    margin-right: 0;
+  .entries-info {
+    text-align: center;
   }
 
-  .entries-info{
-    width: 100%;
-    text-align: center;
+  .pagination-controls {
+    justify-content: center;
+    margin-right: 0;
   }
 }
