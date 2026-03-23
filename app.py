@@ -32,7 +32,7 @@ from reportlab.lib.units import inch, mm  # type: ignore[import]
 from dotenv import load_dotenv
 
 # PDF
-from weasyprint import HTML
+
 from flask import make_response, request
 
 #email
