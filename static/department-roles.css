@@ -92,7 +92,8 @@
   border: none;
   outline: none;
   font-size: 14px;
-  width: 180px;
+  width: 100%;
+  max-width: 180px;
   background: transparent;
 }
 
@@ -630,11 +631,17 @@ gap: 10px;
 font-size: 25px;
 }
 
-.department-page .mini-search,
-.department-page .primary-btn {
+.department-page .mini-search {
 width: 100%;
+max-width: 100%;
 }
+
 .department-page .mini-search input {
+width: 100%;
+max-width: 100%;
+}
+
+.department-page .primary-btn {
 width: 100%;
 }
 
