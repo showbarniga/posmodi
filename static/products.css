@@ -340,7 +340,7 @@
 
 .table tbody tr:hover td {
   background: #e3bdbd;      /* soft maroon tint */
-  /* transform: scale(1.01);   slight lift */
+  transform: scale(1.01);   /* slight lift */
   transition: 0.25s ease;
 }
 
@@ -617,12 +617,8 @@
   }
 }
 
-
+/* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px) {
-  .table td:nth-child(2) {
-    white-space: normal;   
-  }
- 
 
   .product-page {
     padding: 12px;
@@ -661,29 +657,11 @@
     overflow-x: auto;
   }
 
-  @media (max-width: 768px) {
   .table {
-    min-width: 100%;        /* ✅ full fit */
-    table-layout: fixed;    /* ✅ important */
+    min-width: 650px;
   }
-  .table-wrap {
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .table th,
-  .table td {
-    font-size: 12px;
-    padding: 6px 8px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-     white-space: nowrap; 
-  }
-}
  .table-footer {
-    flex-direction: row;  
-    position: relative;   /* ✅ keep in normal flow */
-    width: 100%;
+    flex-direction: row;            /* 🔥 force row */
   }
 
   .right-pager {
@@ -731,7 +709,6 @@
 
  .table-footer {
     font-size: 12px;
-  
   }
 
   .pager-btn {
