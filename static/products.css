@@ -624,8 +624,11 @@
 @media (max-width: 768px) {
 
   .product-page {
-    padding: 12px;
+      padding: 8px !important;
   }
+ .card {
+  padding: 6px !important;
+ }
 
  
 
@@ -653,12 +656,15 @@
   /* Filters: 2 per row */
   .filters {
     grid-template-columns: repeat(2, 1fr);
+      gap: 6px !important;
+  margin-bottom: 8px !important;
   }
 
   /* Table scroll */
   .table-wrap {
     overflow-x: auto;
-    max-height: 250px;
+    overflow-y: auto;
+    max-height:  calc(100vh - 420px);
   }
 
   .table {
@@ -671,11 +677,23 @@
   .right-pager {
     flex-direction: row;            /* 🔥 force row */
   }
+  .top-controls {
+  gap: 4px; 
+  }
+ .clear-filter {
+  margin-top: 4px;
+  font-size: 13px;
+ }
 
   .pager-btn {
     flex: 1 1 45%;
     text-align: center;
   }
+  .table thead th,
+.table tbody td {
+  padding: 5px 6px !important;
+  font-size: 12px;
+}
 }
 
 /* 📱 Small Mobiles (≤520px) */
