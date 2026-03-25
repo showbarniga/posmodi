@@ -712,18 +712,19 @@ button:disabled,
 @media (max-width: 768px) {
 
   .customer-page{
-    padding: 10px;
+    padding: 12px;
+    overflow-x: hidden;
   }
 
   /* Header stack */
   .customer-page .manage-header-row{
     flex-direction: column;
-    align-items: stretch;
+    align-items: flex-start;
     gap: 10px;
   }
 
   .customer-page .manage-title{
-    font-size: 24x;
+    font-size: 25px;
     margin-right: 0;
   }
 
@@ -757,57 +758,47 @@ button:disabled,
   /* Table scroll */
   .customer-page .table-wrap{
     overflow-x: auto;
+    width: 100%;
     -webkit-overflow-scrolling: touch;
-        width: 100%;
-
   }
+  .customer-page .card{
+  overflow: hidden;   /* ✅ prevent layout break */
+}
 
   .customer-page .table{
-    min-width: 520px !important;
-    table-layout: fixed;
-  }
-    .customer-page .table th,
-  .customer-page .table td {
-    font-size: 11px;
-    padding: 6px 6px;
-    white-space: nowrap;
+     min-width: 550px;   /* ✅ FIX */
+  table-layout: fixed;
   }
 
   /* Footer keep single line like department pagination */
   .customer-page .table-footer{
-     flex-wrap: nowrap;
-    white-space: nowrap;
-    flex-direction: row;
-    justify-content: space-between;
+    display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 16px 14px;
-  
+    justify-content: space-between;
+    flex-wrap: nowrap;       /* ✅ force single line */
+    gap: 10px;
+    white-space: nowrap;     /* ✅ prevent wrap */
   }
 
   .customer-page .right-pager{
     display: flex;
     align-items: center;
-    justify-content: flex-end;
+    justify-content: center;
     flex-wrap: nowrap;       /* ✅ force single line */
-    gap: 6px;
+    gap: 8px;
     white-space: nowrap;
   }
 
   .customer-page .pager-btn{
-    padding: 6px 10x;
+    padding: 6px 14px;
     font-size: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
-     min-width: 65px;
   }
 
   .customer-page .page-text{
-      flex: 1;
-    width: auto;
     font-size: 12px;
-    text-align: left;
   }
 
   .customer-page .left-info{
