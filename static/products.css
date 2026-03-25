@@ -695,7 +695,6 @@
     font-size: 12px;
   }
 
-  /* 🔥 FOOTER FIX (LIKE DEPARTMENT) */
   .table-footer {
     flex-shrink: 0;
     display: flex;
@@ -714,9 +713,12 @@
 
   /* 🔥 LEFT TEXT FIX (NO CUT) */
   .left-info {
+    display: flex;              /* ✅ KEY */
+  align-items: center; 
     font-size: 13px;
     font-weight: 600;
     color: #7a1d1d;
+      line-height: 1; 
 
     white-space: nowrap;
     overflow: visible;        /* ✅ FIX */
@@ -728,6 +730,7 @@
     display: flex;
     flex-direction: row;
     gap: 8px;
+    align-items: center; 
   }
 
   .pager-btn {
