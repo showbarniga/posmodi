@@ -667,7 +667,8 @@
     table-layout: fixed;    /* ✅ important */
   }
   .table-wrap {
-    overflow-x: hidden;   /* ❌ remove horizontal scroll */
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   .table th,
@@ -676,10 +677,13 @@
     padding: 6px 8px;
     overflow: hidden;
     text-overflow: ellipsis;
+     white-space: nowrap; 
   }
 }
  .table-footer {
-    flex-direction: row;            /* 🔥 force row */
+    flex-direction: row;  
+    position: relative;   /* ✅ keep in normal flow */
+    width: 100%;
   }
 
   .right-pager {
@@ -727,8 +731,7 @@
 
  .table-footer {
     font-size: 12px;
-     position: relative;   /* ✅ keep in normal flow */
-    width: 100%;
+  
   }
 
   .pager-btn {
