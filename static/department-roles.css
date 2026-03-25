@@ -399,38 +399,41 @@
    FOOTER / PAGINATION
 ------------------------------------------ */
 .department-page .table-footer {
-width: 100%;
-max-width: 100%;
-background: #f3f3f3;
-border-top: 1px solid #e0e0e0;
-box-sizing: border-box;
-padding: 10px 14px;
-border-radius: 0 0 12px 12px;
-
-display: flex;
-flex-direction: row;            /* ✅ keep in one line */
-justify-content: space-between;/* ✅ left + right */
-align-items: center;           /* ✅ vertical center */
-flex-wrap: nowrap;             /* ❗ IMPORTANT (prevents break) */
-gap: 8px;
+  width: 100%;
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+  box-sizing: border-box;
+  padding: 10px 14px;
+  border-radius: 0 0 12px 12px;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 10px;
 }
-
 
 .department-page .entries-info {
-flex: 1;                 /* ✅ takes left space */
-width: auto;             /* ❗ IMPORTANT (remove 100%) */
-font-size: 12px;         /* ✅ keep only one font-size */
-font-weight: 600;
-color: #7a1d1d;
-text-align: left;
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a1d1d;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
 }
 
-
 .department-page .pagination-controls {
-display: flex; 
-justify-content: flex-end;   
-align-items: center;
-gap: 8px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.department-page .page-info {
+  font-size: 13px;
+  color: #7a1d1d;
+  white-space: nowrap;
 }
 
 .department-page .pager-btn {
@@ -647,22 +650,32 @@ width: 100%;
 width: 100%;
 max-width: 100%;
 }
-.department-page .pager-btn {
-    display: flex;
-    padding: 6px 14px;        /* smaller buttons */
-    font-size: 12px;
-  }
 
-  .department-page .page-info {
-    font-size: 12px;
-  }
-  .department-page .pagination-controls {
-  display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  flex-wrap: nowrap;          /* ✅ force single line */
+/* ===== FOOTER MOBILE FIX ===== */
+.department-page .table-footer {
+  padding: 8px 10px;
   gap: 8px;
-  white-space: nowrap;        /* ✅ prevent text wrap */
+}
+
+.department-page .entries-info {
+  font-size: 12px;
+  flex: 1;
+  min-width: 0;
+}
+
+.department-page .pagination-controls {
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.department-page .pager-btn {
+  padding: 6px 12px;
+  font-size: 12px;
+  min-width: 60px;
+}
+
+.department-page .page-info {
+  font-size: 12px;
 }
 
 }
@@ -767,38 +780,40 @@ font-size: 12px;
 }
 
 /* ===== FOOTER (FINAL FIX) ===== */
-.department-page .table-footer{
-width: 100%;
-box-sizing: border-box;
-padding: 10px;
-
-
-display: flex;
-flex-direction: row;              
-justify-content: space-between; 
-align-items: center;
-flex-wrap: nowrap;               
-
-
+.department-page .table-footer {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 8px;
+  
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 8px;
 }
 
-.department-page .entries-info{
-flex: 1;                         
-width: auto;
-font-size: 12px;
-text-align: left;
+.department-page .entries-info {
+  flex: 1;
+  font-size: 11px;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
 }
 
-.department-page .pagination-controls{
-display: flex;
-justify-content: flex-end;       
-align-items: center;
-gap: 6px;
+.department-page .pagination-controls {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-shrink: 0;
 }
 
-.department-page .pager-btn{
-padding: 6px 10px;
-font-size: 12px;
-min-width: 65px;
+.department-page .pager-btn {
+  padding: 5px 8px;
+  font-size: 11px;
+  min-width: 55px;
+}
+
+.department-page .page-info {
+  font-size: 11px;
 }
 }
