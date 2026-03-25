@@ -514,34 +514,22 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
-  flex-wrap: nowrap;
 }
 
 .left-info {
   font-size: 13px;
   font-weight: 600;
   color: #7a1d1d;
-  flex: 1;
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: unset;
 }
 
 .right-pager {
   display: flex;
   align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
-
-.page-text {
-  font-size: 13px;
-  color: #7a1d1d;
-  white-space: nowrap;
+  gap: 14px;
 }
 
 .pager-btn {
@@ -574,7 +562,43 @@
 
 
 
+/* ============================
+   TABLE FOOTER – ONE LINE, NO SCROLL
+============================ */
 
+.table-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;           /* one line */
+}
+
+/* LEFT INFO */
+.left-info {
+  font-size: 13px;
+  font-weight: 600;
+  color: #7a1d1d;
+  white-space: nowrap;
+  flex: 1 1 auto;              /* 🔥 can shrink */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* RIGHT PAGER */
+.right-pager {
+  display: flex;
+  gap: 8px;
+  flex: 0 0 auto;              /* 🔥 buttons never wrap */
+}
+
+/* BUTTONS */
+.pager-btn {
+  padding: 6px 18px;
+  font-size: 13px;
+  min-width: 80px;
+  white-space: nowrap;
+}
 
 
 
@@ -671,14 +695,11 @@
     font-size: 12px;
   }
 
-  /* 🔥 TABLE FOOTER MOBILE FIX */
   .table-footer {
     flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: nowrap;
-    gap: 8px;
     
     position: sticky;
     bottom: 0;
@@ -692,30 +713,24 @@
 
   /* 🔥 LEFT TEXT FIX (NO CUT) */
   .left-info {
-    display: flex;
+    display: flex;              /* ✅ KEY */
     align-items: center;
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     color: #7a1d1d;
     line-height: 1;
     
-    flex: 1;
     white-space: nowrap;
-    overflow: visible;
-    text-overflow: unset;
+    overflow: visible;        /* ✅ FIX */
+    text-overflow: unset;     /* ✅ FIX */
   }
 
   /* 🔥 RIGHT BUTTONS */
   .right-pager {
     display: flex;
-    align-items: center;
+    flex-direction: row;
     gap: 8px;
-    flex-shrink: 0;
-  }
-
-  .page-text {
-    font-size: 12px;
-    white-space: nowrap;
+    align-items: center; 
   }
 
   .pager-btn {
@@ -752,30 +767,43 @@
     grid-template-columns: 1fr;
   }
 
-  /* 🔥 FOOTER EXTRA SMALL MOBILE */
-  .table-footer {
-    padding: 6px 8px !important;
-    gap: 6px;
-  }
-
-  .left-info {
-    font-size: 11px;
-    flex: 1;
-    min-width: 0;
-  }
-
+  /* 🔥 Prev + Next ALWAYS SAME LINE */
   .right-pager {
-    gap: 6px;
-    flex-shrink: 0;
+    flex-direction: row;
+    gap: 10px;
+  }
+
+
+
+  .table-footer {
+    font-size: 12px;
   }
 
   .pager-btn {
-    padding: 5px 10px;
-    font-size: 11px;
-    min-width: 60px;
+    padding: 6px 18px;
+    font-size: 12px;
   }
 
-  .page-text {
-    font-size: 11px;
+  /* Modal full width */
+  .modal-content,
+  .product-edit-modal {
+    width: 100%;
+    max-width: 100%;
+  }
+
+  .form-grid {
+    grid-template-columns: 1fr;
+  }
+
+  
+  .left-info {
+    font-size: 11px;            /* 🔥 shrink text */
+    max-width: 55%;             /* 🔥 prevent overflow */
+  }
+
+  .pager-btn {
+    padding: 6px 12px;          /* 🔥 smaller buttons */
+    font-size: 12px;
+    min-width: 70px;
   }
 }
