@@ -514,22 +514,34 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  gap: 8px;
+  gap: 10px;
   margin-top: 10px;
   padding-top: 10px;
   border-top: 1px solid rgba(170, 70, 70, 0.12);
+  flex-wrap: nowrap;
 }
 
 .left-info {
   font-size: 13px;
   font-weight: 600;
   color: #7a1d1d;
+  flex: 1;
+  white-space: nowrap;
+  overflow: visible;
+  text-overflow: unset;
 }
 
 .right-pager {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.page-text {
+  font-size: 13px;
+  color: #7a1d1d;
+  white-space: nowrap;
 }
 
 .pager-btn {
@@ -562,43 +574,7 @@
 
 
 
-/* ============================
-   TABLE FOOTER – ONE LINE, NO SCROLL
-============================ */
 
-.table-footer {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;           /* one line */
-}
-
-/* LEFT INFO */
-.left-info {
-  font-size: 13px;
-  font-weight: 600;
-  color: #7a1d1d;
-  white-space: nowrap;
-  flex: 1 1 auto;              /* 🔥 can shrink */
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-/* RIGHT PAGER */
-.right-pager {
-  display: flex;
-  gap: 8px;
-  flex: 0 0 auto;              /* 🔥 buttons never wrap */
-}
-
-/* BUTTONS */
-.pager-btn {
-  padding: 6px 18px;
-  font-size: 13px;
-  min-width: 80px;
-  white-space: nowrap;
-}
 
 
 
