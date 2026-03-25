@@ -712,18 +712,18 @@ button:disabled,
 @media (max-width: 768px) {
 
   .customer-page{
-    padding: 12px;
+    padding: 10px;
   }
 
   /* Header stack */
   .customer-page .manage-header-row{
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
     gap: 10px;
   }
 
   .customer-page .manage-title{
-    font-size: 25px;
+    font-size: 24x;
     margin-right: 0;
   }
 
@@ -758,16 +758,29 @@ button:disabled,
   .customer-page .table-wrap{
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+        width: 100%;
+
   }
 
   .customer-page .table{
-    min-width: 780px;
+    min-width: 620px;
+    table-layout: auto;
+  }
+    .customer-page .table th,
+  .customer-page .table td {
+    font-size: 12px;
+    padding: 8px;
+    white-space: nowrap;
   }
 
   /* Footer keep single line like department pagination */
   .customer-page .table-footer{
+     width: 100%;
+    box-sizing: border-box;
+    padding: 10px;
     display: flex;
     align-items: center;
+     flex-direction: row;
     justify-content: space-between;
     flex-wrap: nowrap;       /* ✅ force single line */
     gap: 10px;
@@ -777,22 +790,26 @@ button:disabled,
   .customer-page .right-pager{
     display: flex;
     align-items: center;
-    justify-content: center;
+    justify-content: flex-end;
     flex-wrap: nowrap;       /* ✅ force single line */
-    gap: 8px;
+    gap: 6px;
     white-space: nowrap;
   }
 
   .customer-page .pager-btn{
-    padding: 6px 14px;
+    padding: 6px 10x;
     font-size: 12px;
     display: inline-flex;
     align-items: center;
     justify-content: center;
+     min-width: 65px;
   }
 
   .customer-page .page-text{
+      flex: 1;
+    width: auto;
     font-size: 12px;
+    text-align: left;
   }
 
   .customer-page .left-info{
