@@ -624,20 +624,20 @@
 /* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px) {
 
-  /* 🔥 FULL PAGE CONTROL (KEY FIX) */
+  /* 🔥 FULL PAGE CONTROL */
   .product-page {
-     min-height: 100vh;
+    min-height: 100vh;
     display: flex;
     flex-direction: column;
     padding: 8px !important;
   }
 
-  /* 🔥 CARD FLEX STRUCTURE */
+  /* 🔥 CARD STRUCTURE */
   .product-page .card {
-     display: flex;
-      flex-direction: column;
-  height: 100%;
-  overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
   }
 
   /* 🔥 HEADER */
@@ -676,12 +676,12 @@
     font-size: 13px;
   }
 
-  /* 🔥 TABLE AREA (MAIN FIX) */
+  /* 🔥 TABLE AREA */
   .table-wrap {
-    flex: 1;                 /* ✅ takes remaining space */
+    flex: 1;
     overflow-y: auto;
     overflow-x: auto;
-    min-height: 0; 
+    min-height: 0;   /* ✅ IMPORTANT FIX */
   }
 
   .table {
@@ -695,24 +695,46 @@
     font-size: 12px;
   }
 
-  /* 🔥 FOOTER ALWAYS VISIBLE */
+  /* 🔥 FOOTER FIX (LIKE DEPARTMENT) */
   .table-footer {
-    flex-shrink: 0;          /* ✅ prevents hiding */
-    flex-direction: row;
-    padding: 6px !important;
-      position: sticky;   /* 🔥 keeps visible */
-  bottom: 0;
-  background: #f7f2f2;
-  z-index: 5;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    position: sticky;
+    bottom: 0;
+
+    background: #f3f3f3;
+    border-top: 1px solid #e0e0e0;
+
+    padding: 8px 10px !important;
+    z-index: 5;
   }
 
+  /* 🔥 LEFT TEXT FIX (NO CUT) */
+  .left-info {
+    font-size: 13px;
+    font-weight: 600;
+    color: #7a1d1d;
+
+    white-space: nowrap;
+    overflow: visible;        /* ✅ FIX */
+    text-overflow: unset;     /* ✅ FIX */
+  }
+
+  /* 🔥 RIGHT BUTTONS */
   .right-pager {
+    display: flex;
     flex-direction: row;
+    gap: 8px;
   }
 
   .pager-btn {
     flex: 1 1 45%;
     text-align: center;
+    font-size: 12px;
+    padding: 6px 10px;
   }
 
 }

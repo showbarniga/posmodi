@@ -669,7 +669,7 @@
     "customer_name": "vijayvsxs",
     "currency": "GBP",
     "expected_date": "92324-09-12",
-    "status": "send",
+    "status": "expired",
     "status_date": "2026-03-09T04:07:01.686Z",
     "submitted_by": "Current User",
     "rejection_reason": "",
@@ -706,8 +706,16 @@
         "date": "2026-03-09T04:07:01.686Z",
         "user": "Current User",
         "notes": "Quotation send"
+      },
+      {
+        "status": "expired",
+        "date": "2026-03-25",
+        "time": "11:53:47",
+        "reason": "Auto-expired",
+        "notes": "Expired on 2026-03-25 (valid until 2026-03-24)"
       }
-    ]
+    ],
+    "expired_date": "2026-03-25"
   },
   {
     "quotation_id": "QA-0013",
