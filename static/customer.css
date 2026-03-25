@@ -763,26 +763,26 @@ button:disabled,
   }
 
   .customer-page .table{
-    min-width: 620px;
-    table-layout: auto;
+    min-width: 520px !important;
+    table-layout: fixed;
   }
     .customer-page .table th,
   .customer-page .table td {
-    font-size: 12px;
-    padding: 8px;
+    font-size: 11px;
+    padding: 6px 6px;
     white-space: nowrap;
   }
 
   /* Footer keep single line like department pagination */
   .customer-page .table-footer{
-  
-     .table-footer {
+     flex-wrap: nowrap;
+    white-space: nowrap;
     flex-direction: row;
     justify-content: space-between;
     align-items: center;
     gap: 12px;
     padding: 16px 14px;
-  }
+  
   }
 
   .customer-page .right-pager{
