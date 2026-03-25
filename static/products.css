@@ -617,8 +617,12 @@
   }
 }
 
-/* 📱 Tablets & Mobiles (≤768px) */
+
 @media (max-width: 768px) {
+  .table td:nth-child(2) {
+    white-space: normal;   
+  }
+ 
 
   .product-page {
     padding: 12px;
@@ -657,9 +661,23 @@
     overflow-x: auto;
   }
 
+  @media (max-width: 768px) {
   .table {
-    min-width: 650px;
+    min-width: 100%;        /* ✅ full fit */
+    table-layout: fixed;    /* ✅ important */
   }
+  .table-wrap {
+    overflow-x: hidden;   /* ❌ remove horizontal scroll */
+  }
+
+  .table th,
+  .table td {
+    font-size: 12px;
+    padding: 6px 8px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+}
  .table-footer {
     flex-direction: row;            /* 🔥 force row */
   }
@@ -709,6 +727,8 @@
 
  .table-footer {
     font-size: 12px;
+     position: relative;   /* ✅ keep in normal flow */
+    width: 100%;
   }
 
   .pager-btn {
