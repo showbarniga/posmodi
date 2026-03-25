@@ -623,17 +623,24 @@
 /* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px) {
 
+  /* 🔥 FULL PAGE CONTROL (KEY FIX) */
   .product-page {
-      padding: 8px !important;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding: 8px !important;
   }
- .card {
-  padding: 6px !important;
- }
 
- 
+  /* 🔥 CARD FLEX STRUCTURE */
+  .product-page .card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+    padding: 6px !important;
+  }
 
-
-  /* 🔥 HEADER: title + buttons SAME LINE */
+  /* 🔥 HEADER */
   .product-page .manage-header-row {
     flex-direction: column;
     align-items: stretch;
@@ -642,7 +649,7 @@
 
   .product-page .manage-header-right {
     display: flex;
-    flex-direction: row;          /* ✅ SAME LINE */
+    flex-direction: row;
     gap: 10px;
   }
 
@@ -653,47 +660,57 @@
     text-align: center;
   }
 
-  /* Filters: 2 per row */
+  /* 🔥 FILTERS */
   .filters {
     grid-template-columns: repeat(2, 1fr);
-      gap: 6px !important;
-  margin-bottom: 8px !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
   }
 
-  /* Table scroll */
+  .top-controls {
+    gap: 4px;
+  }
+
+  .clear-filter {
+    margin-top: 4px;
+    font-size: 13px;
+  }
+
+  /* 🔥 TABLE AREA (MAIN FIX) */
   .table-wrap {
-    overflow-x: auto;
+    flex: 1;                 /* ✅ takes remaining space */
     overflow-y: auto;
-    max-height:  calc(100vh - 420px);
+    overflow-x: auto;
+    max-height: none;        /* ❌ remove calc */
   }
 
   .table {
     min-width: 650px;
   }
- .table-footer {
-    flex-direction: row;            /* 🔥 force row */
+
+  /* 🔥 TABLE COMPACT */
+  .table thead th,
+  .table tbody td {
+    padding: 5px 6px !important;
+    font-size: 12px;
+  }
+
+  /* 🔥 FOOTER ALWAYS VISIBLE */
+  .table-footer {
+    flex-shrink: 0;          /* ✅ prevents hiding */
+    flex-direction: row;
+    padding: 6px !important;
   }
 
   .right-pager {
-    flex-direction: row;            /* 🔥 force row */
+    flex-direction: row;
   }
-  .top-controls {
-  gap: 4px; 
-  }
- .clear-filter {
-  margin-top: 4px;
-  font-size: 13px;
- }
 
   .pager-btn {
     flex: 1 1 45%;
     text-align: center;
   }
-  .table thead th,
-.table tbody td {
-  padding: 5px 6px !important;
-  font-size: 12px;
-}
+
 }
 
 /* 📱 Small Mobiles (≤520px) */
