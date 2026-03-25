@@ -685,6 +685,7 @@
     
     padding: 8px 10px !important;
     z-index: 5;
+     overflow: hidden; 
   }
 
   /* 🔥 LEFT TEXT FIX (NO CUT) */
@@ -695,6 +696,7 @@
     font-weight: 600;
     color: #7a1d1d;
     line-height: 1;
+       flex: 1;
     
     white-space: nowrap;
     overflow: visible;        /* ✅ FIX */
@@ -707,13 +709,16 @@
     flex-direction: row;
     gap: 8px;
     align-items: center; 
+      flex-wrap: nowrap; 
   }
 
   .pager-btn {
-    flex: 1 1 45%;
+  
     text-align: center;
     font-size: 12px;
     padding: 6px 10px;
+     flex: 0 0 auto;         /* ✅ STOP stretching */
+    min-width: 65px; 
   }
 
 }
