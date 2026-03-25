@@ -306,6 +306,9 @@
 .table-wrap {
   overflow-x: auto;
   border-radius: 10px;
+   max-height: 300px;
+  overflow-y: auto;
+  overflow-x: auto;
 }
 
 .table {
@@ -655,6 +658,7 @@
   /* Table scroll */
   .table-wrap {
     overflow-x: auto;
+    max-height: 250px;
   }
 
   .table {
