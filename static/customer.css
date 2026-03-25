@@ -713,7 +713,6 @@ button:disabled,
 
   .customer-page{
     padding: 12px;
-    overflow-x: hidden;
   }
 
   /* Header stack */
@@ -758,16 +757,11 @@ button:disabled,
   /* Table scroll */
   .customer-page .table-wrap{
     overflow-x: auto;
-    width: 100%;
     -webkit-overflow-scrolling: touch;
   }
-  .customer-page .card{
-  overflow: hidden;   /* ✅ prevent layout break */
-}
 
   .customer-page .table{
-     min-width: 550px;   /* ✅ FIX */
-  table-layout: fixed;
+    min-width: 780px;
   }
 
   /* Footer keep single line like department pagination */
