@@ -6,6 +6,7 @@
   font-family: "Poppins", sans-serif;
   color: #4a1f1a;
   background: #f6f1f1;
+    
 }
 
 /* -----------------------------------------
@@ -625,7 +626,7 @@
 
   /* 🔥 FULL PAGE CONTROL (KEY FIX) */
   .product-page {
-    height: 100vh;
+     min-height: 100vh;
     display: flex;
     flex-direction: column;
     padding: 8px !important;
@@ -633,11 +634,10 @@
 
   /* 🔥 CARD FLEX STRUCTURE */
   .product-page .card {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-    padding: 6px !important;
+     display: flex;
+      flex-direction: column;
+  height: 100%;
+  overflow: hidden;
   }
 
   /* 🔥 HEADER */
@@ -681,7 +681,7 @@
     flex: 1;                 /* ✅ takes remaining space */
     overflow-y: auto;
     overflow-x: auto;
-    max-height: none;        /* ❌ remove calc */
+    min-height: 0; 
   }
 
   .table {
@@ -700,6 +700,10 @@
     flex-shrink: 0;          /* ✅ prevents hiding */
     flex-direction: row;
     padding: 6px !important;
+      position: sticky;   /* 🔥 keeps visible */
+  bottom: 0;
+  background: #f7f2f2;
+  z-index: 5;
   }
 
   .right-pager {
