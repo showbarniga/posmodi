@@ -775,16 +775,14 @@ button:disabled,
 
   /* Footer keep single line like department pagination */
   .customer-page .table-footer{
-     width: 100%;
-    box-sizing: border-box;
-    padding: 10px;
-    display: flex;
-    align-items: center;
-     flex-direction: row;
+  
+     .table-footer {
+    flex-direction: row;
     justify-content: space-between;
-    flex-wrap: nowrap;       /* ✅ force single line */
-    gap: 10px;
-    white-space: nowrap;     /* ✅ prevent wrap */
+    align-items: center;
+    gap: 12px;
+    padding: 16px 14px;
+  }
   }
 
   .customer-page .right-pager{
