@@ -558,61 +558,47 @@
 
   /* ✅ FOOTER ALWAYS VISIBLE */
   .quotation-page .pager-bar{
-    position: relative;   /* ❗ NOT sticky */
+    position: relative;
     margin-top: 6px;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
-      flex-direction: column;   /* 2 lines */
-  gap: 6px;
-
+    flex-wrap: nowrap;
+    gap: 8px;
     background: #fff;
     border-top: 1px solid #ddd;
     padding: 10px;
   }
 
-  .quotation-page .pager-btn{
-     padding: 6px 12px;
-  font-size: 12px;
-  min-width: 70px;
-  border-radius: 6px;}
-
-  .quotation-page .pager-text
-  
-  {font-size: 12px;
-  white-space: nowrap;
-
-  }
   .quotation-page .pager-left{
-    display: flex;              /* ✅ KEY */
-  align-items: center; 
-    font-size: 13px;
-    display: flex;
- flex-direction: column;
- justify-content: center;
-    font-size: 12px;
-font-weight: 600;
-color: #7a1d1d;
-      
-
-    line-height: 1.2;
-    
     flex: 1;
-   white-space: normal;
-    overflow: visible;        /* ✅ FIX */
-    text-overflow: unset;     /* ✅ FIX */
-    overflow: visible;
-    text-overflow: unset;
+    font-size: 12px;
+    text-align: left;
+    font-weight: 600;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
-  /* ✅ LINE 2 → RIGHT SIDE BUTTONS */
-.quotation-page .pager-controls{
-  display: flex;
-  justify-content: flex-end;   /* 🔥 RIGHT ALIGN */
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
+
+  .quotation-page .pager-controls{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .quotation-page .pager-btn{
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 70px;
+    border-radius: 6px;
+  }
+
+  .quotation-page .pager-text{
+    font-size: 12px;
+    white-space: nowrap;
+  }
 }
   /* Small mobiles */
   @media (max-width: 520px){
