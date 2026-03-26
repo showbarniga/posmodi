@@ -713,6 +713,10 @@ button:disabled,
 
   .customer-page{
     padding: 12px;
+      height: 100vh;
+  display: flex;
+  flex-direction: column;
+   overflow: hidden;
   }
 
   /* Header stack */
@@ -767,7 +771,8 @@ button:disabled,
 .customer-page .card {
   display: flex;
   flex-direction: column;
-  height: auto !important;
+  flex: 1;
+  overflow: hidden;
 }
 
 /* ✅ TABLE AREA SHOULD SCROLL, NOT FULL PAGE */
@@ -775,8 +780,7 @@ button:disabled,
   flex: 1;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 50vh;   /* 👈 KEY FIX */
-    -webkit-overflow-scrolling: touch;
+ min-height: 0;
 }
 
 
@@ -798,6 +802,9 @@ button:disabled,
   bottom: 0;
   background: #fff;
   z-index: 5;
+   flex-shrink: 0;
+    padding: 10px;
+  border-top: 1px solid #ddd;
 }
 
 /* 📱 Small Mobiles (≤480px) */
