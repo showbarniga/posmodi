@@ -541,7 +541,7 @@
 
   /* ✅ TABLE SMALL */
   .quotation-page .quotation-table{
-    min-width: 480px !important;
+    min-width: 780px !important;
     font-size: 11px;
   }
 
@@ -555,71 +555,64 @@
     overflow: hidden;
     text-overflow: ellipsis;
   }
+/* 🔥 QUOTATION FOOTER  */
+.quotation-page .pager-bar {
+  flex-shrink: 0;
 
-  /* ✅ FOOTER ALWAYS VISIBLE */
-  .quotation-page .pager-bar{
-    position: relative;   /* ❗ NOT sticky */
-    margin-top: 6px;
-
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-      flex-direction: column;   /* 2 lines */
-  gap: 6px;
-
-    background: #fff;
-    border-top: 1px solid #ddd;
-    padding: 10px;
-  }
-
-  .quotation-page .pager-btn{
-     padding: 6px 12px;
-  font-size: 12px;
-  min-width: 70px;
-  border-radius: 6px;}
-
-  .quotation-page .pager-text
-  
-  {font-size: 12px;
-  white-space: nowrap;
-
-  }
-  .right-pager {
-display: flex;
-    flex-direction: row;
-    align-items: center;
-gap: 8px;
-    align-items: center; 
-    flex-shrink: 0;
-  }
-  .quotation-page .pager-left{
-    display: flex;              /* ✅ KEY */
-  align-items: center; 
-    font-size: 13px;
-    display: flex;
- flex-direction: column;
- justify-content: center;
-    font-size: 12px;
-font-weight: 600;
-color: #7a1d1d;
-      
-
-    line-height: 1.2;
-    
-    flex: 1;
-   white-space: normal;
-    overflow: visible;        /* ✅ FIX */
-    text-overflow: unset;     /* ✅ FIX */
-    overflow: visible;
-    text-overflow: unset;
-  }
-  /* ✅ LINE 2 → RIGHT SIDE BUTTONS */
-.quotation-page .pager-controls{
   display: flex;
-  justify-content: flex-end;   /* 🔥 RIGHT ALIGN */
+  justify-content: space-between;
   align-items: center;
-  gap: 12px;
-  width: 100%;
+
+  flex-wrap: nowrap;
+  gap: 8px;
+
+  position: sticky;
+  bottom: 0;
+
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+
+  padding: 8px 10px;
+  z-index: 5;
+}
+
+/* 🔥 LEFT TEXT (SAME AS PRODUCT) */
+.quotation-page .pager-left {
+  display: flex;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
+
+  flex: 1;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+/* 🔥 RIGHT BUTTONS (ROW) */
+.quotation-page .right-pager {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 🔥 PAGE TEXT */
+.quotation-page .pager-text {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 🔥 BUTTON */
+.quotation-page .pager-btn {
+  font-size: 12px;
+  padding: 6px 10px;
+  text-align: center;
+  min-width: 60px;
 }
 }
   /* Small mobiles */
