@@ -558,46 +558,44 @@
 
   /* ✅ FOOTER ALWAYS VISIBLE */
   .quotation-page .pager-bar{
-    position: relative;   /* ❗ NOT sticky */
+    position: relative;
     margin-top: 6px;
-
     display: flex;
     justify-content: space-between;
     align-items: center;
-      flex-direction: column;   /* 2 lines */
-  gap: 6px;
-
+    flex-direction: row;
+    gap: 8px;
     background: #fff;
     border-top: 1px solid #ddd;
     padding: 10px;
   }
 
-  .quotation-page .pager-btn{
-     padding: 6px 12px;
-  font-size: 12px;
-  min-width: 70px;
-  border-radius: 6px;}
-
-  .quotation-page .pager-text
-  
-  {font-size: 12px;
-  white-space: nowrap;
-
-  }
   .quotation-page .pager-left{
-     width: 100%;
-  font-size: 12px;
-  text-align: left;
-  font-weight: 600;
+    flex: 1;
+    font-size: 12px;
+    text-align: left;
+    font-weight: 600;
   }
-  /* ✅ LINE 2 → RIGHT SIDE BUTTONS */
-.quotation-page .pager-controls{
-  display: flex;
-  justify-content: flex-end;   /* 🔥 RIGHT ALIGN */
-  align-items: center;
-  gap: 12px;
-  width: 100%;
-}
+
+  .quotation-page .pager-controls{
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 8px;
+    flex-shrink: 0;
+  }
+
+  .quotation-page .pager-btn{
+    padding: 6px 12px;
+    font-size: 12px;
+    min-width: 70px;
+    border-radius: 6px;
+  }
+
+  .quotation-page .pager-text{
+    font-size: 12px;
+    white-space: nowrap;
+  }
 }
   /* Small mobiles */
   @media (max-width: 520px){
