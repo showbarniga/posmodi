@@ -818,13 +818,16 @@ button:disabled,
 
   /* 🔥 FOOTER (PERFECT FIX) */
  /* 🔥 MOBILE FRIENDLY FOOTER */
-.customer-page .table-footer {
+ .customer-page .table-footer {
   flex-shrink: 0;
 
   display: flex;
-  flex-direction: column;   /* ✅ stack nicely */
+  flex-direction: row;            /* ✅ single line */
+  justify-content: space-between;
   align-items: center;
-  gap: 6px;
+
+  width: 100%;
+  box-sizing: border-box;
 
   position: sticky;
   bottom: 0;
@@ -832,9 +835,13 @@ button:disabled,
   background: #f3f3f3;
   border-top: 1px solid #e0e0e0;
 
-  padding: 10px;
+  margin-left: -8px;
+  margin-right: -8px;
+
+  padding: 14px 16px;
   z-index: 5;
 }
+
 
   /* 🔥 LEFT TEXT */
   .customer-page .left-info {
@@ -852,6 +859,7 @@ button:disabled,
      justify-content: center;
     gap: 8px;
     flex-wrap: nowrap;
+      white-space: nowrap;
   }
 
   .customer-page .page-text {
