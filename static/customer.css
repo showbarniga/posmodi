@@ -826,7 +826,6 @@ button:disabled,
   .customer-page .left-info{
     font-size: 11px;
     max-width: 55%;
-    overflow: hidden;
     text-overflow: ellipsis;
   }
 
