@@ -727,30 +727,36 @@ button:disabled,
   }
 
   .customer-page .manage-title{
-    font-size: 25px;
+    font-size: 20px;
     margin-right: 0;
-  }
+    margin-bottom: 6px;
+}
 
   /* Search + buttons full width */
   .customer-page .manage-header-right{
     width: 100%;
     flex-direction: column;
     align-items: stretch;
-    gap: 10px;
+    gap: 6px;
   }
 
   .customer-page .mini-search{
     width: 100%;
+      height: 34px; 
   }
 
   .customer-page .mini-search input{
     width: 100%;
+     font-size: 12px;
+
   }
 
   .customer-page .btn-primary,
   .customer-page .btn-secondary{
     width: 100%;
     text-align: center;
+     padding: 6px 10px;
+  font-size: 12px;
   }
   .customer-page .table td {
   max-width: 120px;
@@ -762,9 +768,19 @@ button:disabled,
   /* Filters: 2 per row */
   .customer-page .filters{
     grid-template-columns: repeat(2, 1fr);
-     margin-bottom: 10px;
+      font-size: 12px;
+  margin-bottom: 8px;
+   gap: 6px;
   }
+ .customer-page .filter-group label {
+  font-size: 12px;
+  margin-bottom: 4px;
+}
 
+.customer-page .filter-group select {
+  height: 28px;
+  font-size: 12px;
+}
   
 
  /* ✅ FIX: allow footer to be visible */
