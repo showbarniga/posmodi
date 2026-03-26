@@ -712,7 +712,6 @@ button:disabled,
 @media (max-width: 768px) {
 
   .customer-page{
-    padding: 12px;
       height: 100vh;
   display: flex;
   flex-direction: column;
@@ -763,6 +762,18 @@ button:disabled,
   overflow: hidden;
   text-overflow: ellipsis;
 }
+.customer-page .table td:last-child {
+  overflow: visible;
+  text-overflow: unset;
+  white-space: nowrap;
+  min-width: 120px;
+}
+/* Allow text columns to shrink */
+.customer-page .table td:not(:last-child) {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
 
 
   /* Filters: 2 per row */
@@ -797,8 +808,8 @@ button:disabled,
   overflow-x: auto;
   overflow-y: auto;
  min-height: 0;
-   max-height: calc(100vh - 260px); 
-     padding-bottom: 20px; 
+  
+     padding-bottom: 10px; 
 }
 
 
@@ -819,15 +830,13 @@ button:disabled,
 
 /* ✅ FOOTER ALWAYS VISIBLE */
 .customer-page .table-footer {
-  position: sticky;
-  bottom: 0;
   background: #fff;
   z-index: 5;
    flex-shrink: 0;
   padding: 14px;
   margin-top: 6px;
    border-top: 2px solid #a12828;   /* ✅ strong line */
-  box-shadow: 0 -4px 10px rgba(0,0,0,0.1);  /* ✅ floating effect */
+  box-shadow: 0 -3px 108x rgba(0,0,0,0.1);  /* ✅ floating effect */
 }
 
 /* 📱 Small Mobiles (≤480px) */
