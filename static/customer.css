@@ -760,51 +760,27 @@ button:disabled,
     -webkit-overflow-scrolling: touch;
   }
 
-  .customer-page .table{
-    min-width: 780px;
-  }
+ /* ✅ FIX: allow footer to be visible */
+.customer-page .card {
+  display: flex;
+  flex-direction: column;
+  height: auto !important;
+}
 
-  /* Footer keep single line like department pagination */
-  .customer-page .table-footer{
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    flex-wrap: nowrap;       /* ✅ force single line */
-    gap: 10px;
-    white-space: nowrap;     /* ✅ prevent wrap */
-  }
+/* ✅ TABLE AREA SHOULD SCROLL, NOT FULL PAGE */
+.customer-page .table-wrap {
+  flex: 1;
+  overflow-x: auto;
+  overflow-y: auto;
+  max-height: 60vh;   /* 👈 KEY FIX */
+}
 
-  .customer-page .right-pager{
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    flex-wrap: nowrap;       /* ✅ force single line */
-    gap: 8px;
-    white-space: nowrap;
-  }
-
-  .customer-page .pager-btn{
-    padding: 6px 14px;
-    font-size: 12px;
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
-  }
-
-  .customer-page .page-text{
-    font-size: 12px;
-  }
-
-  .customer-page .left-info{
-    font-size: 12px;
-  }
-
-  /* Modal full width */
-  .customer-page .edit-modal-card.product-edit-modal,
-  .customer-page .delete-modal-card{
-    width: 92%;
-    max-width: 92%;
-  }
+/* ✅ FOOTER ALWAYS VISIBLE */
+.customer-page .table-footer {
+  position: sticky;
+  bottom: 0;
+  background: #fff;
+  z-index: 5;
 }
 
 /* 📱 Small Mobiles (≤480px) */
@@ -885,6 +861,7 @@ button:disabled,
     width: 100%;
     justify-content: space-between;
   }
+}
 }
 
 
