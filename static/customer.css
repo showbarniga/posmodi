@@ -709,208 +709,160 @@ button:disabled,
 }
 
 /* 📱 Tablets & Mobiles (≤768px) */
+/* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px) {
 
-  .customer-page{
-      height: 100vh;
-  display: flex;
-  flex-direction: column;
-   overflow: hidden;
-  }
-
-  /* Header stack */
-  .customer-page .manage-header-row{
+  /* 🔥 FULL PAGE */
+  .customer-page {
+    height: 100vh;
+    display: flex;
     flex-direction: column;
-    align-items: flex-start;
-    gap: 10px;
+    overflow: hidden;
+    padding: 12px;
   }
 
-  .customer-page .manage-title{
-    font-size: 20px;
-    margin-right: 0;
-    margin-bottom: 6px;
-}
-
-  /* Search + buttons full width */
-  .customer-page .manage-header-right{
-    width: 100%;
+  /* 🔥 HEADER */
+  .customer-page .manage-header-row {
+    display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
+    gap: 8px;   /* ✅ GAP between title & buttons */
   }
 
-  .customer-page .mini-search{
-    width: 100%;
-      height: 34px; 
+  .customer-page .manage-title {
+    font-size: 20px;
+    margin-bottom: 4px;
   }
 
-  .customer-page .mini-search input{
-    width: 100%;
-     font-size: 12px;
-
+  /* 🔥 BUTTON ROW (ADD + IMPORT) */
+  .customer-page .manage-header-right {
+    display: flex;
+    flex-direction: row;
+    gap: 10px;   /* ✅ SPACE BETWEEN BUTTONS */
   }
 
   .customer-page .btn-primary,
-  .customer-page .btn-secondary{
-    width: 100%;
+  .customer-page .btn-secondary {
+    flex: 1;
     text-align: center;
-     padding: 6px 10px;
-  font-size: 12px;
-  }
-  .customer-page .table td {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.customer-page .table td:last-child {
-  overflow: visible;
-  text-overflow: unset;
-  white-space: nowrap;
-  min-width: 120px;
-}
-/* Allow text columns to shrink */
-.customer-page .table td:not(:last-child) {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-
-  /* Filters: 2 per row */
-  .customer-page .filters{
-    grid-template-columns: repeat(2, 1fr);
-      font-size: 12px;
-  margin-bottom: 8px;
-   gap: 6px;
-  }
- .customer-page .filter-group label {
-  font-size: 12px;
-  margin-bottom: 4px;
-}
-
-.customer-page .filter-group select {
-  height: 28px;
-  font-size: 12px;
-}
-  
-
- /* ✅ FIX: allow footer to be visible */
-.customer-page .card {
-  display: flex;
-  flex-direction: column;
-  flex: 1;
-  overflow: hidden;
-}
-
-/* ✅ TABLE AREA SHOULD SCROLL, NOT FULL PAGE */
-.customer-page .table-wrap {
-  flex: 1;
-  overflow-x: auto;
-  overflow-y: auto;
- min-height: 0;
-  
-     padding-bottom: 10px; 
-}
-
-
-/* ✅ Reduce full table width */
-.customer-page .table {
-  min-width: 600px !important;   /* before 780px ❌ */
-  font-size: 12px;
-}
-
-/* ✅ Reduce cell spacing */
-.customer-page .table thead th,
-.customer-page .table tbody td {
-  padding: 6px 8px;
-}
-.customer-page .table tbody tr {
-  height: 36px;
-}
-.customer-page .left-info,
-.customer-page .page-text {
-  white-space: nowrap;
-  font-size: 12px;
-}
-.customer-page .right-pager {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  flex-wrap: nowrap;   /* ❌ prevent breaking */
-}
-
-/* ✅ FOOTER ALWAYS VISIBLE */
-.customer-page .table-footer {
-  display: flex;
-  flex-direction: row;              /* ✅ force horizontal */
-  justify-content: space-between;  /* left + right */
-  align-items: center;
-  flex-wrap: nowrap;               /* ❌ no wrapping */
-
-  width: 100%;
-  background: #fff;
-  padding: 10px 12px;
-  border-top: 2px solid #a12828;
-  box-sizing: border-box;
-}
-
-/* 📱 Small Mobiles (≤480px) */
-@media (max-width: 480px) {
-
-  .customer-page{
-    padding: 10px;
-  }
-
-  /* Title smaller + centered */
-  .customer-page .manage-title{
-    font-size: 22px;
-    text-align: center;
-  }
-
-  /* Header controls stacked already */
-  .customer-page .manage-header-right{
-    width: 100%;
-  }
-
-  /* Filters: 1 per row */
-  .customer-page .filters{
-    grid-template-columns: 1fr;
-  }
-
-  /* Table scroll more */
-  .customer-page .table{
-    min-width: 700px;
-  }
-
-  .customer-page .table thead th,
-  .customer-page .table tbody td{
+    padding: 6px 10px;
     font-size: 12px;
+  }
+
+  /* 🔥 SEARCH */
+  .customer-page .mini-search {
+    height: 34px;
+  }
+
+  .customer-page .mini-search input {
+    font-size: 12px;
+  }
+
+  /* 🔥 FILTERS */
+  .customer-page .filters {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 6px;
+    margin-bottom: 8px;
+  }
+
+  .customer-page .filter-group label {
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .customer-page .filter-group select {
+    height: 28px;
+    font-size: 12px;
+  }
+
+  /* 🔥 CARD STRUCTURE */
+  .customer-page .card {
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  /* 🔥 TABLE AREA */
+  .customer-page .table-wrap {
+    flex: 1;
+    overflow-y: auto;
+    overflow-x: auto;
+    min-height: 0;
+    padding-bottom: 10px;
+  }
+
+  /* 🔥 TABLE */
+  .customer-page .table {
+    min-width: 600px;
+    font-size: 12px;
+  }
+
+  .customer-page .table th,
+  .customer-page .table td {
     padding: 6px 8px;
   }
 
-  /* Footer compact but single line */
-  .customer-page .table-footer{
-    gap: 8px;
-    font-size: 12px;
-  }
-
-  .customer-page .left-info{
-    font-size: 11px;
-    max-width: 55%;
+  /* 🔥 TEXT ELLIPSIS ONLY FOR NON-ACTION */
+  .customer-page .table td:not(:last-child) {
+    max-width: 120px;
+    overflow: hidden;
     text-overflow: ellipsis;
   }
 
-  .customer-page .pager-btn{
-    padding: 6px 12px;
-    font-size: 12px;
-    min-width: 70px;
+  .customer-page .table td:last-child {
+    white-space: nowrap;
+    min-width: 120px;
   }
 
-  /* Modal 100% */
-  .customer-page .edit-modal-card.product-edit-modal,
-  .customer-page .delete-modal-card{
-    width: 100%;
-    max-width: 100%;
+  /* 🔥 FOOTER (PERFECT FIX) */
+  .customer-page .table-footer {
+    flex-shrink: 0;
+
+    display: flex;
+    flex-direction: row;
+    justify-content: space-between;
+    align-items: center;
+
+    gap: 8px;
+    flex-wrap: nowrap;
+
+    position: sticky;   /* ✅ STICK LIKE PRODUCT */
+    bottom: 0;
+
+    background: #f3f3f3;
+    border-top: 1px solid #e0e0e0;
+
+    padding: 8px 10px;
+    z-index: 5;
+  }
+
+  /* 🔥 LEFT TEXT */
+  .customer-page .left-info {
+    font-size: 12px;
+    font-weight: 600;
+    color: #7a1d1d;
+    white-space: nowrap;
+  }
+
+  /* 🔥 RIGHT PAGINATION */
+  .customer-page .right-pager {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: nowrap;
+  }
+
+  .customer-page .page-text {
+    font-size: 12px;
+    white-space: nowrap;
+  }
+
+  .customer-page .pager-btn {
+    padding: 5px 10px;
+    font-size: 12px;
+    white-space: nowrap;
   }
 }
 @media (max-width: 360px){
@@ -932,7 +884,7 @@ button:disabled,
     justify-content: space-between;
   }
 }
-}
+
 
 
 
