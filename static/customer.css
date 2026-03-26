@@ -781,11 +781,13 @@ button:disabled,
   .customer-page .manage-header-row {
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;
+      gap: 4px;              /* reduce spacing */
+    margin-bottom: 4px;
   }
 
   .customer-page .manage-title {
-    font-size: 20px;
+    font-size: 18px;
+     margin-bottom: 2px;
   }
 
   .customer-page .manage-header-right {
@@ -796,24 +798,24 @@ button:disabled,
   .customer-page .btn-primary,
   .customer-page .btn-secondary {
     flex: 1;
-    font-size: 12px;
-    padding: 6px;
+    font-size: 11px;
+    padding: 4px 8px;
   }
 
   /* ===== SEARCH ===== */
   .customer-page .mini-search {
-    height: 32px;
+    height: 30px;
   }
 
   .customer-page .mini-search input {
-    font-size: 12px;
+    font-size: 11px;
   }
 
   /* ===== FILTER ===== */
   .customer-page .filters {
     grid-template-columns: 1fr 1fr;
-    gap: 6px;
-    margin-bottom: 6px;
+    gap: 4px;
+    margin-bottom: 4px;
   }
 
   /* ===== CARD ===== */
@@ -902,8 +904,19 @@ button:disabled,
   }
 
   /* Filters: 1 per row */
-  .customer-page .filters {
-    grid-template-columns: 1fr;
+    .customer-page .filters {
+    margin-bottom: 4px;
+    gap: 4px;
+  }
+
+  .customer-page .filter-group label {
+    font-size: 11px;
+    margin-bottom: 2px;
+  }
+
+  .customer-page .filter-group select {
+    height: 26px;
+    font-size: 11px;
   }
 
   /* 🔥 Prev + Next ALWAYS SAME LINE */
