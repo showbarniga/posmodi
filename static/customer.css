@@ -835,21 +835,26 @@ button:disabled,
 
   /* 🔥 REDUCE TABLE SIZE */
   .customer-page .table {
-    min-width: 480px;   /* reduced from 600 */
-    font-size: 11px;
+    min-width: 750px;   /* reduced from 600 */
+    font-size: 12px;
   }
+/* Name + Company fix */
+.customer-page .table td:nth-child(2),
+.customer-page .table td:nth-child(3) {
+  min-width: 140px;
+}
 
+/* Action column */
+.customer-page .table td:last-child {
+  min-width: 120px;
+}
   .customer-page .table th,
   .customer-page .table td {
-    padding: 5px 6px;
+      white-space: nowrap;   /* ✅ no breaking */
+  padding: 6px 10px; 
   }
 
-  /* 🔥 CUT COLUMN WIDTH */
-  .customer-page .table td:not(:last-child) {
-    max-width: 90px;
-    
-    text-overflow: ellipsis;
-  }
+ 
 
   /* ===== FOOTER (FIXED VISIBILITY) ===== */
   .customer-page .table-footer {
