@@ -781,6 +781,7 @@ button:disabled,
   overflow-x: auto;
   overflow-y: auto;
  min-height: 0;
+   max-height: calc(100vh - 260px); 
 }
 
 
@@ -795,6 +796,9 @@ button:disabled,
 .customer-page .table tbody td {
   padding: 6px 8px;
 }
+.customer-page .table tbody tr {
+  height: 36px;
+}
 
 /* ✅ FOOTER ALWAYS VISIBLE */
 .customer-page .table-footer {
@@ -804,7 +808,8 @@ button:disabled,
   z-index: 5;
    flex-shrink: 0;
     padding: 10px;
-  border-top: 1px solid #ddd;
+   border-top: 2px solid #a12828;   /* ✅ strong line */
+  box-shadow: 0 -4px 10px rgba(0,0,0,0.1);  /* ✅ floating effect */
 }
 
 /* 📱 Small Mobiles (≤480px) */
