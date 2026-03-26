@@ -770,10 +770,10 @@ button:disabled,
 
   /* ===== PAGE STRUCTURE ===== */
   .customer-page {
-    height: 100vh;
+    
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    
     padding: 10px;
   }
 
@@ -821,7 +821,7 @@ button:disabled,
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+      min-height: 0;
   }
 
   /* ===== TABLE AREA (IMPORTANT FIX) ===== */
@@ -829,12 +829,11 @@ button:disabled,
     flex: 1;
     overflow-y: auto;
     overflow-x: auto;
-    min-height: 0;
-  }
+       max-height: 300px; }
 
   /* 🔥 REDUCE TABLE SIZE */
   .customer-page .table {
-    min-width: 500px;   /* reduced from 600 */
+    min-width: 480px;   /* reduced from 600 */
     font-size: 11px;
   }
 
@@ -846,7 +845,7 @@ button:disabled,
   /* 🔥 CUT COLUMN WIDTH */
   .customer-page .table td:not(:last-child) {
     max-width: 90px;
-    overflow: hidden;
+    
     text-overflow: ellipsis;
   }
 
@@ -857,7 +856,9 @@ button:disabled,
     justify-content: space-between;
     align-items: center;
 
-    position: sticky;
+    position: relative;
+       margin-top: 6px;
+
     bottom: 0;
 
     background: #ffffff;
@@ -876,7 +877,7 @@ button:disabled,
   }
 
   .customer-page .pager-btn {
-    padding: 4px 8px;
+    padding: 5px 8px;
     font-size: 11px;
     min-width: 55px;
   }
