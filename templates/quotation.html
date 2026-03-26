@@ -78,15 +78,23 @@
       </tbody>
     </table>
   </div>
+<div class="pager-bar">
 
-  <div class="pager-bar">
-    <div class="pager-left" id="showingCount">Showing 0 entries</div>
-    <div class="pager-right">
-      <button class="pager-btn" id="prevBtn">Prev</button>
-      <span class="pager-text">Page <b id="pageNow">1</b> of <b id="pageTotal">1</b></span>
-      <button class="pager-btn" id="nextBtn">Next</button>
-    </div>
+  <div class="pager-left">
+    <span id="showingCount">Showing 0 Entities</span>
   </div>
+
+  <div class="pager-controls">
+    <button class="pager-btn" id="prevBtn" type="button">‹ Prev</button>
+
+    <span class="pager-text">
+      Page <b id="pageNow">1</b> of <b id="pageTotal">1</b>
+    </span>
+
+    <button class="pager-btn" id="nextBtn" type="button">Next ›</button>
+  </div>
+
+</div>
 
 </div>
 {% endblock %}
