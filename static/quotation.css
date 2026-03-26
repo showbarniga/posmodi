@@ -557,38 +557,47 @@
   }
 
   /* ✅ FOOTER ALWAYS VISIBLE */
-.quotation-page .pager-bar{
-  position: relative;
-  margin-top: 6px;
+  .quotation-page .pager-bar{
+    position: relative;   /* ❗ NOT sticky */
+    margin-top: 6px;
 
-  display: flex;
-  flex-direction: column;   /* 🔥 ADD THIS */
-  align-items: center;      /* 🔥 ADD THIS */
-  gap: 8px;                 /* 🔥 ADD THIS */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+      flex-direction: column;   /* 2 lines */
+  gap: 6px;
 
-  background: #f5f5f5;      /* 🔥 IMPROVE UI */
-  border-top: 2px solid #dcdcdc; /* 🔥 STRONG BORDER */
-  border-radius: 12px;      /* 🔥 NICE LOOK */
-  padding: 10px;
-}
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 10px;
+  }
+
   .quotation-page .pager-btn{
-    font-size: 11px;
-    padding: 5px 8px;
-    min-width: 70px;
-  }
-    .pager-controls {
-    justify-content: center;
-    width: 100%;
-    gap: 10px;
-  }
+     padding: 6px 12px;
+  font-size: 12px;
+  min-width: 70px;
+  border-radius: 6px;}
 
-  .quotation-page .pager-text,
+  .quotation-page .pager-text
+  
+  {font-size: 12px;
+  white-space: nowrap;
+
+  }
   .quotation-page .pager-left{
-      width: 100%;
-  text-align: center;
-  font-size: 11px;
+     width: 100%;
+  font-size: 12px;
+  text-align: left;
   font-weight: 600;
   }
+  /* ✅ LINE 2 → RIGHT SIDE BUTTONS */
+.quotation-page .pager-controls{
+  display: flex;
+  justify-content: flex-end;   /* 🔥 RIGHT ALIGN */
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+}
 }
   /* Small mobiles */
   @media (max-width: 520px){
