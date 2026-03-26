@@ -748,17 +748,20 @@ button:disabled,
     width: 100%;
     text-align: center;
   }
+  .customer-page .table td {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
 
   /* Filters: 2 per row */
   .customer-page .filters{
     grid-template-columns: repeat(2, 1fr);
+     margin-bottom: 10px;
   }
 
-  /* Table scroll */
-  .customer-page .table-wrap{
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
+  
 
  /* ✅ FIX: allow footer to be visible */
 .customer-page .card {
@@ -772,7 +775,21 @@ button:disabled,
   flex: 1;
   overflow-x: auto;
   overflow-y: auto;
-  max-height: 60vh;   /* 👈 KEY FIX */
+  max-height: 50vh;   /* 👈 KEY FIX */
+    -webkit-overflow-scrolling: touch;
+}
+
+
+/* ✅ Reduce full table width */
+.customer-page .table {
+  min-width: 600px !important;   /* before 780px ❌ */
+  font-size: 12px;
+}
+
+/* ✅ Reduce cell spacing */
+.customer-page .table thead th,
+.customer-page .table tbody td {
+  padding: 6px 8px;
 }
 
 /* ✅ FOOTER ALWAYS VISIBLE */
