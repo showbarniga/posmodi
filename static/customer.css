@@ -1,11 +1,10 @@
 
-
-/* ================================
+  /* ================================
    CUSTOMER MASTER PAGE
 ================================ */
 .customer-page {
   padding: 20px;
-  font-family: "Poppins", sans-serif;
+  font-family: \"Poppins\", sans-serif;
   color: #4a1f1a;
   background: #f6f1f1;
 }
@@ -56,13 +55,13 @@
 }
 
 .success-notification::before {
-  content: "✓";
+  content: \"✓\";
   font-size: 18px;
   font-weight: bold;
 }
 
 .error-notification::before {
-  content: "✕";
+  content: \"✕\";
   font-size: 18px;
   font-weight: bold;
 }
@@ -485,7 +484,7 @@
   padding: 10px 22px;
   border-radius: 18px;
   font-weight: 600;
-  font-family: "Poppins", sans-serif;
+  font-family: \"Poppins\", sans-serif;
   display: flex;
   align-items: center;
   gap: 8px;
@@ -766,11 +765,12 @@ button:disabled,
   }
 }
 
-/* 📱 Tablets & Mobiles (≤768px) */
-/* 📱 Tablets & Mobiles (≤768px) */
+/* 📱 Tablets & Mobiles (≤768px) 
+   🔧 MAIN FIX AREA - FOOTER VISIBILITY
+*/
 @media (max-width: 768px) {
 
-  /* 🔥 FULL PAGE */
+  /* 🔥 FULL PAGE - Constrain height to viewport */
   .customer-page {
     height: 100vh;
     display: flex;
@@ -784,7 +784,8 @@ button:disabled,
     display: flex;
     flex-direction: column;
     align-items: stretch;
-    gap: 8px;   /* ✅ GAP between title & buttons */
+    gap: 8px;
+    flex-shrink: 0;  /* 🔧 FIX: Prevent header from shrinking */
   }
 
   .customer-page .manage-title {
@@ -796,7 +797,7 @@ button:disabled,
   .customer-page .manage-header-right {
     display: flex;
     flex-direction: row;
-    gap: 10px;   /* ✅ SPACE BETWEEN BUTTONS */
+    gap: 10px;
   }
 
   .customer-page .btn-primary,
@@ -834,15 +835,24 @@ button:disabled,
     font-size: 12px;
   }
 
-  /* 🔥 CARD STRUCTURE */
+  /* 🔧 FIX #1: CARD STRUCTURE 
+     - Make card a flex container that takes remaining space
+     - This ensures footer is always visible at bottom
+  */
   .customer-page .card {
     display: flex;
     flex-direction: column;
     flex: 1;
-    overflow: hidden;
+    /* 🔧 CRITICAL FIX: Changed from overflow: hidden to overflow: visible */
+    /* overflow: hidden breaks sticky positioning and can hide footer */
+    overflow: visible;
+    min-height: 0;  /* Important for flex children */
   }
 
-  /* 🔥 TABLE AREA */
+  /* 🔧 FIX #2: TABLE AREA
+     - Make table-wrap the scrolling area
+     - It takes all available space between filters and footer
+  */
   .customer-page .table-wrap {
     flex: 1;
     overflow-y: auto;
@@ -874,17 +884,23 @@ button:disabled,
     min-width: 120px;
   }
 
-  /* 🔥 FOOTER - MOBILE FIX */
+  /* 🔧 FIX #3: FOOTER - MOBILE FIX
+     ⚠️ MAIN BUG WAS HERE: Removed position: sticky which doesn't work with overflow parent
+     Now footer is a regular flex item that stays at bottom
+  */
   .customer-page .table-footer {
+    /* 🔧 CRITICAL: flex-shrink: 0 prevents footer from being compressed */
     flex-shrink: 0;
+    
     display: flex;
-    justify-content: space-between;
+    justify-content: space-between;  /* Text left, buttons right */
     align-items: center;
     flex-wrap: nowrap;
     gap: 8px;
     
-    position: sticky;
-    bottom: 0;
+    /* 🔧 REMOVED: position: sticky; bottom: 0; */
+    /* Sticky doesn't work when parent has overflow: hidden */
+    /* Instead, we use flexbox to keep it at bottom */
     
     background: #f3f3f3;
     border-top: 1px solid #e0e0e0;
@@ -894,24 +910,24 @@ button:disabled,
     z-index: 5;
   }
 
-  /* LEFT INFO */
+  /* 🔧 FIX #4: LEFT INFO - Text stays on left with proper spacing */
   .customer-page .left-info {
     font-size: 12px;
     font-weight: 600;
     color: #7a1d1d;
-    flex: 1;
+    flex: 1;  /* Takes available space, pushing buttons to right */
     white-space: nowrap;
     overflow: visible;
     text-overflow: unset;
   }
 
-  /* RIGHT PAGER */
+  /* 🔧 FIX #5: RIGHT PAGER - Buttons stay on right */
   .customer-page .right-pager {
     display: flex;
     flex-direction: row;
     align-items: center;
     gap: 8px;
-    flex-shrink: 0;
+    flex-shrink: 0;  /* Prevents buttons from shrinking */
   }
 
   .customer-page .page-text {
@@ -933,6 +949,7 @@ button:disabled,
     min-width: 70px;
   }
 }
+
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px) {
   .customer-page .manage-title {
@@ -1001,8 +1018,3 @@ button:disabled,
     font-size: 11px;
   }
 }
-
-
-
-
-
