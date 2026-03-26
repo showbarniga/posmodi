@@ -708,163 +708,54 @@ button:disabled,
   }
 }
 
-/* 📱 Tablets & Mobiles (≤768px) */
-/* 📱 Tablets & Mobiles (≤768px) */
+/* 📱 FORCE DESKTOP-LIKE FOOTER IN MOBILE */
 @media (max-width: 768px) {
 
-  /* 🔥 FULL PAGE */
-  .customer-page {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 12px;
-  }
-
-  /* 🔥 HEADER */
-  .customer-page .manage-header-row {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;   /* ✅ GAP between title & buttons */
-  }
-
-  .customer-page .manage-title {
-    font-size: 20px;
-    margin-bottom: 4px;
-  }
-
-  /* 🔥 BUTTON ROW (ADD + IMPORT) */
-  .customer-page .manage-header-right {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;   /* ✅ SPACE BETWEEN BUTTONS */
-  }
-
-  .customer-page .btn-primary,
-  .customer-page .btn-secondary {
-    flex: 1;
-    text-align: center;
-    padding: 6px 10px;
-    font-size: 12px;
-  }
-
-  /* 🔥 SEARCH */
-  .customer-page .mini-search {
-    height: 34px;
-  }
-
-  .customer-page .mini-search input {
-    font-size: 12px;
-  }
-
-  /* 🔥 FILTERS */
-  .customer-page .filters {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-
-  .customer-page .filter-group label {
-    font-size: 12px;
-    margin-bottom: 4px;
-  }
-
-  .customer-page .filter-group select {
-    height: 28px;
-    font-size: 12px;
-  }
-
-  /* 🔥 CARD STRUCTURE */
-  .customer-page .card {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    overflow: hidden;
-  }
-
-  /* 🔥 TABLE AREA */
-  .customer-page .table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-    min-height: 0;
-    padding-bottom: 10px;
-  }
-
-  /* 🔥 TABLE */
-  .customer-page .table {
-    min-width: 600px;
-    font-size: 12px;
-  }
-
-  .customer-page .table th,
-  .customer-page .table td {
-    padding: 6px 8px;
-  }
-
-  /* 🔥 TEXT ELLIPSIS ONLY FOR NON-ACTION */
-  .customer-page .table td:not(:last-child) {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-
-  .customer-page .table td:last-child {
-    white-space: nowrap;
-    min-width: 120px;
-  }
-
-  /* 🔥 FOOTER (PERFECT FIX) */
   .customer-page .table-footer {
-    flex-shrink: 0;
-
     display: flex;
-    flex-direction: row;
+    flex-direction: row !important;      /* ✅ force row */
     justify-content: space-between;
     align-items: center;
 
-    gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap !important;        /* ❌ no wrap */
+    gap: 10px;
 
-    position: sticky;   /* ✅ STICK LIKE PRODUCT */
-    bottom: 0;
+    white-space: nowrap;                /* ❌ prevent break */
 
-    background: #f3f3f3;
-    border-top: 1px solid #e0e0e0;
-
-    padding: 8px 10px;
-    z-index: 5;
+    overflow-x: auto;                   /* ✅ safety scroll */
   }
 
-  /* 🔥 LEFT TEXT */
+  /* LEFT TEXT */
   .customer-page .left-info {
-    font-size: 12px;
-    font-weight: 600;
-    color: #7a1d1d;
     white-space: nowrap;
+    font-size: 12px;
+    flex-shrink: 0;
   }
 
-  /* 🔥 RIGHT PAGINATION */
+  /* RIGHT SIDE */
   .customer-page .right-pager {
     display: flex;
+    flex-direction: row !important;
     align-items: center;
     gap: 8px;
-    flex-wrap: nowrap;
+    flex-wrap: nowrap !important;
+    flex-shrink: 0;
   }
 
+  /* PAGE TEXT */
   .customer-page .page-text {
-    font-size: 12px;
     white-space: nowrap;
+    font-size: 12px;
   }
 
+  /* BUTTONS */
   .customer-page .pager-btn {
-    padding: 5px 10px;
+    padding: 6px 12px;
     font-size: 12px;
     white-space: nowrap;
   }
 }
+
 @media (max-width: 360px){
   .customer-page .table-footer{
     flex-direction: column;

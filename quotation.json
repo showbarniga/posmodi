@@ -728,7 +728,7 @@
     "customer_name": "vijayvsxss",
     "currency": "IND",
     "expected_date": "2026-03-13",
-    "status": "send",
+    "status": "expired",
     "status_date": "2026-03-10T04:47:33.992Z",
     "submitted_by": "Current User",
     "rejection_reason": "",
@@ -765,8 +765,16 @@
         "date": "2026-03-10T04:47:33.992Z",
         "user": "Current User",
         "notes": "Quotation send"
+      },
+      {
+        "status": "expired",
+        "date": "2026-03-26",
+        "time": "12:56:28",
+        "reason": "Auto-expired",
+        "notes": "Expired on 2026-03-26 (valid until 2026-03-25)"
       }
-    ]
+    ],
+    "expired_date": "2026-03-26"
   },
   {
     "quotation_id": "QA-0014",
@@ -779,7 +787,7 @@
     "customer_name": "vijbbxss",
     "currency": "SGD",
     "expected_date": "2026-03-20",
-    "status": "send",
+    "status": "expired",
     "status_date": "2026-03-10T07:02:09.571Z",
     "submitted_by": "Current User",
     "rejection_reason": "",
@@ -816,8 +824,16 @@
         "date": "2026-03-10T07:02:09.571Z",
         "user": "Current User",
         "notes": "Quotation send"
+      },
+      {
+        "status": "expired",
+        "date": "2026-03-26",
+        "time": "12:56:28",
+        "reason": "Auto-expired",
+        "notes": "Expired on 2026-03-26 (valid until 2026-03-25)"
       }
-    ]
+    ],
+    "expired_date": "2026-03-26"
   },
   {
     "quotation_id": "QA-0015",
