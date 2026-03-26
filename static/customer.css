@@ -765,256 +765,281 @@ button:disabled,
   }
 }
 
-/* 📱 Tablets & Mobiles (≤768px) 
-   🔧 MAIN FIX AREA - FOOTER VISIBILITY
-*/
+/* ========================================
+   🔧 MOBILE FOOTER FIX - AGGRESSIVE VERSION
+   
+   Apply this fix to your customer.css file
+   Replace the @media (max-width: 768px) section
+======================================== */
+
+/* 📱 MOBILE FIX (≤768px) - FOOTER VISIBILITY */
 @media (max-width: 768px) {
 
-  /* 🔥 FULL PAGE - Constrain height to viewport */
+  /* 🔥 PAGE CONTAINER - Full height constraint */
   .customer-page {
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    padding: 12px;
+    height: 100vh !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    padding: 12px !important;
   }
 
-  /* 🔥 HEADER */
+  /* 🔥 HEADER - Prevent shrinking */
   .customer-page .manage-header-row {
-    display: flex;
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-    flex-shrink: 0;  /* 🔧 FIX: Prevent header from shrinking */
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;
+    margin-bottom: 10px !important;
   }
 
   .customer-page .manage-title {
-    font-size: 20px;
-    margin-bottom: 4px;
+    font-size: 20px !important;
+    margin-bottom: 4px !important;
   }
 
-  /* 🔥 BUTTON ROW (ADD + IMPORT) */
+  /* 🔥 BUTTON ROW */
   .customer-page .manage-header-right {
-    display: flex;
-    flex-direction: row;
-    gap: 10px;
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10px !important;
   }
 
   .customer-page .btn-primary,
   .customer-page .btn-secondary {
-    flex: 1;
-    text-align: center;
-    padding: 6px 10px;
-    font-size: 12px;
+    flex: 1 !important;
+    text-align: center !important;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
   }
 
-  /* 🔥 SEARCH */
+  /* 🔥 SEARCH BAR */
+  .customer-page .top-controls {
+    flex-shrink: 0 !important;
+  }
+
   .customer-page .mini-search {
-    height: 34px;
+    height: 34px !important;
   }
 
   .customer-page .mini-search input {
-    font-size: 12px;
+    font-size: 12px !important;
   }
 
   /* 🔥 FILTERS */
   .customer-page .filters {
-    display: grid;
-    grid-template-columns: repeat(2, 1fr);
-    gap: 6px;
-    margin-bottom: 8px;
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 6px !important;
+    margin-bottom: 8px !important;
+    flex-shrink: 0 !important;
   }
 
   .customer-page .filter-group label {
-    font-size: 12px;
-    margin-bottom: 4px;
+    font-size: 12px !important;
+    margin-bottom: 4px !important;
   }
 
   .customer-page .filter-group select {
-    height: 28px;
-    font-size: 12px;
+    height: 28px !important;
+    font-size: 12px !important;
   }
 
-  /* 🔧 FIX #1: CARD STRUCTURE 
-     - Make card a flex container that takes remaining space
-     - This ensures footer is always visible at bottom
+  /* 🔧 CRITICAL FIX #1: CARD STRUCTURE 
+     Remove overflow:hidden, add visible
   */
   .customer-page .card {
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    /* 🔧 CRITICAL FIX: Changed from overflow: hidden to overflow: visible */
-    /* overflow: hidden breaks sticky positioning and can hide footer */
-    overflow: visible;
-    min-height: 0;  /* Important for flex children */
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    overflow: visible !important;  /* ✅ CRITICAL: Changed from hidden */
+    min-height: 0 !important;
+    padding: 8px !important;
   }
 
-  /* 🔧 FIX #2: TABLE AREA
-     - Make table-wrap the scrolling area
-     - It takes all available space between filters and footer
+  /* 🔧 CRITICAL FIX #2: TABLE AREA 
+     This area scrolls, not the footer
   */
   .customer-page .table-wrap {
-    flex: 1;
-    overflow-y: auto;
-    overflow-x: auto;
-    min-height: 0;
-    padding-bottom: 10px;
+    flex: 1 !important;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+    min-height: 0 !important;
+    padding-bottom: 10px !important;
+    /* Add WebKit scrolling for smoother mobile experience */
+    -webkit-overflow-scrolling: touch !important;
   }
 
   /* 🔥 TABLE */
   .customer-page .table {
-    min-width: 600px;
-    font-size: 12px;
+    min-width: 600px !important;
+    font-size: 12px !important;
   }
 
   .customer-page .table th,
   .customer-page .table td {
-    padding: 6px 8px;
+    padding: 6px 8px !important;
   }
 
-  /* 🔥 TEXT ELLIPSIS ONLY FOR NON-ACTION */
+  /* Text ellipsis for long content */
   .customer-page .table td:not(:last-child) {
-    max-width: 120px;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    max-width: 120px !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
   }
 
   .customer-page .table td:last-child {
-    white-space: nowrap;
-    min-width: 120px;
+    white-space: nowrap !important;
+    min-width: 120px !important;
   }
 
-  /* 🔧 FIX #3: FOOTER - MOBILE FIX
-     ⚠️ MAIN BUG WAS HERE: Removed position: sticky which doesn't work with overflow parent
-     Now footer is a regular flex item that stays at bottom
+  /* 🔧 CRITICAL FIX #3: FOOTER - MAIN BUG FIX
+     ⚠️ This is where the bug was!
+     - Removed position: sticky (doesn't work with overflow parent)
+     - Using pure flexbox layout instead
+     - Footer stays at bottom with flex-shrink: 0
   */
   .customer-page .table-footer {
-    /* 🔧 CRITICAL: flex-shrink: 0 prevents footer from being compressed */
-    flex-shrink: 0;
+    /* ✅ CRITICAL: Prevent footer from shrinking */
+    flex-shrink: 0 !important;
     
-    display: flex;
-    justify-content: space-between;  /* Text left, buttons right */
-    align-items: center;
-    flex-wrap: nowrap;
-    gap: 8px;
+    /* ✅ Layout: Text left, buttons right, space middle */
+    display: flex !important;
+    justify-content: space-between !important;
+    align-items: center !important;
+    flex-wrap: nowrap !important;
+    gap: 8px !important;
     
-    /* 🔧 REMOVED: position: sticky; bottom: 0; */
-    /* Sticky doesn't work when parent has overflow: hidden */
-    /* Instead, we use flexbox to keep it at bottom */
+    /* ✅ REMOVED position: sticky - it was causing the bug! */
+    /* Using flexbox keeps footer at bottom automatically */
     
-    background: #f3f3f3;
-    border-top: 1px solid #e0e0e0;
+    /* ✅ Visual styling */
+    background: #f3f3f3 !important;
+    border-top: 1px solid #e0e0e0 !important;
+    padding: 8px 10px !important;
+    margin: 0 !important;
+    margin-top: 8px !important;
+    z-index: 5 !important;
     
-    padding: 8px 10px;
-    margin: 0;
-    z-index: 5;
+    /* ✅ Ensure visibility */
+    visibility: visible !important;
+    opacity: 1 !important;
+    position: relative !important;  /* Override any sticky/fixed */
   }
 
-  /* 🔧 FIX #4: LEFT INFO - Text stays on left with proper spacing */
+  /* 🔧 FIX #4: LEFT INFO (Text) - Always on LEFT */
   .customer-page .left-info {
-    font-size: 12px;
-    font-weight: 600;
-    color: #7a1d1d;
-    flex: 1;  /* Takes available space, pushing buttons to right */
-    white-space: nowrap;
-    overflow: visible;
-    text-overflow: unset;
+    font-size: 12px !important;
+    font-weight: 600 !important;
+    color: #7a1d1d !important;
+    flex: 1 !important;  /* ✅ Takes space, pushes buttons right */
+    white-space: nowrap !important;
+    overflow: visible !important;
+    text-overflow: unset !important;
+    text-align: left !important;
   }
 
-  /* 🔧 FIX #5: RIGHT PAGER - Buttons stay on right */
+  /* 🔧 FIX #5: RIGHT PAGER (Buttons) - Always on RIGHT */
   .customer-page .right-pager {
-    display: flex;
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    flex-shrink: 0;  /* Prevents buttons from shrinking */
+    display: flex !important;
+    flex-direction: row !important;  /* ✅ Keep horizontal */
+    align-items: center !important;
+    gap: 8px !important;
+    flex-shrink: 0 !important;  /* ✅ Buttons don't shrink */
+    flex-wrap: nowrap !important;
   }
 
   .customer-page .page-text {
-    font-size: 12px;
-    white-space: nowrap;
+    font-size: 12px !important;
+    white-space: nowrap !important;
+    color: #7a1d1d !important;
   }
 
   .customer-page .pager-btn {
-    padding: 6px 10px;
-    font-size: 12px;
-    text-align: center;
-    border-radius: 4px;
-    background: linear-gradient(#a12828, #821f1f);
-    border: none;
-    color: white;
-    cursor: pointer;
-    box-shadow: 0 4px 0 #6d1717;
-    transition: 0.25s ease;
-    min-width: 70px;
+    padding: 6px 10px !important;
+    font-size: 12px !important;
+    text-align: center !important;
+    border-radius: 4px !important;
+    background: linear-gradient(#a12828, #821f1f) !important;
+    border: none !important;
+    color: white !important;
+    cursor: pointer !important;
+    box-shadow: 0 4px 0 #6d1717 !important;
+    transition: 0.25s ease !important;
+    min-width: 70px !important;
+    white-space: nowrap !important;
+  }
+
+  .customer-page .pager-btn:hover:not(:disabled) {
+    transform: translateY(-2px) !important;
+  }
+
+  .customer-page .pager-btn:disabled {
+    opacity: 0.5 !important;
   }
 }
 
-/* 📱 Small Mobiles (≤520px) */
+/* 📱 EXTRA SMALL MOBILES (≤520px) */
 @media (max-width: 520px) {
+  
   .customer-page .manage-title {
-    font-size: 22px;
-    text-align: center;
+    font-size: 18px !important;
+    text-align: center !important;
   }
 
-  /* 🔥 FORCE SAME LINE (NO STACKING) */
+  /* Keep buttons on same line */
   .customer-page .manage-header-right {
-    flex-direction: row;
-    gap: 8px;
+    flex-direction: row !important;
+    gap: 8px !important;
   }
 
   .customer-page .btn-primary,
   .customer-page .btn-secondary {
-    flex: 1 1 50%;
-    font-size: 12px;
+    flex: 1 1 50% !important;
+    font-size: 11px !important;
+    padding: 5px 8px !important;
   }
 
-  /* Filters: 1 per row */
+  /* Filters: 1 per row on small screens */
   .customer-page .filters {
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr !important;
   }
 
-  /* 🔥 Prev + Next ALWAYS SAME LINE */
+  /* 🔥 FOOTER - Keep same line for Prev/Next */
   .customer-page .right-pager {
-    flex-direction: row;
-    gap: 10px;
+    flex-direction: row !important;
+    gap: 6px !important;
+    flex-wrap: nowrap !important;
   }
 
   .customer-page .table-footer {
-    font-size: 12px;
+    font-size: 11px !important;
     padding: 6px 8px !important;
-    gap: 6px;
-  }
-
-  .customer-page .pager-btn {
-    padding: 6px 18px;
-    font-size: 12px;
-  }
-
-  /* Modal full width */
-  .customer-page .edit-modal-card.product-edit-modal {
-    width: 100%;
-    max-width: 100%;
+    gap: 6px !important;
   }
 
   .customer-page .left-info {
-    font-size: 11px;
-    flex: 1;
-    min-width: 0;
-  }
-
-  .customer-page .right-pager {
-    gap: 6px;
-    flex-shrink: 0;
+    font-size: 11px !important;
+    flex: 1 !important;
+    min-width: 0 !important;
   }
 
   .customer-page .pager-btn {
-    padding: 5px 10px;
-    font-size: 11px;
-    min-width: 60px;
+    padding: 5px 8px !important;
+    font-size: 11px !important;
+    min-width: 60px !important;
   }
 
   .customer-page .page-text {
-    font-size: 11px;
+    font-size: 11px !important;
+  }
+
+  /* Modal full width on small screens */
+  .customer-page .edit-modal-card.product-edit-modal {
+    width: 100% !important;
+    max-width: 100% !important;
+    margin: 10px !important;
   }
 }
+
