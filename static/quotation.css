@@ -455,68 +455,94 @@
   
   /* Tablets & mobiles */
   @media (max-width: 768px){
-    .quotation-page {
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
-}
-    .quotation-page .quotation-table {
-  min-width: 600px !important;   /* before 900px ❌ */
-  font-size: 12px;
-}
 
-    .quotation-page .table-wrapper {
-  display: flex;
-  flex: 1;
-  flex-direction: column;
-  overflow: hidden;   /* ✅ container should not scroll */
-}
-
-
-    .quotation-header{
-      flex-direction: column;
-      align-items: stretch;
-      gap: 6px;
-    }
-  
-    .quotation-header-right{
-      display:flex;
-      flex-direction: row;
-      gap: 10px;
-    }
-  
-    .btn-primary{ flex: 1 1 50%; text-align:center; }
-  
-    .filter-row{ grid-template-columns: 1fr; }
-   .quotation-page .quotation-table {
-  flex: 1;
-  overflow: auto;     /* ✅ ONLY table scrolls */
-  min-height: 0;      /* ✅ CRITICAL FIX */
-}
-.quotation-page .quotation-table th,
-.quotation-page .quotation-table td {
-  padding: 6px 8px;
-}
-.quotation-page .quotation-table td {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.quotation-page .pager-bar {
-  position: sticky;
-  bottom: 0;
-  background: #fff;
-  z-index: 5;
-  flex-shrink: 0;
-  padding: 10px;
-}
-  
-    
-  
-    .pager-bar{ flex-direction: row; }
+  /* ✅ REMOVE HEIGHT LOCK */
+  .quotation-page {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
   }
-  
+
+  /* ✅ HEADER */
+  .quotation-header{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .quotation-header-right{
+    display:flex;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .btn-primary{
+    flex: 1;
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  /* ✅ FILTER */
+  .filter-row{
+    grid-template-columns: 1fr;
+  }
+
+  /* ✅ TABLE CONTAINER (IMPORTANT) */
+  .quotation-page .table-wrapper{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ✅ SCROLL ONLY HERE */
+  .quotation-page .table-wrapper{
+    overflow-y: auto;
+    overflow-x: auto;
+    max-height: 300px;   /* 🔥 KEY FIX */
+  }
+
+  /* ✅ TABLE SMALL */
+  .quotation-page .quotation-table{
+    min-width: 500px;
+    font-size: 11px;
+  }
+
+  .quotation-page .quotation-table th,
+  .quotation-page .quotation-table td{
+    padding: 5px 6px;
+  }
+
+  .quotation-page .quotation-table td{
+    max-width: 100px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  /* ✅ FOOTER ALWAYS VISIBLE */
+  .quotation-page .pager-bar{
+    position: relative;   /* ❗ NOT sticky */
+    margin-top: 6px;
+
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    background: #fff;
+    border-top: 1px solid #ddd;
+    padding: 8px;
+  }
+
+  .quotation-page .pager-btn{
+    font-size: 11px;
+    padding: 5px 8px;
+  }
+
+  .quotation-page .pager-text,
+  .quotation-page .pager-left{
+    font-size: 11px;
+  }
+}
   /* Small mobiles */
   @media (max-width: 520px){
     .quotation-title{ font-size: 22px; text-align:center; }
