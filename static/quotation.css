@@ -467,19 +467,28 @@
   .quotation-header{
     flex-direction: column;
     align-items: stretch;
-    gap: 6px;
-  }
+    gap: 4px;
+  margin-bottom: 4px;}
+  .quotation-title {
+  font-size: 18px;
+  margin-bottom: 2px;
+}
+
+.quotation-subtitle {
+  font-size: 11px;
+}
+
 
   .quotation-header-right{
     display:flex;
     flex-direction: row;
-    gap: 8px;
+    gap: 6px;
   }
 
   .btn-primary{
     flex: 1;
-    font-size: 12px;
-    padding: 6px;
+    font-size: 11px;
+    padding: 4px 8px;
   }
 
   /* ✅ FILTER */
@@ -499,12 +508,40 @@
   .quotation-page .table-wrapper{
     overflow-y: auto;
     overflow-x: auto;
-    max-height: 300px;   /* 🔥 KEY FIX */
+    max-height: 260px;   /* 🔥 KEY FIX */
   }
+  /* =========================
+   🔥 SEARCH + FILTER COMPACT
+========================= */
+.mini-search {
+  height: 30px;
+  font-size: 11px;
+}
+
+.clear-filter {
+  font-size: 12px;
+  margin-top: 4px;
+}
+
+.filter-row {
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.filter-item label {
+  font-size: 11px;
+  margin-bottom: 2px;
+}
+
+.filter-item select {
+  height: 26px;
+  font-size: 11px;
+}
+
 
   /* ✅ TABLE SMALL */
   .quotation-page .quotation-table{
-    min-width: 500px;
+    min-width: 480px !important;
     font-size: 11px;
   }
 
@@ -514,7 +551,7 @@
   }
 
   .quotation-page .quotation-table td{
-    max-width: 100px;
+    max-width: 90px;
     overflow: hidden;
     text-overflow: ellipsis;
   }
@@ -530,7 +567,7 @@
 
     background: #fff;
     border-top: 1px solid #ddd;
-    padding: 8px;
+    padding: 6px;
   }
 
   .quotation-page .pager-btn{
