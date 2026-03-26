@@ -827,16 +827,31 @@ button:disabled,
 .customer-page .table tbody tr {
   height: 36px;
 }
+.customer-page .left-info,
+.customer-page .page-text {
+  white-space: nowrap;
+  font-size: 12px;
+}
+.customer-page .right-pager {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;   /* ❌ prevent breaking */
+}
 
 /* ✅ FOOTER ALWAYS VISIBLE */
 .customer-page .table-footer {
+  display: flex;
+  flex-direction: row;              /* ✅ force horizontal */
+  justify-content: space-between;  /* left + right */
+  align-items: center;
+  flex-wrap: nowrap;               /* ❌ no wrapping */
+
+  width: 100%;
   background: #fff;
-  z-index: 5;
-   flex-shrink: 0;
-  padding: 14px;
-  margin-top: 6px;
-   border-top: 2px solid #a12828;   /* ✅ strong line */
-  box-shadow: 0 -3px 108x rgba(0,0,0,0.1);  /* ✅ floating effect */
+  padding: 10px 12px;
+  border-top: 2px solid #a12828;
+  box-sizing: border-box;
 }
 
 /* 📱 Small Mobiles (≤480px) */
