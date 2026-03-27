@@ -853,22 +853,31 @@
   .quick-billing-page{ padding: 8px; }
 
   .quick-billing-header{
-    flex-direction: column;
-    align-items: stretch;
-    gap: 6px;
-    margin-bottom: 6px;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .quick-billing-header h2{
-    font-size: 20px;
+    font-size: 18px;
     margin: 0;
     text-align: left;
+    flex: 1;
   }
 
   .qb-header-actions{
     justify-content: flex-end;
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
     gap: 6px;
+    flex: 0 0 auto;
+  }
+
+  .qb-btn{
+    height: 26px;
+    font-size: 10px;
+    padding: 0 8px;
   }
 
   .quick-billing-tabs{ gap: 8px; margin: 8px 0; }
@@ -946,7 +955,7 @@
     border-radius: 12px;
   }
 
-  .table-scroll-area{ height: 220px; }
+  .table-scroll-area{ height: 260px; }
 
   .billing-table{ font-size: 11px; }
 
@@ -981,12 +990,22 @@
 @media (max-width: 520px){
   .quick-billing-page{ padding: 6px; }
 
-  .quick-billing-header h2{
-    font-size: 18px;
-    text-align: center;
+  .quick-billing-header{
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
   }
 
-  .qb-header-actions{ justify-content: center; }
+  .quick-billing-header h2{
+    font-size: 16px;
+    text-align: left;
+    flex: 1;
+  }
+
+  .qb-header-actions{ 
+    justify-content: flex-end;
+    flex: 0 0 auto;
+  }
 
   .quick-billing-tabs:not(.qb-row-2){
     grid-template-columns: 1fr !important;
@@ -1011,7 +1030,7 @@
 
   .quick-billing-card{ padding: 8px; }
   .qb-data-wrap{ padding: 6px; }
-  .table-scroll-area{ height: 180px; }
+  .table-scroll-area{ height: 220px; }
 
   .billing-table{ font-size: 10px; }
 
@@ -1040,20 +1059,20 @@
 
 /* 📱 Extra Small Mobiles (≤360px) */
 @media (max-width: 360px){
-  .quick-billing-header h2{ font-size: 16px; }
+  .quick-billing-header h2{ font-size: 14px; }
 
   .qb-btn{
-    height: 26px;
-    font-size: 10px;
-    padding: 0 8px;
+    height: 24px;
+    font-size: 9px;
+    padding: 0 6px;
   }
 
-  .table-scroll-area{ height: 160px; }
+  .table-scroll-area{ height: 200px; }
 
-  .billing-table tfoot td{ font-size: 10px; }
+  .billing-table tfoot td{ font-size: 9px; }
 
   .billing-table tfoot .sum-total .sum-label,
   .billing-table tfoot .sum-total .sum-value{
-    font-size: 10px;
+    font-size: 9px;
   }
 }
