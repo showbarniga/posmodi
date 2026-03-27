@@ -998,12 +998,13 @@
 
   /* ✅ KEEP FOOTER LIKE DESKTOP */
   .qb-bottom-row{
-    display: flex;
-    flex-direction: row;              /* ✅ SAME AS DESKTOP */
-    align-items: center;
-    justify-content: space-between;   /* ✅ LEFT + RIGHT */
-    flex-wrap: nowrap;                /* ❌ NO WRAP */
+    display: flex !important;
+    flex-direction: row !important;              /* ✅ SAME AS DESKTOP */
+    align-items: center !important;
+    justify-content: space-between !important;   /* ✅ LEFT + RIGHT */
+    flex-wrap: nowrap !important;              /* ❌ NO WRAP */
     gap: 10px;
+    width: 100%;
      margin: 6px 0 0;      /* ✅ reduce gap */
   padding-bottom: 8px;
   flex-shrink: 0;
@@ -1016,7 +1017,7 @@
   /* ✅ LEFT SIDE */
   .qb-footer-left{
     flex: 0 0 auto;                  /* ❌ REMOVE 100% WIDTH */
-    text-align: left;
+    text-align: left !important;
     font-size: 12px;
   }
 
@@ -1024,7 +1025,7 @@
   .qb-footer-right{
     display: flex;
     align-items: center;
-    justify-content: flex-end;       /* ✅ PUSH RIGHT */
+    justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
     flex: 0 0 auto;                 /* ❌ REMOVE FULL WIDTH */
     gap: 6px;
   }
