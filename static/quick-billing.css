@@ -848,183 +848,175 @@
 
   
 }
-
-/* 📱 Tablets & Mobiles (≤768px) */
+/* 📱 MOBILE FIX – QUICK BILLING (FINAL PROFESSIONAL VERSION) */
 @media (max-width: 768px){
-  .quick-billing-page{ padding: 12px; }
 
+  /* ===== PAGE ===== */
+  .quick-billing-page{
+    padding: 12px;
+  }
+
+  /* ===== HEADER (SIDE BY SIDE) ===== */
   .quick-billing-header{
+    display: flex;
     flex-direction: row !important;
     align-items: center;
-    gap: 8px;
     justify-content: space-between;
-    margin-bottom: 8px;
+    gap: 6px;
+    margin-bottom: 6px;
   }
 
   .quick-billing-header h2{
-    font-size: 18px;
+    font-size: 16px;
     margin: 0;
-    text-align: left;
-     white-space: nowrap;
+    flex: 1;
+    white-space: nowrap;
   }
 
   .qb-header-actions{
-    justify-content: flex-end;
-    flex-wrap: wrap;
+    display: flex;
     gap: 6px;
-      display: flex;
   }
-  .qb-btn {
+
+  .qb-btn{
     height: 28px;
     padding: 0 10px;
     font-size: 12px;
   }
-  .quick-billing-page {
-  padding: 12px;   /* was 20px ❌ */
-}
 
-.quick-billing-header {
-  margin-bottom: 6px;  /* tighter */
-}
-
-  .quick-billing-tabs{ gap: 10px; margin: 10px 0; }
-
-  /* Row-1: 2-column grid */
-  .quick-billing-tabs:not(.qb-row-2){
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: center;
+  /* ===== ROW 1 (PRODUCT + FINALIZE) ===== */
+  .quick-billing-tabs{
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0;
   }
 
   .pill-input,
   .pill-select{
-    width: 90% !important;
-    min-width: 0 !important;
-  }
-
-  #productCodeInput{ min-width: 110px; }
-
-  /* Row-2 becomes grid */
-  .qb-row-2.qb-row-single{
-    flex-wrap: wrap !important;
-    overflow-x: visible !important;
-  }
-
-  .qb-row-2{
-    display: grid !important;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    align-items: center;
-    margin-bottom: 14px;
-  }
-
-  .qb-row-2 .pill-select,
-  .qb-row-2 .deleted-pill-btn{
+    flex: 1 1 48%;
     width: 100% !important;
-    min-width: 0 !important;
+  }
+
+  #productCodeInput{
+    min-width: 0;
+  }
+
+  #finalizeBtn{
+    flex: 1 1 100%;
+  }
+
+  /* ===== ROW 2 ===== */
+  .qb-row-2{
+    display: flex !important;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 12px;
+  }
+
+  .qb-row-2 .pill-select{
+    flex: 1 1 48%;
+  }
+
+  .deleted-pill-btn{
+    flex: 1 1 100%;
   }
 
   #clearFilterBtn{
-    grid-column: 1 / -1;
-    justify-self: end;
+    width: 100%;
+    text-align: right;
     margin-left: 0 !important;
-    margin-top: 0 !important;
   }
 
   .clear-filter-btn{
-    width: auto !important;
-    text-align: right !important;
+    text-align: right;
     white-space: nowrap;
-    margin-top: 0;
   }
 
+  /* ===== SCAN ===== */
   .scan-pill{
-    width: 90%;
+    width: 100%;
     height: 34px;
-    margin-bottom: 14px;
+    margin-bottom: 12px;
   }
 
-  .scan-icon{ width: 34px; height: 34px; }
+  .scan-icon{
+    width: 34px;
+    height: 34px;
+  }
 
-  .quick-billing-card{ padding: 14px; }
+  /* ===== CARD ===== */
+  .quick-billing-card{
+    padding: 12px;
+  }
 
   .qb-data-wrap{
-    padding: 12px;
-    border-radius: 16px;
+    padding: 10px;
   }
 
-  .table-scroll-area{ height: 300px; }
-
-  .billing-table{ font-size: 13px; }
-
-  .billing-table thead th,
-  .billing-table tbody td{
-    padding: 8px 10px;
+  /* ===== TABLE (CRITICAL FIX FOR FOOTER) ===== */
+  .table-scroll-area{
+    height: 45vh !important;
+    max-height: 45vh;
+    overflow-y: auto;
   }
 
-  .qty-input{ width: 64px; }
+  .billing-table{
+    font-size: 13px;
+  }
 
+  .billing-table th,
+  .billing-table td{
+    padding: 8px;
+  }
+
+  .qty-input{
+    width: 60px;
+  }
+
+  /* ===== FOOTER (LIKE DEPARTMENT PAGE) ===== */
   .qb-bottom-row{
-    flex-direction: column;
-    flex-wrap: wrap;
-    gap: 6px;
-    padding-bottom: 10px;
-      position: sticky;
-  bottom: 0;
-  background: #f6f1f1;
-  z-index: 5;
-  padding: 8px 0;
+    display: flex;
+    flex-direction: row !important;
+    align-items: center;
+    justify-content: space-between;
+    gap: 8px;
+
+    position: sticky;
+    bottom: 0;
+    background: #f6f1f1;
+    z-index: 10;
+
+    padding: 8px 6px;
+    border-top: 1px solid #ead7d7;
   }
-  
 
   .qb-footer-left{
-     display: flex;              /* ✅ KEY */
-  align-items: center; 
-    font-size: 13px;
-    display: flex;
- flex-direction: column;
- justify-content: center;
     font-size: 12px;
-font-weight: 600;
-color: #7a1d1d;
-      
-
-    line-height: 1.2;
-    
-    flex: 1;
-   white-space: normal;
-    overflow: visible;        /* ✅ FIX */
-    text-overflow: unset;     /* ✅ FIX */
-    overflow: visible;
-    text-overflow: unset;
+    white-space: nowrap;
   }
 
   .qb-footer-right{
-   display: flex;
-    flex-direction: row;
+    display: flex;
     align-items: center;
-gap: 8px;
-    align-items: center; 
-    flex-shrink: 0;
+    gap: 6px;
+    white-space: nowrap;
   }
-.table-scroll-area {
-  height: 50vh;        /* ✅ reduce height */
-  max-height: 50vh;
-  overflow-y: auto;
-}
-  
- 
 
-  .mp-grid{
+  .pager-btn{
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .page-indicator{
+    font-size: 12px;
+  }
+
+  /* ===== PAYMENT ===== */
+  .qb-pay-grid{
     grid-template-columns: 1fr 1fr;
-    gap: 10px;
   }
 
-  .mp-row input{ width: 100%; }
-
-  /* payment grid */
-  .qb-pay-grid{ grid-template-columns: 1fr 1fr; }
 }
 
 /* 📱 Small Mobiles (≤520px) */
