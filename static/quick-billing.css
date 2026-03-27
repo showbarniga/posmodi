@@ -974,7 +974,7 @@
     border-radius: 16px;
      display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 0.8;
   min-height: 0;
   }
 
@@ -1098,7 +1098,7 @@
   .quick-billing-card{ padding: 12px; }
   .qb-data-wrap{ 
     padding: 10px;
-    flex: 0.5;
+    flex: 0.7;
   }
   .table-scroll-area{ height: 280px; }
 
@@ -1148,7 +1148,7 @@
   .table-scroll-area{ height: 260px; }
 
   .qb-data-wrap{ 
-    flex: 0.4;
+    flex: 0.6;
   }
 
   .billing-table tfoot td{ font-size: 12px; }
