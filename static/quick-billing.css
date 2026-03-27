@@ -713,6 +713,24 @@
   position: relative;
 }
 
+@media (max-width: 768px){
+  #barcodeScanner{
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 520px){
+  #barcodeScanner{
+    max-width: 250px;
+  }
+}
+
+@media (max-width: 360px){
+  #barcodeScanner{
+    max-width: 220px;
+  }
+}
+
 #barcodeScanner video{
   width: 100% !important;
   height: 100% !important;
