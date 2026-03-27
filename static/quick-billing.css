@@ -962,8 +962,8 @@
   /* ===== TABLE (CRITICAL FIX FOR FOOTER) ===== */
   .table-scroll-area{
    flex: 1;            /* ✅ dynamic height */
-  min-height: 200px;
-  max-height: 300px;
+  min-height: 0;
+  max-height: none;
   overflow-y: auto;
   }
 
@@ -1022,28 +1022,32 @@
   text-overflow: unset;
 }
 
-  .qb-footer-right{
-    display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 6px;
-  flex-shrink: 0;
+  
+   .qb-footer-right{
+  display: flex;
   width: 100%;
+
+  justify-content: space-between;   /* ✅ KEY FIX */
+  align-items: center;
+
+  gap: 6px;
 }
 
 
   .pager-btn{
    
-   flex: 1;
+  flex: 0 0 auto;        /* ✅ prevent stretching */
+  min-width: 60px; 
   text-align: center;
   font-size: 12px;
   padding: 6px 8px;
   }
 
   .page-indicator{
-    font-size: 12px;
-     white-space: nowrap;
-}
+     flex: 1;
+  text-align: center;   /* ✅ center page text */
+  font-size: 12px;
+  white-space: nowrap;}
   
 
   /* ===== PAYMENT ===== */
