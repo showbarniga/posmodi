@@ -1002,14 +1002,18 @@
 
   /* ✅ KEEP FOOTER LIKE DESKTOP */
   .qb-bottom-row{
-     flex-shrink: 0;
+  flex-shrink: 0;
 
   display: flex;
+  flex-direction: row;                 /* ✅ ensure row */
   justify-content: space-between;
   align-items: center;
 
   flex-wrap: nowrap;
-  gap: 8px;
+  gap: 6px;
+
+  width: 100%;                        /* ✅ FIX overflow */
+  box-sizing: border-box;             /* ✅ include padding */
 
   position: sticky;
   bottom: 0;
@@ -1017,16 +1021,21 @@
   background: #f3f3f3;
   border-top: 1px solid #e0e0e0;
 
-  padding: 12px 14px;
-  z-index: 5;
-  
+  padding: 6px 8px;                   /* ✅ reduce height */
+  margin: 0;                          /* ✅ avoid push */
+
+  z-index: 10;
 }
 
   /* ✅ LEFT SIDE */
   .qb-footer-left{
-    flex: 0 0 auto;                  /* ❌ REMOVE 100% WIDTH */
+    flex: 1 1 auto;                  /* ❌ REMOVE 100% WIDTH */
     text-align: left !important;
     font-size: 11px;
+     min-width: 0;
+     white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ✅ prevents breaking */
   }
 
   /* ✅ RIGHT SIDE */
@@ -1034,14 +1043,16 @@
     display: flex;
     align-items: center;
     justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
-    flex: 0 0 auto;                 /* ❌ REMOVE FULL WIDTH */
+    flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
     gap: 6px;
+     min-width: 0; 
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
     padding: 4px 8px;
     font-size: 11px;
+     white-space: nowrap;
   }
 
   /* ✅ PAGE TEXT */
@@ -1101,7 +1112,7 @@
     padding: 10px;
     flex: 0.7;
   }
-  .table-scroll-area{ height: 280px; }
+  .table-scroll-area{ height: 200px; }
 
   .billing-table{ font-size: 12px; }
 
@@ -1146,7 +1157,7 @@
     padding: 0 10px;
   }
 
-  .table-scroll-area{ height: 260px; }
+  .table-scroll-area{ height: 180px; }
 
   .qb-data-wrap{ 
     flex: 0.6;
