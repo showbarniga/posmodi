@@ -545,11 +545,9 @@
    12) BOTTOM PAGINATION / SHOWING COUNT 
 ========================================================= */
 .qb-bottom-row{
-  display: flex !important;
-  flex-direction: row !important;
-  align-items: center !important;
-  justify-content: space-between !important;
-  flex-wrap: nowrap !important;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   gap: 18px;
   margin: 16px 0 6px;
   padding-top: 10px;
@@ -561,17 +559,9 @@
   font-size: 13px;
   font-weight: 600;
   color: #7a1d1d;
-  flex: 0 0 auto !important;
-  text-align: left !important;
 }
 
-.qb-footer-right{
-  display: flex !important;
-  align-items: center !important;
-  gap: 10px;
-  flex: 0 0 auto !important;
-  justify-content: flex-end !important;
-}
+
 
 .pager-btn{
   padding: 6px 18px;
@@ -584,7 +574,7 @@
   box-shadow: 0 4px 0 #6d1717;
   transition: 0.25s ease;
 }
-
+/* ===== Pagination Indicator (Page 1 of 1) ===== */
 .page-indicator{
   font-size: 12px;         
   font-weight: 400;          
@@ -592,11 +582,19 @@
   letter-spacing: 0.2px;
 }
 
+/* numbers inside (1 of 1) */
 #pageNow,
 #pageTotal{
   font-size: 12px;
   font-weight: 700;        
   color: #6a2a2a;
+}
+
+
+.qb-footer-right{
+  display: flex;
+  align-items: center;
+  gap: 10px;
 }
 
 #pageNow {
@@ -606,6 +604,7 @@
 
 .pager-btn:disabled{ opacity: 0.5; }
 .pager-btn:hover:not(:disabled){ transform: translateY(-2px); }
+
 
 
 /* =========================================================
@@ -846,58 +845,40 @@
   .qb-data-wrap{ padding: 12px; }
 
   .table-scroll-area{ height: 320px; }
+
+  
 }
 
 /* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px){
-  .quick-billing-page{ 
-    padding: 8px;
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
-  }
+  .quick-billing-page{ padding: 12px; }
 
   .quick-billing-header{
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
+    flex-direction: column;
+    align-items: stretch;
     gap: 8px;
     margin-bottom: 8px;
-    flex: 0 0 auto;
   }
 
   .quick-billing-header h2{
-    font-size: 22px;
+    font-size: 24px;
     margin: 0;
     text-align: left;
-    flex: 1;
   }
 
   .qb-header-actions{
     justify-content: flex-end;
-    flex-wrap: nowrap;
-    gap: 6px;
-    flex: 0 0 auto;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .qb-btn{
-    height: 28px;
-    font-size: 11px;
-    padding: 0 10px;
-  }
-
-  .quick-billing-tabs{ 
-    gap: 8px; 
-    margin: 8px 0;
-    flex: 0 0 auto;
-  }
+  .quick-billing-tabs{ gap: 10px; margin: 10px 0; }
 
   /* Row-1: 2-column grid */
   .quick-billing-tabs:not(.qb-row-2){
     display: grid !important;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
   }
 
@@ -905,11 +886,9 @@
   .pill-select{
     width: 90% !important;
     min-width: 0 !important;
-    height: 26px;
-    font-size: 12px;
   }
 
-  #productCodeInput{ min-width: 100px; }
+  #productCodeInput{ min-width: 110px; }
 
   /* Row-2 becomes grid */
   .qb-row-2.qb-row-single{
@@ -920,18 +899,15 @@
   .qb-row-2{
     display: grid !important;
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
     align-items: center;
-    margin-bottom: 10px;
-    flex: 0 0 auto;
+    margin-bottom: 14px;
   }
 
   .qb-row-2 .pill-select,
   .qb-row-2 .deleted-pill-btn{
     width: 100% !important;
     min-width: 0 !important;
-    height: 26px;
-    font-size: 12px;
   }
 
   #clearFilterBtn{
@@ -946,73 +922,85 @@
     text-align: right !important;
     white-space: nowrap;
     margin-top: 0;
-    font-size: 12px;
   }
 
   .scan-pill{
     width: 90%;
-    height: 30px;
-    margin-bottom: 10px;
-    padding: 0 12px;
-    flex: 0 0 auto;
+    height: 34px;
+    margin-bottom: 14px;
   }
 
-  .scan-pill input{ font-size: 12px; }
+  .scan-icon{ width: 34px; height: 34px; }
 
-  .scan-icon{ width: 30px; height: 30px; }
-
-  .quick-billing-card{ 
-    padding: 10px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+  .quick-billing-card{ padding: 14px; }
 
   .qb-data-wrap{
-    padding: 8px;
-    border-radius: 12px;
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
+    padding: 12px;
+    border-radius: 16px;
   }
 
-  .table-scroll-area{ 
-    flex: 1;
-    height: auto;
-    overflow-y: auto !important;
-    overflow-x: auto !important;
-  }
+  .table-scroll-area{ height: 300px; }
 
-  .qb-bottom-row{
-    flex: 0 0 auto !important;
-    margin: 8px 0 0 0 !important;
-    padding-top: 8px !important;
-    padding-bottom: 8px !important;
-  }
-
-  .billing-table{ font-size: 12px; }
+  .billing-table{ font-size: 13px; }
 
   .billing-table thead th,
   .billing-table tbody td{
-    padding: 6px 8px;
+    padding: 8px 10px;
   }
 
-  .qty-input{ 
-    width: 55px;
-    padding: 4px 6px;
+  .qty-input{ width: 64px; }
+
+  
+@media (max-width: 768px){
+
+  /* ✅ KEEP FOOTER LIKE DESKTOP */
+  .qb-bottom-row{
+    display: flex;
+    flex-direction: row;              /* ✅ SAME AS DESKTOP */
+    align-items: center;
+    justify-content: space-between;   /* ✅ LEFT + RIGHT */
+    flex-wrap: nowrap;                /* ❌ NO WRAP */
+    gap: 10px;
+      position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  }
+
+  /* ✅ LEFT SIDE */
+  .qb-footer-left{
+    flex: 0 0 auto;                  /* ❌ REMOVE 100% WIDTH */
+    text-align: left;
+    font-size: 12px;
+  }
+
+  /* ✅ RIGHT SIDE */
+  .qb-footer-right{
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;       /* ✅ PUSH RIGHT */
+    flex: 0 0 auto;                 /* ❌ REMOVE FULL WIDTH */
+    gap: 6px;
+  }
+
+  /* ✅ BUTTON SIZE SMALL FOR MOBILE */
+  .pager-btn{
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  /* ✅ PAGE TEXT */
+  .page-indicator{
     font-size: 11px;
   }
+}
 
-  .row-remove-btn{
-    padding: 4px 8px;
-    font-size: 10px;
-  }
+  
+ 
 
   .mp-grid{
     grid-template-columns: 1fr 1fr;
-    gap: 8px;
+    gap: 10px;
   }
 
   .mp-row input{ width: 100%; }
@@ -1023,34 +1011,14 @@
 
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
-  .quick-billing-page{ 
-    padding: 6px;
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .quick-billing-header{
-    flex-direction: row;
-    align-items: center;
-    justify-content: space-between;
-  }
+  .quick-billing-page{ padding: 10px; }
 
   .quick-billing-header h2{
-    font-size: 20px;
-    text-align: left;
-    flex: 1;
+    font-size: 22px;
+    text-align: center;
   }
 
-  .qb-header-actions{ 
-    justify-content: flex-end;
-    flex: 0 0 auto;
-  }
-
-  .qb-btn{
-    height: 26px;
-    font-size: 10px;
-    padding: 0 8px;
-  }
+  .qb-header-actions{ justify-content: center; }
 
   .quick-billing-tabs:not(.qb-row-2){
     grid-template-columns: 1fr !important;
@@ -1058,7 +1026,7 @@
 
   .qb-row-2{
     grid-template-columns: 1fr !important;
-    gap: 6px;
+    gap: 8px;
   }
 
   #clearFilterBtn{
@@ -1067,34 +1035,43 @@
   }
 
   .scan-pill{
-    height: 28px;
-    padding: 0 10px;
+    height: 36px;
+    padding: 0 12px;
   }
 
-  .scan-pill input{ font-size: 11px; }
+  .scan-pill input{ font-size: 12px; }
 
-  .quick-billing-card{ padding: 8px; }
-  .qb-data-wrap{ padding: 6px; }
+  .quick-billing-card{ padding: 12px; }
+  .qb-data-wrap{ padding: 10px; }
+  .table-scroll-area{ height: 280px; }
 
-  .billing-table{ font-size: 11px; }
+  .billing-table{ font-size: 12px; }
 
   .billing-table thead th,
   .billing-table tbody td{
-    padding: 5px 6px;
+    padding: 7px 8px;
   }
 
   .qty-input{
-    width: 50px;
-    padding: 3px 4px;
-    font-size: 10px;
+    width: 58px;
+    padding: 6px 6px;
   }
 
   .row-remove-btn{
-    padding: 3px 6px;
-    border-radius: 8px;
-    font-size: 9px;
+    padding: 6px 10px;
+    border-radius: 10px;
   }
 
+  .qb-bottom-row{
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .qb-footer-left{ text-align: center; }
+  .qb-footer-right{ justify-content: center; }
+
+  
   .mp-grid{ grid-template-columns: 1fr; }
 
   /* payment grid */
@@ -1103,23 +1080,20 @@
 
 /* 📱 Extra Small Mobiles (≤360px) */
 @media (max-width: 360px){
-  .quick-billing-page{
-    height: 100vh;
-    overflow: hidden;
-  }
-
-  .quick-billing-header h2{ font-size: 18px; }
+  .quick-billing-header h2{ font-size: 20px; }
 
   .qb-btn{
-    height: 24px;
-    font-size: 9px;
-    padding: 0 6px;
+    height: 30px;
+    font-size: 12px;
+    padding: 0 10px;
   }
 
-  .billing-table tfoot td{ font-size: 10px; }
+  .table-scroll-area{ height: 260px; }
+
+  .billing-table tfoot td{ font-size: 12px; }
 
   .billing-table tfoot .sum-total .sum-label,
   .billing-table tfoot .sum-total .sum-value{
-    font-size: 10px;
+    font-size: 12px;
   }
 }
