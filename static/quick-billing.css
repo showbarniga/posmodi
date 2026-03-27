@@ -977,6 +977,9 @@
   flex-direction: column;
   flex: 1 !important;
   min-height: 0;
+      overflow-y: auto;
+    overflow-x: auto;
+    max-height: 260px; 
   }
 
   .table-scroll-area{
@@ -999,29 +1002,24 @@
 
   /* ✅ KEEP FOOTER LIKE DESKTOP */
   .qb-bottom-row{
-  display: flex !important;
-  flex-direction: row !important;              /* ✅ desktop-like */
-  align-items: center !important;
-  justify-content: space-between !important;   /* ✅ left + right */
-  flex-wrap: nowrap !important;
+     flex-shrink: 0;
 
-  width: 100%;
-  gap: 6px;                    /* ✅ reduced gap */
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-  margin: 4px 0 0;            /* ✅ less space above */
-  padding: 4px 8px;           /* ✅ compact height */
-
-  font-size: 12px;            /* ✅ smaller text */
-  flex-shrink: 0;
-    padding: 2px 6px;     /* 🔥 reduce height */
-  margin: 2px 0 0;
+  flex-wrap: nowrap;
+  gap: 8px;
 
   position: sticky;
   bottom: 0;
 
-  background: #f6f1f1;
-  border-top: 1px solid #ead7d7;  /* ✅ clean separation */
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+
+  padding: 12px 14px;
   z-index: 5;
+  
 }
 
   /* ✅ LEFT SIDE */
