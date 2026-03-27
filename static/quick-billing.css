@@ -974,7 +974,7 @@
     border-radius: 16px;
      display: flex;
   flex-direction: column;
-  flex: 0.6;
+  flex: 1;
   min-height: 0;
   }
 
@@ -994,31 +994,38 @@
   .qty-input{ width: 64px; }
 
   
-@media (max-width: 768px){
+
 
   /* ✅ KEEP FOOTER LIKE DESKTOP */
   .qb-bottom-row{
-    display: flex !important;
-    flex-direction: row !important;              /* ✅ SAME AS DESKTOP */
-    align-items: center !important;
-    justify-content: space-between !important;   /* ✅ LEFT + RIGHT */
-    flex-wrap: nowrap !important;              /* ❌ NO WRAP */
-    gap: 10px;
-    width: 100%;
-     margin: 6px 0 0;      /* ✅ reduce gap */
-  padding-bottom: 8px;
+  display: flex !important;
+  flex-direction: row !important;              /* ✅ desktop-like */
+  align-items: center !important;
+  justify-content: space-between !important;   /* ✅ left + right */
+  flex-wrap: nowrap !important;
+
+  width: 100%;
+  gap: 6px;                    /* ✅ reduced gap */
+
+  margin: 4px 0 0;            /* ✅ less space above */
+  padding: 4px 8px;           /* ✅ compact height */
+
+  font-size: 12px;            /* ✅ smaller text */
   flex-shrink: 0;
-    position: sticky;
+
+  position: sticky;
   bottom: 0;
+
   background: #f6f1f1;
+  border-top: 1px solid #ead7d7;  /* ✅ clean separation */
   z-index: 5;
-  }
+}
 
   /* ✅ LEFT SIDE */
   .qb-footer-left{
     flex: 0 0 auto;                  /* ❌ REMOVE 100% WIDTH */
     text-align: left !important;
-    font-size: 12px;
+    font-size: 11px;
   }
 
   /* ✅ RIGHT SIDE */
@@ -1032,8 +1039,8 @@
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-    padding: 5px 10px;
-    font-size: 12px;
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   /* ✅ PAGE TEXT */
@@ -1054,7 +1061,7 @@
 
   /* payment grid */
   .qb-pay-grid{ grid-template-columns: 1fr 1fr; }
-}
+
 
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
