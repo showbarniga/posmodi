@@ -984,21 +984,19 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
+        width: 100% !important;
+    max-width: 100% !important;
   }
 
   .quick-billing-card{
     display: flex;
     flex-direction: column;
-    flex: 1;
     min-height: 0;
+        width: 100% !important;
+    max-width: 100% !important;
   }
 
-  .qb-data-wrap{
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
+  
 
   .qty-input{
     width: 60px;
@@ -1027,12 +1025,15 @@
 
   padding: 12px 14px;
   z-index: 5;
+      width: 100% !important;
+    max-width: 100% !important;
 }
 
 /* 🔥 LEFT TEXT (SAME AS PRODUCT) */
 .qb-footer-left{
   display: flex;
   align-items: center;
+    justify-content: flex-end;   /* ✅ push to right */
 
   font-size: 12px;
   font-weight: 600;
