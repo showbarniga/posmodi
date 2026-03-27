@@ -1031,11 +1031,17 @@
 
 
   .pager-btn{
-   
-      flex: 1 1 45%;
-text-align: center;
-font-size: 12px;
-padding: 6px 10px;
+    padding: 6px 10px;
+    font-size: 12px;
+    text-align: center;
+    border-radius: 4px;
+    background: linear-gradient(#a12828, #821f1f);
+    border: none;
+    color: white;
+    cursor: pointer;
+    box-shadow: 0 4px 0 #6d1717;
+    transition: 0.25s ease;
+    min-width: 70px;
   }
 
   .page-indicator{
