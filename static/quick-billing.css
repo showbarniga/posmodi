@@ -850,7 +850,13 @@
 
 /* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px){
-  .quick-billing-page{ padding: 8px; }
+  .quick-billing-page{ 
+    padding: 8px;
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    overflow: hidden;
+  }
 
   .quick-billing-header{
     flex-direction: row;
@@ -858,10 +864,11 @@
     justify-content: space-between;
     gap: 8px;
     margin-bottom: 8px;
+    flex: 0 0 auto;
   }
 
   .quick-billing-header h2{
-    font-size: 18px;
+    font-size: 22px;
     margin: 0;
     text-align: left;
     flex: 1;
@@ -875,12 +882,16 @@
   }
 
   .qb-btn{
-    height: 26px;
-    font-size: 10px;
-    padding: 0 8px;
+    height: 28px;
+    font-size: 11px;
+    padding: 0 10px;
   }
 
-  .quick-billing-tabs{ gap: 8px; margin: 8px 0; }
+  .quick-billing-tabs{ 
+    gap: 8px; 
+    margin: 8px 0;
+    flex: 0 0 auto;
+  }
 
   /* Row-1: 2-column grid */
   .quick-billing-tabs:not(.qb-row-2){
@@ -894,8 +905,8 @@
   .pill-select{
     width: 90% !important;
     min-width: 0 !important;
-    height: 24px;
-    font-size: 11px;
+    height: 26px;
+    font-size: 12px;
   }
 
   #productCodeInput{ min-width: 100px; }
@@ -912,14 +923,15 @@
     gap: 8px;
     align-items: center;
     margin-bottom: 10px;
+    flex: 0 0 auto;
   }
 
   .qb-row-2 .pill-select,
   .qb-row-2 .deleted-pill-btn{
     width: 100% !important;
     min-width: 0 !important;
-    height: 24px;
-    font-size: 11px;
+    height: 26px;
+    font-size: 12px;
   }
 
   #clearFilterBtn{
@@ -934,30 +946,53 @@
     text-align: right !important;
     white-space: nowrap;
     margin-top: 0;
-    font-size: 11px;
+    font-size: 12px;
   }
 
   .scan-pill{
     width: 90%;
-    height: 28px;
+    height: 30px;
     margin-bottom: 10px;
-    padding: 0 10px;
+    padding: 0 12px;
+    flex: 0 0 auto;
   }
 
-  .scan-pill input{ font-size: 11px; }
+  .scan-pill input{ font-size: 12px; }
 
-  .scan-icon{ width: 28px; height: 28px; }
+  .scan-icon{ width: 30px; height: 30px; }
 
-  .quick-billing-card{ padding: 10px; }
+  .quick-billing-card{ 
+    padding: 10px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
 
   .qb-data-wrap{
     padding: 8px;
     border-radius: 12px;
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
   }
 
-  .table-scroll-area{ height: 260px; }
+  .table-scroll-area{ 
+    flex: 1;
+    height: auto;
+    overflow-y: auto !important;
+    overflow-x: auto !important;
+  }
 
-  .billing-table{ font-size: 11px; }
+  .qb-bottom-row{
+    flex: 0 0 auto !important;
+    margin: 8px 0 0 0 !important;
+    padding-top: 8px !important;
+    padding-bottom: 8px !important;
+  }
+
+  .billing-table{ font-size: 12px; }
 
   .billing-table thead th,
   .billing-table tbody td{
@@ -965,7 +1000,7 @@
   }
 
   .qty-input{ 
-    width: 50px;
+    width: 55px;
     padding: 4px 6px;
     font-size: 11px;
   }
@@ -988,7 +1023,11 @@
 
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
-  .quick-billing-page{ padding: 6px; }
+  .quick-billing-page{ 
+    padding: 6px;
+    height: 100vh;
+    overflow: hidden;
+  }
 
   .quick-billing-header{
     flex-direction: row;
@@ -997,7 +1036,7 @@
   }
 
   .quick-billing-header h2{
-    font-size: 16px;
+    font-size: 20px;
     text-align: left;
     flex: 1;
   }
@@ -1005,6 +1044,12 @@
   .qb-header-actions{ 
     justify-content: flex-end;
     flex: 0 0 auto;
+  }
+
+  .qb-btn{
+    height: 26px;
+    font-size: 10px;
+    padding: 0 8px;
   }
 
   .quick-billing-tabs:not(.qb-row-2){
@@ -1022,25 +1067,24 @@
   }
 
   .scan-pill{
-    height: 26px;
-    padding: 0 8px;
+    height: 28px;
+    padding: 0 10px;
   }
 
-  .scan-pill input{ font-size: 10px; }
+  .scan-pill input{ font-size: 11px; }
 
   .quick-billing-card{ padding: 8px; }
   .qb-data-wrap{ padding: 6px; }
-  .table-scroll-area{ height: 220px; }
 
-  .billing-table{ font-size: 10px; }
+  .billing-table{ font-size: 11px; }
 
   .billing-table thead th,
   .billing-table tbody td{
-    padding: 4px 6px;
+    padding: 5px 6px;
   }
 
   .qty-input{
-    width: 45px;
+    width: 50px;
     padding: 3px 4px;
     font-size: 10px;
   }
@@ -1059,7 +1103,12 @@
 
 /* 📱 Extra Small Mobiles (≤360px) */
 @media (max-width: 360px){
-  .quick-billing-header h2{ font-size: 14px; }
+  .quick-billing-page{
+    height: 100vh;
+    overflow: hidden;
+  }
+
+  .quick-billing-header h2{ font-size: 18px; }
 
   .qb-btn{
     height: 24px;
@@ -1067,12 +1116,10 @@
     padding: 0 6px;
   }
 
-  .table-scroll-area{ height: 200px; }
-
-  .billing-table tfoot td{ font-size: 9px; }
+  .billing-table tfoot td{ font-size: 10px; }
 
   .billing-table tfoot .sum-total .sum-label,
   .billing-table tfoot .sum-total .sum-value{
-    font-size: 9px;
+    font-size: 10px;
   }
 }
