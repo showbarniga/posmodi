@@ -854,23 +854,38 @@
   .quick-billing-page{ padding: 12px; }
 
   .quick-billing-header{
-    flex-direction: column;
-    align-items: stretch;
+    flex-direction: row !important;
+    align-items: center;
     gap: 8px;
+    justify-content: space-between;
     margin-bottom: 8px;
   }
 
   .quick-billing-header h2{
-    font-size: 24px;
+    font-size: 18px;
     margin: 0;
     text-align: left;
+     white-space: nowrap;
   }
 
   .qb-header-actions{
     justify-content: flex-end;
     flex-wrap: wrap;
-    gap: 8px;
+    gap: 6px;
+      display: flex;
   }
+  .qb-btn {
+    height: 28px;
+    padding: 0 10px;
+    font-size: 12px;
+  }
+  .quick-billing-page {
+  padding: 12px;   /* was 20px ❌ */
+}
+
+.quick-billing-header {
+  margin-bottom: 6px;  /* tighter */
+}
 
   .quick-billing-tabs{ gap: 10px; margin: 10px 0; }
 
@@ -951,11 +966,17 @@
   .qty-input{ width: 64px; }
 
   .qb-bottom-row{
-    flex-direction: row;
+    flex-direction: column;
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 6px;
     padding-bottom: 10px;
+      position: sticky;
+  bottom: 0;
+  background: #f6f1f1;
+  z-index: 5;
+  padding: 8px 0;
   }
+  
 
   .qb-footer-left{
      display: flex;              /* ✅ KEY */
@@ -987,7 +1008,11 @@ gap: 8px;
     align-items: center; 
     flex-shrink: 0;
   }
-
+.table-scroll-area {
+  height: 50vh;        /* ✅ reduce height */
+  max-height: 50vh;
+  overflow-y: auto;
+}
   
  
 
