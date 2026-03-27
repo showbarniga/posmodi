@@ -974,7 +974,7 @@
     border-radius: 16px;
      display: flex;
   flex-direction: column;
-  flex: 1;
+  flex: 0.6;
   min-height: 0;
   }
 
@@ -1089,7 +1089,10 @@
   .scan-pill input{ font-size: 12px; }
 
   .quick-billing-card{ padding: 12px; }
-  .qb-data-wrap{ padding: 10px; }
+  .qb-data-wrap{ 
+    padding: 10px;
+    flex: 0.5;
+  }
   .table-scroll-area{ height: 280px; }
 
   .billing-table{ font-size: 12px; }
@@ -1136,6 +1139,10 @@
   }
 
   .table-scroll-area{ height: 260px; }
+
+  .qb-data-wrap{ 
+    flex: 0.4;
+  }
 
   .billing-table tfoot td{ font-size: 12px; }
 
