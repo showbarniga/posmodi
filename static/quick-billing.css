@@ -1031,13 +1031,18 @@
 
 
   .pager-btn{
-    padding: 5px 10px;
-    font-size: 12px;
+   
+      flex: 1 1 45%;
+text-align: center;
+font-size: 12px;
+padding: 6px 10px;
   }
 
   .page-indicator{
     font-size: 12px;
-  }
+     white-space: nowrap;
+}
+  
 
   /* ===== PAYMENT ===== */
   .qb-pay-grid{
