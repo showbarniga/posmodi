@@ -155,10 +155,11 @@
 
 /* Keep row 2 in a single line (horizontal scroll if needed) */
 .qb-row-single{
-  flex-wrap: wrap !important;
-  overflow-x: visible !important;
-  gap: 8px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  gap: 12px;
 }
+.qb-row-single > *{ flex: 0 0 auto; }
 
 
 /* =========================================================
@@ -544,9 +545,11 @@
    12) BOTTOM PAGINATION / SHOWING COUNT 
 ========================================================= */
 .qb-bottom-row{
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
+  display: flex !important;
+  flex-direction: row !important;
+  align-items: center !important;
+  justify-content: space-between !important;
+  flex-wrap: nowrap !important;
   gap: 18px;
   margin: 16px 0 6px;
   padding-top: 10px;
@@ -558,9 +561,17 @@
   font-size: 13px;
   font-weight: 600;
   color: #7a1d1d;
+  flex: 0 0 auto !important;
+  text-align: left !important;
 }
 
-
+.qb-footer-right{
+  display: flex !important;
+  align-items: center !important;
+  gap: 10px;
+  flex: 0 0 auto !important;
+  justify-content: flex-end !important;
+}
 
 .pager-btn{
   padding: 6px 18px;
@@ -573,7 +584,7 @@
   box-shadow: 0 4px 0 #6d1717;
   transition: 0.25s ease;
 }
-/* ===== Pagination Indicator (Page 1 of 1) ===== */
+
 .page-indicator{
   font-size: 12px;         
   font-weight: 400;          
@@ -581,19 +592,11 @@
   letter-spacing: 0.2px;
 }
 
-/* numbers inside (1 of 1) */
 #pageNow,
 #pageTotal{
   font-size: 12px;
   font-weight: 700;        
   color: #6a2a2a;
-}
-
-
-.qb-footer-right{
-  display: flex;
-  align-items: center;
-  gap: 10px;
 }
 
 #pageNow {
@@ -603,7 +606,6 @@
 
 .pager-btn:disabled{ opacity: 0.5; }
 .pager-btn:hover:not(:disabled){ transform: translateY(-2px); }
-
 
 
 /* =========================================================
@@ -844,245 +846,120 @@
   .qb-data-wrap{ padding: 12px; }
 
   .table-scroll-area{ height: 320px; }
-
-  
 }
-/* 📱 MOBILE FIX – QUICK BILLING (FINAL PROFESSIONAL VERSION) */
+
+/* 📱 Tablets & Mobiles (≤768px) */
 @media (max-width: 768px){
+  .quick-billing-page{ padding: 12px; }
 
-  /* ===== PAGE ===== */
-  .quick-billing-page{
-    padding: 12px;
-  }
-
-  /* ===== HEADER (SIDE BY SIDE) ===== */
   .quick-billing-header{
-    display: flex;
-    flex-direction: row !important;
-    align-items: center;
-    justify-content: space-between;
-    gap: 6px;
-    margin-bottom: 6px;
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    margin-bottom: 8px;
   }
 
   .quick-billing-header h2{
-    font-size: 16px;
+    font-size: 24px;
     margin: 0;
-    flex: 1;
-    white-space: nowrap;
+    text-align: left;
   }
 
   .qb-header-actions{
-    display: flex;
-    gap: 6px;
-  }
-
-  .qb-btn{
-    height: 28px;
-    padding: 0 10px;
-    font-size: 12px;
-  }
-
-  /* ===== ROW 1 (PRODUCT + FINALIZE) ===== */
-  .quick-billing-tabs{
-    display: flex !important;
+    justify-content: flex-end;
     flex-wrap: wrap;
     gap: 8px;
-    margin: 10px 0;
+  }
+
+  .quick-billing-tabs{ gap: 10px; margin: 10px 0; }
+
+  /* Row-1: 2-column grid */
+  .quick-billing-tabs:not(.qb-row-2){
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
   }
 
   .pill-input,
   .pill-select{
-    flex: 1 1 48%;
-    width: 100% !important;
+    width: 90% !important;
+    min-width: 0 !important;
   }
 
-  #productCodeInput{
-    min-width: 0;
+  #productCodeInput{ min-width: 110px; }
+
+  /* Row-2 becomes grid */
+  .qb-row-2.qb-row-single{
+    flex-wrap: wrap !important;
+    overflow-x: visible !important;
   }
 
-  #finalizeBtn{
-    flex: 1 1 100%;
-  }
-
-  /* ===== ROW 2 ===== */
   .qb-row-2{
-    display: flex !important;
-    flex-wrap: wrap;
-    gap: 8px;
-    margin-bottom: 12px;
+    display: grid !important;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 14px;
   }
 
-  .qb-row-2 .pill-select{
-    flex: 1 1 48%;
-  }
-
-  .deleted-pill-btn{
-    flex: 1 1 100%;
+  .qb-row-2 .pill-select,
+  .qb-row-2 .deleted-pill-btn{
+    width: 100% !important;
+    min-width: 0 !important;
   }
 
   #clearFilterBtn{
-    width: 100%;
-    text-align: right;
+    grid-column: 1 / -1;
+    justify-self: end;
     margin-left: 0 !important;
+    margin-top: 0 !important;
   }
 
   .clear-filter-btn{
-    text-align: right;
+    width: auto !important;
+    text-align: right !important;
     white-space: nowrap;
+    margin-top: 0;
   }
 
-  /* ===== SCAN ===== */
   .scan-pill{
-     width: 100% !important;   /* ✅ FULL WIDTH */
-    max-width: 100%;
-    box-sizing: border-box;
+    width: 90%;
     height: 34px;
     margin-bottom: 14px;
-    overflow: hidden;
   }
 
-  .scan-icon{
-    width: 28px;
-    height: 28px;
-    flex-shrink: 0;
-    min-width: 28px;
-  }
+  .scan-icon{ width: 34px; height: 34px; }
 
-  /* ===== CARD ===== */
-  .quick-billing-card{
+  .quick-billing-card{ padding: 14px; }
+
+  .qb-data-wrap{
     padding: 12px;
-     display: flex;
-  flex-direction: column;
-  flex: 1;            
-  min-height: 0;      
-}
-  
-
-  .qb-data-wrap{
-    padding: 10px;
+    border-radius: 16px;
   }
 
-  /* ===== TABLE (CRITICAL FIX FOR FOOTER) ===== */
-  .table-scroll-area{
-    flex: 1;
-    min-height: 0;
-    max-height: none;
-    overflow-y: auto;
+  .table-scroll-area{ height: 300px; }
+
+  .billing-table{ font-size: 13px; }
+
+  .billing-table thead th,
+  .billing-table tbody td{
+    padding: 8px 10px;
   }
 
-  .billing-table{
-    font-size: 13px;
-  }
+  .qty-input{ width: 64px; }
 
-  .billing-table th,
-  .billing-table td{
-    padding: 8px;
-  }
-
-  .quick-billing-page{
-    display: flex;
-    flex-direction: column;
-    min-height: 100vh;
-  }
-
-  .quick-billing-card{
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .qb-data-wrap{
-    display: flex;
-    flex-direction: column;
-    flex: 1;
-    min-height: 0;
-  }
-
-  .qty-input{
-    width: 60px;
-  }
-
- 
-
-  /* ===== FOOTER PAGINATION (FIXED) ===== */
-
-  /* 🔥 QUOTATION FOOTER  */
-.qb-bottom-row{
-  flex-shrink: 0;
-
-  display: block;
-  justify-content: space-between;
-  align-items: center;
-
-  flex-wrap: nowrap;
-  gap: 8px;
-    text-align: center;
-
-  position: static;
-  bottom: 0;
-
-  background: #f3f3f3;
-  border-top: 1px solid #e0e0e0;
-
-  padding: 12px 14px;
-  z-index: 5;
-}
-
-/* 🔥 LEFT TEXT (SAME AS PRODUCT) */
-.qb-footer-left{
-  display: flex;
-  align-items: center;
-
-  font-size: 12px;
-  font-weight: 600;
-  color: #7a1d1d;
-
-  flex: 1;
-
-  white-space: nowrap;
-  overflow: visible;
-  text-overflow: unset;
-}
-
-/* 🔥 RIGHT BUTTONS (ROW) */
-.qb-footer-right{
-  display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
-   white-space: nowrap;
-}
-
-/* 🔥 PAGE TEXT */
-.pager-text {
-  font-size: 12px;
-  white-space: nowrap;
-}
-.pager-btn {
-  background: none;
-  border: 1px solid #ccc;
-  color: #333;
-  box-shadow: none;
-  padding: 4px 8px;
-  font-size: 12px;
-}
-.page-indicator {
-  display: inline-block;
-  margin: 0 6px;
-  font-size: 12px;
-  color: #555;
-}
- 
-
-   /* ===== PAYMENT ===== */
-  .qb-pay-grid{
+  .mp-grid{
     grid-template-columns: 1fr 1fr;
+    gap: 10px;
   }
- 
+
+  .mp-row input{ width: 100%; }
+
+  /* payment grid */
+  .qb-pay-grid{ grid-template-columns: 1fr 1fr; }
 }
+
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
   .quick-billing-page{ padding: 10px; }
@@ -1136,39 +1013,6 @@
     border-radius: 10px;
   }
 
-  .qb-bottom-row{
-    flex-direction: row;
-    align-items: center;
-    gap: 6px;
-    flex-wrap: nowrap;
-  }
-
-  .qb-footer-left{ 
-    text-align: left;
-    font-size: 11px;
-    flex-shrink: 1;
-    min-width: 0;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
-  
-  .qb-footer-right{ 
-    justify-content: flex-end;
-    gap: 4px;
-    flex-shrink: 0;
-  }
-
-  .pager-btn{
-    min-width: 45px;
-    padding: 4px 6px;
-    font-size: 11px;
-  }
-
-  .page-indicator{
-    font-size: 11px;
-  }
-
-  
   .mp-grid{ grid-template-columns: 1fr; }
 
   /* payment grid */

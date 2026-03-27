@@ -260,6 +260,28 @@
         </table>
       </div>
     </div>
+   <!-- ============================================================
+  5) BOTTOM PAGINATION / SHOWING COUNT
+============================================================= -->
+<div class="qb-bottom-row">
+
+  <!-- LEFT -->
+  <div class="qb-footer-left">
+    <span id="showingCount">Showing 0 Entries</span>
+  </div>
+
+  <!-- RIGHT -->
+  <div class="qb-footer-right">
+    <button class="pager-btn" id="prevBtn" type="button">‹ Prev</button>
+
+    <span class="page-indicator">
+      Page <b id="pageNow">1</b> of <b id="pageTotal">1</b>
+    </span>
+
+    <button class="pager-btn" id="nextBtn" type="button">Next ›</button>
+  </div>
+
+</div>
 
     <!-- ==========================================================
       ✅ 4D) PAYMENT (SCREEN ONLY) — Cash Received / Change / Due
@@ -303,25 +325,7 @@
 
 </div>
 
-  <!-- ============================================================
-    5) BOTTOM PAGINATION / SHOWING COUNT
-  ============================================================= -->
-   <div class="pager-bar">
-
-  <div class="pager-left">
-    <span id="showingCount">Showing 0 Entities</span>
-  </div>
-
-  <div class="right-pager">
-    <button class="pager-btn" id="prevBtn" type="button">‹ Prev</button>
-
-    <span class="pager-text">
-      Page <b id="pageNow">1</b> of <b id="pageTotal">1</b>
-    </span>
-
-    <button class="pager-btn" id="nextBtn" type="button">Next ›</button>
-  </div>
-
+  
 
   <!-- ============================================================
     6) TOAST (Success / Error messages from JS)
