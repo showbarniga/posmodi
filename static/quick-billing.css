@@ -964,29 +964,52 @@
 
   .quick-billing-card{
      padding: 14px; 
-      display: flex;
-  flex-direction: column;
+      display: flex !important;
+  flex-direction: column !important;
   flex: 1;
-  min-height: 0;
-  }
+  min-height: 0 !important;
+  /* ✅ CORRECT TABLE WRAPPER */
+.qb-data-wrap{
+  padding: 12px;
+  border-radius: 16px;
 
-  .qb-data-wrap{
-    padding: 12px;
-    border-radius: 16px;
-     display: flex;
+  display: flex;
   flex-direction: column;
-  flex: 1 !important;
+
+  flex: 0 0 auto !important;      /* ❌ stop taking full height */
+  max-height: 60vh !important;    /* ✅ controlled size */
+
+  overflow: hidden !important;    /* ❌ no scroll here */
   min-height: 0;
-      overflow-y: auto;
-    overflow-x: auto;
-    max-height: 260px; 
+}
   }
 
-  .table-scroll-area{
-      flex: 1;              /* ✅ fill space */
+/* ✅ CORRECT TABLE WRAPPER */
+.qb-data-wrap{
+  padding: 12px;
+  border-radius: 16px;
+
+  display: flex;
+  flex-direction: column;
+
+  flex: 0 0 auto !important;      /* ❌ stop taking full height */
+  max-height: 60vh !important;    /* ✅ controlled size */
+
+  overflow: hidden !important;    /* ❌ no scroll here */
   min-height: 0;
-  overflow-y: auto;  
-     }
+}
+
+  /* ✅ CONTROLLED TABLE HEIGHT (DO NOT OVERGROW) */
+.table-scroll-area{
+  flex: 0 0 auto !important;     /* ❌ stop full expansion */
+  max-height: 55vh !important;   /* ✅ limit height */
+  height: auto !important;
+
+  overflow-y: auto !important;
+  overflow-x: auto !important;
+
+  min-height: 0;
+}
 
   .billing-table{ font-size: 13px; }
 
@@ -1002,7 +1025,7 @@
 
   /* ✅ KEEP FOOTER LIKE DESKTOP */
   .qb-bottom-row{
-  flex-shrink: 0;
+  flex-shrink: 0 !important;
 
   display: flex;
   flex-direction: row;                 /* ✅ ensure row */
@@ -1015,16 +1038,16 @@
   width: 100%;                        /* ✅ FIX overflow */
   box-sizing: border-box;             /* ✅ include padding */
 
-  position: sticky;
-  bottom: 0;
+  position: sticky !important;
+  bottom: 0 !important;
 
-  background: #f3f3f3;
-  border-top: 1px solid #e0e0e0;
+  background: #f3f3f3 !important;
+  border-top: 1px solid #e0e0e0 !important;
 
-  padding: 6px 8px;                   /* ✅ reduce height */
-  margin: 0;                          /* ✅ avoid push */
+  padding: 4px 8px !important;                   /* ✅ reduce height */
+  margin: 4px 0 0 !important;                          /* ✅ avoid push */
 
-  z-index: 10;
+  z-index: 10 !important;
 }
 
   /* ✅ LEFT SIDE */
