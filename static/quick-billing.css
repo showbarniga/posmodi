@@ -984,19 +984,21 @@
     display: flex;
     flex-direction: column;
     min-height: 100vh;
-        width: 100% !important;
-    max-width: 100% !important;
   }
 
   .quick-billing-card{
     display: flex;
     flex-direction: column;
+    flex: 1;
     min-height: 0;
-        width: 100% !important;
-    max-width: 100% !important;
   }
 
-  
+  .qb-data-wrap{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
 
   .qty-input{
     width: 60px;
@@ -1010,14 +1012,15 @@
 .qb-bottom-row{
   flex-shrink: 0;
 
-  display: flex;
+  display: block;
   justify-content: space-between;
   align-items: center;
 
   flex-wrap: nowrap;
   gap: 8px;
+    text-align: center;
 
-  position: sticky;
+  position: static;
   bottom: 0;
 
   background: #f3f3f3;
@@ -1025,15 +1028,12 @@
 
   padding: 12px 14px;
   z-index: 5;
-      width: 100% !important;
-    max-width: 100% !important;
 }
 
 /* 🔥 LEFT TEXT (SAME AS PRODUCT) */
 .qb-footer-left{
   display: flex;
   align-items: center;
-    justify-content: flex-end;   /* ✅ push to right */
 
   font-size: 12px;
   font-weight: 600;
@@ -1061,13 +1061,19 @@
   font-size: 12px;
   white-space: nowrap;
 }
-
-/* 🔥 BUTTON */
-.pager-btn{
-  flex: 1 1 45%;
-text-align: center;
-font-size: 12px;
-padding: 6px 10px;
+.pager-btn {
+  background: none;
+  border: 1px solid #ccc;
+  color: #333;
+  box-shadow: none;
+  padding: 4px 8px;
+  font-size: 12px;
+}
+.page-indicator {
+  display: inline-block;
+  margin: 0 6px;
+  font-size: 12px;
+  color: #555;
 }
  
 
