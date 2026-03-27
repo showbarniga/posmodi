@@ -306,23 +306,22 @@
   <!-- ============================================================
     5) BOTTOM PAGINATION / SHOWING COUNT
   ============================================================= -->
-  <div class="qb-bottom-row qb-no-print">
+   <div class="pager-bar">
 
-    <div class="qb-footer-left" id="showingCount">
-      Showing 0 Entries
-    </div>
-
-    <div class="qb-footer-right">
-  <button class="pager-btn" id="prevBtn">‹ Prev</button>
-
-  <span class="page-indicator">
-    Page <span id="pageNow">1</span> of <span id="pageTotal">1</span>
-  </span>
-
-  <button class="pager-btn" id="nextBtn">Next ›</button>
-</div>
-
+  <div class="pager-left">
+    <span id="showingCount">Showing 0 Entities</span>
   </div>
+
+  <div class="right-pager">
+    <button class="pager-btn" id="prevBtn" type="button">‹ Prev</button>
+
+    <span class="pager-text">
+      Page <b id="pageNow">1</b> of <b id="pageTotal">1</b>
+    </span>
+
+    <button class="pager-btn" id="nextBtn" type="button">Next ›</button>
+  </div>
+
 
   <!-- ============================================================
     6) TOAST (Success / Error messages from JS)

@@ -1007,57 +1007,67 @@
 
   /* ===== FOOTER PAGINATION (FIXED) ===== */
 
-  /* ✅ FOOTER CONTAINER */
-  .qb-bottom-row{
-    display: flex;
-    flex-direction: column;   /* 🔥 STACK like clean layout */
-    align-items: center;
-    justify-content: center;
-    gap: 8px;
+  /* 🔥 QUOTATION FOOTER  */
+.quotation-page .pager-bar {
+  flex-shrink: 0;
 
-    margin: 12px 0;
-    padding: 10px 0;
-    border-top: 1px solid #ead7d7;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-    width: 100%;
-  }
+  flex-wrap: nowrap;
+  gap: 8px;
 
-  /* ✅ LEFT TEXT */
-  .qb-footer-left{
-    font-size: 12px;
-    font-weight: 600;
-    color: #7a1d1d;
+  position: sticky;
+  bottom: 0;
 
-    text-align: center;
-    width: 100%;
-  }
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
 
-  /* ✅ RIGHT SECTION (buttons + page) */
-  .qb-footer-right{
-    display: flex;
-    justify-content: center;   /* 🔥 center align */
-    align-items: center;
-    gap: 8px;
-
-    width: 100%;
-    flex-wrap: wrap;          /* 🔥 prevents overflow */
-  }
-
-  /* ✅ PAGE TEXT */
-  .page-indicator{
-    font-size: 12px;
-    color: #8a5a5a;
-  }
-
-  /* ✅ BUTTONS */
-  .pager-btn{
-    padding: 5px 10px;
-    font-size: 12px;
-    min-width: 60px;
-
-    box-shadow: none;         /* optional: cleaner mobile */
-  }
+  padding: 12px 14px;
+  z-index: 5;
 }
+
+/* 🔥 LEFT TEXT (SAME AS PRODUCT) */
+.quotation-page .pager-left {
+  display: flex;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
+
+  flex: 1;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
+
+/* 🔥 RIGHT BUTTONS (ROW) */
+.quotation-page .right-pager {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+/* 🔥 PAGE TEXT */
+.quotation-page .pager-text {
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 🔥 BUTTON */
+.quotation-page .pager-btn {
+  flex: 1 1 45%;
+text-align: center;
+font-size: 12px;
+padding: 6px 10px;
+}
+ 
+
    /* ===== PAYMENT ===== */
   .qb-pay-grid{
     grid-template-columns: 1fr 1fr;
