@@ -855,7 +855,8 @@
     padding: 8px;
     display: flex;
     flex-direction: column;
-    height: 100vh;
+  flex: 1;
+  min-height: 0;
     overflow: visible !important;
     width: 100%;
     border-top: 1px solid #ead7d7;
@@ -981,7 +982,7 @@
   .table-scroll-area{
       flex: 1;              /* ✅ fill space */
   min-height: 0;
-  height: auto;  
+  overflow-y: auto;  
      }
 
   .billing-table{ font-size: 13px; }
