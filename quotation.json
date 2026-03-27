@@ -846,7 +846,7 @@
     "customer_name": "jkk tyt",
     "currency": "IND",
     "expected_date": "2026-03-27",
-    "status": "send",
+    "status": "expired",
     "status_date": "2026-03-11T13:11:54.030Z",
     "submitted_by": "Current User",
     "rejection_reason": "",
@@ -883,8 +883,16 @@
         "date": "2026-03-11T13:11:54.030Z",
         "user": "Current User",
         "notes": "Quotation send"
+      },
+      {
+        "status": "expired",
+        "date": "2026-03-27",
+        "time": "10:21:27",
+        "reason": "Auto-expired",
+        "notes": "Expired on 2026-03-27 (valid until 2026-03-26)"
       }
-    ]
+    ],
+    "expired_date": "2026-03-27"
   },
   {
     "quotation_id": "QA-0016",
