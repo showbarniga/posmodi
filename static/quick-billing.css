@@ -985,6 +985,11 @@
   .qty-input{
     width: 60px;
   }
+  .quotation-page .table-wrapper{
+  overflow-y: auto;
+  overflow-x: auto;
+  max-height: none;   /* ✅ REMOVE LIMIT */
+}
 
   /* ===== FOOTER (LIKE DEPARTMENT PAGE) ===== */
  /* 🔥 QUOTATION FOOTER  */
@@ -1019,7 +1024,7 @@
 
   flex: 1;
 
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
   text-overflow: unset;
 }
