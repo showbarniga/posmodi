@@ -155,11 +155,10 @@
 
 /* Keep row 2 in a single line (horizontal scroll if needed) */
 .qb-row-single{
-  flex-wrap: nowrap;
-  overflow-x: auto;
-  gap: 12px;
+  flex-wrap: wrap !important;
+  overflow-x: visible !important;
+  gap: 8px;
 }
-.qb-row-single > *{ flex: 0 0 auto; }
 
 
 /* =========================================================
@@ -935,7 +934,9 @@
 
   /* ===== SCAN ===== */
   .scan-pill{
-    width: 100%;
+     width: 100% !important;   /* ✅ FULL WIDTH */
+    max-width: 100%;
+    box-sizing: border-box;
     height: 34px;
     margin-bottom: 14px;
     overflow: hidden;
@@ -1008,7 +1009,7 @@
   /* ===== FOOTER PAGINATION (FIXED) ===== */
 
   /* 🔥 QUOTATION FOOTER  */
-.quotation-page .pager-bar {
+.qb-bottom-row{
   flex-shrink: 0;
 
   display: flex;
@@ -1029,7 +1030,7 @@
 }
 
 /* 🔥 LEFT TEXT (SAME AS PRODUCT) */
-.quotation-page .pager-left {
+.qb-footer-left{
   display: flex;
   align-items: center;
 
@@ -1039,28 +1040,29 @@
 
   flex: 1;
 
-  white-space: normal;
+  white-space: nowrap;
   overflow: visible;
   text-overflow: unset;
 }
 
 /* 🔥 RIGHT BUTTONS (ROW) */
-.quotation-page .right-pager {
+.qb-footer-right{
   display: flex;
   flex-direction: row;
   align-items: center;
   gap: 8px;
   flex-shrink: 0;
+   white-space: nowrap;
 }
 
 /* 🔥 PAGE TEXT */
-.quotation-page .pager-text {
+.pager-text {
   font-size: 12px;
   white-space: nowrap;
 }
 
 /* 🔥 BUTTON */
-.quotation-page .pager-btn {
+.pager-btn{
   flex: 1 1 45%;
 text-align: center;
 font-size: 12px;
