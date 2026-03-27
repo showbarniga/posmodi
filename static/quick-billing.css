@@ -963,7 +963,7 @@
   .table-scroll-area{
    flex: 1;            /* ✅ dynamic height */
   min-height: 200px;
-  max-height: 50vh;
+  max-height: 300px;
   overflow-y: auto;
   }
 
@@ -986,32 +986,49 @@
 
   /* ===== FOOTER (LIKE DEPARTMENT PAGE) ===== */
   .qb-bottom-row{
-    display: flex;
-    flex-direction: row !important;
-    align-items: center;
-    justify-content: space-between;
-    gap: 8px;
+ 
+  flex-shrink: 0;
 
-    position: sticky;
-    bottom: 0;
-    background: #f6f1f1;
-    z-index: 10;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-    padding: 8px 6px;
-    border-top: 1px solid #ead7d7;
-  }
+  flex-wrap: nowrap;
+  gap: 8px;
+
+  position: sticky;
+  bottom: 0;
+
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
+
+  padding: 12px 14px;
+  z-index: 5;
+}
 
   .qb-footer-left{
-    font-size: 12px;
-    white-space: nowrap;
-  }
+   display: flex;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
+
+  flex: 1;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+}
 
   .qb-footer-right{
     display: flex;
-    align-items: center;
-    gap: 6px;
-    white-space: nowrap;
-  }
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
 
   .pager-btn{
     padding: 5px 10px;
