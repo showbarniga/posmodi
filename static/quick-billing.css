@@ -1072,6 +1072,7 @@
     flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
     gap: 6px;
      min-width: 0; 
+      white-space: nowrap;
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
