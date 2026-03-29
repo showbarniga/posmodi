@@ -1034,7 +1034,7 @@
   align-items: center;
 
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 2px;
 
   width: 100%;
   box-sizing: border-box;
@@ -1047,7 +1047,7 @@
   background: #f3f3f3 !important;
   border-top: 1px solid #e0e0e0 !important;
 
-  padding: 6px 8px !important;
+  padding: 2px 4px !important;
   margin: 0 !important;
 
   z-index: 100 !important;
@@ -1055,43 +1055,41 @@
 
   /* ✅ LEFT SIDE */
   .qb-footer-left{
-    display: flex;
-  align-items: center;
-
-  font-size: 12px;
-  font-weight: 600;
-  color: #7a1d1d;
-
-  flex: 1;
-
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+    flex: 0 0 auto;
+    font-size: 9px;
+    font-weight: 600;
+    color: #7a1d1d;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    line-height: 1.2;
   }
 
   /* ✅ RIGHT SIDE */
   .qb-footer-right{
     display: flex;
     align-items: center;
-    justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
-    flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
-    gap: 6px;
-     min-width: 0; 
-      white-space: nowrap;
+    justify-content: flex-end !important;
+    flex: 1 1 auto;
+    gap: 1px;
+    min-width: 0;
+    white-space: nowrap;
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-    padding: 6px 10px;
-    font-size: 12px;
-     white-space: nowrap;
-     flex: 1 1 45%;
-text-align: center;
+    padding: 1px 3px;
+    font-size: 9px;
+    white-space: nowrap;
+    line-height: 1.2;
+    min-width: auto;
   }
 
   /* ✅ PAGE TEXT */
   .page-indicator{
-    font-size: 11px;
+    font-size: 9px;
+    white-space: nowrap;
+    line-height: 1.2;
   }
 }
 
@@ -1171,8 +1169,14 @@ text-align: center;
     gap: 8px;
   }
 
-  .qb-footer-left{ text-align: center; }
-  .qb-footer-right{ justify-content: center; }
+  .qb-footer-left{ 
+    text-align: center;
+    font-size: 9px;
+  }
+  .qb-footer-right{ 
+    justify-content: center;
+    gap: 1px;
+  }
 
   
   .mp-grid{ grid-template-columns: 1fr; }
