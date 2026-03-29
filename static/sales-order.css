@@ -630,40 +630,32 @@
   }
 
   /* =========================================
-   🔥 SALES ORDER FOOTER (LIKE QUOTATION)
+   🔥 SALES ORDER FOOTER (LIKE CUSTOMER)
 ========================================= */
 .sales-order-page .table-footer{
   flex-shrink: 0;
-
   display: flex;
   justify-content: space-between;
   align-items: center;
-
   flex-wrap: nowrap;
   gap: 8px;
-
   position: sticky;
   bottom: 0;
-
-  background: #f3f3f3;
-  border-top: 1px solid #e0e0e0;
-
-  padding: 10px 10px;
-  z-index: 5;
+  background: #ffffff;
+  border-top: 1px solid #ddd;
+  padding: 6px 8px;
+  z-index: 10;
 }
 
 /* 🔥 LEFT TEXT */
 .sales-order-page .showing{
   display: flex;
   align-items: center;
-
   font-size: 12px;
   font-weight: 600;
   color: #7a1d1d;
-
   flex: 1;
-
-  white-space: nowrap;       /* 🔥 IMPORTANT */
+  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
@@ -671,24 +663,22 @@
 /* 🔥 RIGHT SIDE */
 .sales-order-page .pager{
   display: flex;
-  flex-direction: row;
   align-items: center;
-  gap: 8px;
-
+  gap: 10px;
   flex-shrink: 0;
 }
 
 /* 🔥 PAGE TEXT */
 .sales-order-page .pager-text{
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
 }
 
 /* 🔥 BUTTON */
 .sales-order-page .pager-btn{
-  font-size: 12px;
-  padding: 6px 10px;
-  min-width: auto;
+  padding: 5px 8px;
+  font-size: 11px;
+  min-width: 55px;
 }
 }
 @media (max-width: 520px) {
