@@ -1,3 +1,4 @@
+
 /* =========================================================
    /* 1) PAGE BASE  (.quick-billing-page) */
 /* ========================================================= */
@@ -1034,7 +1035,7 @@
   align-items: center;
 
   flex-wrap: nowrap;
-  gap: 2px;
+  gap: 6px;
 
   width: 100%;
   box-sizing: border-box;
@@ -1047,7 +1048,7 @@
   background: #f3f3f3 !important;
   border-top: 1px solid #e0e0e0 !important;
 
-  padding: 2px 4px !important;
+  padding: 6px 8px !important;
   margin: 0 !important;
 
   z-index: 100 !important;
@@ -1055,46 +1056,36 @@
 
   /* ✅ LEFT SIDE */
   .qb-footer-left{
-    flex: 0 0 auto;
-    font-size: 9px;
-    font-weight: 600;
-    color: #7a1d1d;
-    display: flex;
-  align-items: center;
-
-  font-size: 12px;
-  font-weight: 600;
-  color: #7a1d1d;
-
-  flex: 1;
-
-  white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+    flex: 1 1 auto;                  /* ❌ REMOVE 100% WIDTH */
+    text-align: left !important;
+    font-size: 11px;
+     min-width: 0;
+     white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis; /* ✅ prevents breaking */
   }
 
   /* ✅ RIGHT SIDE */
   .qb-footer-right{
-     display: flex;
-  flex-direction: row;
-  align-items: center;
-  gap: 8px;
-  flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
+    flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
+    gap: 6px;
+     min-width: 0; 
+      white-space: nowrap;
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-   flex: 1 1 45%;
-text-align: center;
-font-size: 12px;
-padding: 6px 10px;
+    padding: 4px 8px;
+    font-size: 11px;
+     white-space: nowrap;
   }
 
   /* ✅ PAGE TEXT */
   .page-indicator{
-    font-size: 9px;
-    white-space: nowrap;
-    line-height: 1.2;
+    font-size: 11px;
   }
 }
 
@@ -1174,14 +1165,8 @@ padding: 6px 10px;
     gap: 8px;
   }
 
-  .qb-footer-left{ 
-    text-align: center;
-    font-size: 9px;
-  }
-  .qb-footer-right{ 
-    justify-content: center;
-    gap: 1px;
-  }
+  .qb-footer-left{ text-align: center; }
+  .qb-footer-right{ justify-content: center; }
 
   
   .mp-grid{ grid-template-columns: 1fr; }
