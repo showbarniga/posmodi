@@ -1055,13 +1055,18 @@
 
   /* ✅ LEFT SIDE */
   .qb-footer-left{
-    flex: 1 1 auto;                  /* ❌ REMOVE 100% WIDTH */
-    text-align: left !important;
-    font-size: 11px;
-     min-width: 0;
-     white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis; /* ✅ prevents breaking */
+    display: flex;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
+
+  flex: 1;
+
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
   }
 
   /* ✅ RIGHT SIDE */
@@ -1077,9 +1082,11 @@
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-    padding: 4px 8px;
-    font-size: 11px;
+    padding: 6px 10px;
+    font-size: 12px;
      white-space: nowrap;
+     flex: 1 1 45%;
+text-align: center;
   }
 
   /* ✅ PAGE TEXT */
