@@ -570,3 +570,74 @@
 .dn-page-text strong{
   font-weight: 800;
 }
+/* =========================================
+   📱 MOBILE FIX (IMPORTANT)
+========================================= */
+@media (max-width: 768px){
+
+  /* ✅ Page full height layout */
+  .delivery-note-page{
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 10px;
+  }
+
+  /* ✅ Card should also be flexible */
+  .dn-card{
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 0;
+  }
+
+  /* ✅ TABLE AREA → ONLY THIS SCROLLS */
+  .dn-table-wrap{
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;   /* ✅ FIX */
+    overflow-x: auto;
+    max-height: 260px;  /* ✅ reduce table height */
+  }
+
+  /* ✅ Reduce table size */
+  .dn-table{
+    font-size: 12px;
+  }
+
+  .dn-table thead th,
+  .dn-table tbody td{
+    padding: 6px 8px;
+  }
+
+  /* ✅ Footer always visible */
+  .dn-footer{
+    flex-shrink: 0;
+    position: sticky;
+    bottom: 0;
+    background: #f6f1f1;
+    padding: 8px 4px;
+    border-top: 1px solid rgba(170, 70, 70, 0.2);
+    flex-wrap: wrap;
+  }
+
+  /* ✅ Fix footer alignment */
+  .dn-showing{
+    font-size: 11px;
+    width: 100%;
+    text-align: center;
+  }
+
+  .dn-pager{
+    width: 100%;
+    justify-content: center;
+    flex-wrap: wrap;
+  }
+
+  .dn-btn-page{
+    padding: 5px 10px;
+    font-size: 11px;
+    min-width: 60px;
+  }
+
+}
