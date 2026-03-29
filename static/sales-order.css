@@ -616,7 +616,7 @@
   .sales-order-page .table-wrap{
     overflow-x: auto;
     overflow-y: auto;
-    max-height: 220px;
+    max-height: 180px;
   }
 
   .sales-order-page .table{
@@ -629,33 +629,51 @@
     padding: 4px 8px;
   }
 
-
-
+  /* FOOTER - ALWAYS VISIBLE */
   .sales-order-page .table-footer{
-    position: sticky;
-    bottom: 0;
-    z-index: 10;
-
-    padding: 6px 8px;
+    flex-shrink: 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: nowrap;
     gap: 6px;
+    
+    position: relative;
+    bottom: auto;
+    
+    background: #ffffff;
+    border-top: 1px solid #ddd;
+    padding: 6px 8px;
+    margin-top: 8px;
+    z-index: 10;
   }
 
-  .sales-order-page .pager-left{
+  .sales-order-page .showing{
     font-size: 11px;
+    font-weight: 600;
+    color: #7a1d1d;
+    flex: 1;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 
-  .sales-order-page .right-pager{
+  .sales-order-page .pager{
+    display: flex;
+    align-items: center;
     gap: 4px;
+    flex-shrink: 0;
+  }
+
+  .sales-order-page .pager-text{
+    font-size: 10px;
+    white-space: nowrap;
   }
 
   .sales-order-page .pager-btn{
     padding: 4px 8px;
-    font-size: 11px;
-    min-width: auto;
-  }
-
-  .sales-order-page .pager-text{
-    font-size: 11px;
+    font-size: 10px;
+    min-width: 50px;
   }
 
 
