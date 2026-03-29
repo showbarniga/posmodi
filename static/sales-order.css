@@ -613,7 +613,37 @@
   .sales-order-page .btn-primary {
     width: 100%;
   }
+/* =========================================
+   ✅ BULK ACTION MOBILE FIX
+========================================= */
+@media (max-width: 768px){
 
+  .so-bulkbar{
+    display: flex;
+    flex-direction: column;   /* ✅ stack properly */
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .so-bulktext{
+    font-size: 13px;
+  }
+
+  .so-bulkbtns{
+    display: flex;
+    flex-wrap: wrap;          /* ✅ allow wrap */
+    justify-content: center;
+    gap: 8px;
+  }
+
+  .so-bulkbtn{
+    flex: 1 1 45%;            /* ✅ 2 buttons per row */
+    font-size: 11px;
+    padding: 6px 8px;
+    text-align: center;
+  }
+
+}
   /* FILTERS */
   .sales-order-page .heading-tabs {
     grid-template-columns: repeat(2, 1fr);
@@ -653,6 +683,7 @@
   /* LEFT SIDE */
   .sales-order-page .showing {
     flex: 1;
+    max-width: 50%;
     font-size: 11px;
     white-space: nowrap;
     overflow: hidden;
@@ -666,6 +697,7 @@
     align-items: center !important;
     justify-content: flex-end !important;
     gap: 6px;
+      flex-shrink: 0;
   }
 
   /* BUTTONS */
