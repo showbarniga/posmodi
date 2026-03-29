@@ -1,5 +1,6 @@
 
 
+
 /* =========================================================
    DELIVERY NOTE PAGE
    Main page wrapper
@@ -651,66 +652,5 @@
 /* Page text */
 .dn-page-text{
   font-size: 11px;
-}
-/* =========================================
-   📱 EXTRA SMALL DEVICES (≤360px)
-========================================= */
-@media (max-width: 360px){
-
-  /* Reduce overall padding */
-  .delivery-note-page{
-    padding: 6px;
-  }
-
-  .dn-card{
-    padding: 6px;
-  }
-
-  /* Table more compact */
-  .dn-table{
-    font-size: 11px;
-  }
-
-  .dn-table thead th,
-  .dn-table tbody td{
-    padding: 5px 6px;
-  }
-
-  /* Reduce table height slightly */
-  .dn-table-wrap{
-    max-height: 220px;
-  }
-
-  /* Footer layout */
-  .dn-footer{
-    gap: 4px;
-    padding: 6px 4px;
-  }
-
-  /* LEFT TEXT */
-  .dn-showing{
-    font-size: 10px;
-    max-width: 45%;          /* prevent overlap */
-    overflow: hidden;
-    text-overflow: ellipsis;
-    white-space: nowrap;
-  }
-
-  /* RIGHT SIDE */
-  .dn-pager{
-    gap: 4px;
-  }
-
-  /* Buttons very small */
-  .dn-btn-page{
-    padding: 3px 6px;
-    font-size: 10px;
-  }
-
-  /* Page text */
-  .dn-page-text{
-    font-size: 10px;
-  }
-
 }
 }
