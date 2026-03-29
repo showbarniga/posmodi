@@ -629,48 +629,67 @@
     min-width: 650px;
   }
 
-  /* ✅ FOOTER FIX */
-  .sales-order-page .table-footer{
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+  /* =========================================
+   🔥 SALES ORDER FOOTER (LIKE QUOTATION)
+========================================= */
+.sales-order-page .table-footer{
+  flex-shrink: 0;
 
-    width: 100%;
-    box-sizing: border-box;
-    padding: 6px 6px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-    gap: 4px;
-  }
+  flex-wrap: nowrap;
+  gap: 8px;
 
-  /* LEFT */
-  .sales-order-page .showing{
-    flex: 1;
-    min-width: 0;   /* 🔥 MOST IMPORTANT */
-    font-size: 11px;
+  position: sticky;
+  bottom: 0;
 
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-  }
+  background: #f3f3f3;
+  border-top: 1px solid #e0e0e0;
 
-  /* RIGHT */
-  .sales-order-page .pager{
-    flex-shrink: 0;
-    display: flex;
-    gap: 4px;
-     align-items: center;
-  }
+  padding: 10px 10px;
+  z-index: 5;
+}
 
-  .sales-order-page .pager-btn{
-    padding: 4px 8px;
-    font-size: 11px;
-  }
+/* 🔥 LEFT TEXT */
+.sales-order-page .showing{
+  display: flex;
+  align-items: center;
 
-  .sales-order-page .pager-text{
-    font-size: 11px;
-    white-space: nowrap;
-  }
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
 
+  flex: 1;
+
+  white-space: nowrap;       /* 🔥 IMPORTANT */
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* 🔥 RIGHT SIDE */
+.sales-order-page .pager{
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+
+  flex-shrink: 0;
+}
+
+/* 🔥 PAGE TEXT */
+.sales-order-page .pager-text{
+  font-size: 12px;
+  white-space: nowrap;
+}
+
+/* 🔥 BUTTON */
+.sales-order-page .pager-btn{
+  font-size: 12px;
+  padding: 6px 10px;
+  min-width: auto;
+}
 }
 @media (max-width: 520px) {
   .sales-order-page .main-heading {
