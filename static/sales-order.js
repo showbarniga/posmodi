@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", () => {
   const tbody = document.getElementById("salesOrderTbody");
   const noDataRow = document.getElementById("noDataRow");
 
-  const showingText = document.getElementById("showingText");
+  const showingText = document.getElementById("showingCount");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const pageNow = document.getElementById("pageNow");
@@ -160,20 +160,21 @@ const pageTotal = document.getElementById("pageTotal");
   if (pageTotal) pageTotal.textContent = tp;
 }
 
+  
   function updateShowing() {
-    if (!showingText) return;
+  if (!showingText) return;
 
-    if (!filteredOrders.length) {
-      showingText.textContent = "Showing 0 Entries";
-      return;
-    }
-
-    const start = (currentPage - 1) * ROWS_PER_PAGE + 1;
-    const end = Math.min(currentPage * ROWS_PER_PAGE, filteredOrders.length);
-    const total = filteredOrders.length;
-
-    showingText.textContent = `Showing ${start}-${end} of ${total} Entries`;
+  if (!filteredOrders.length) {
+    showingText.textContent = "Showing 0 Entities";
+    return;
   }
+
+  const start = (currentPage - 1) * ROWS_PER_PAGE + 1;
+  const end = Math.min(currentPage * ROWS_PER_PAGE, filteredOrders.length);
+  const total = filteredOrders.length;
+
+  showingText.textContent = `Showing ${start}-${end} of ${total} Entities`;
+}
 
   /* =========================================================
      SORTING
