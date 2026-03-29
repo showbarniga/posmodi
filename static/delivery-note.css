@@ -611,33 +611,45 @@
   }
 
   /* ✅ Footer always visible */
-  .dn-footer{
-    flex-shrink: 0;
-    position: sticky;
-    bottom: 0;
-    background: #f6f1f1;
-    padding: 8px 4px;
-    border-top: 1px solid rgba(170, 70, 70, 0.2);
-    flex-wrap: wrap;
-  }
+.dn-footer{
+  flex-shrink: 0;
+  position: sticky;
+  bottom: 0;
+  background: #f6f1f1;
+  padding: 8px 6px;
+  border-top: 1px solid rgba(170, 70, 70, 0.2);
 
-  /* ✅ Fix footer alignment */
-  .dn-showing{
-    font-size: 11px;
-    width: 100%;
-    text-align: center;
-  }
+  display: flex;
+  justify-content: space-between;  /* ✅ LEFT + RIGHT */
+  align-items: center;
+  flex-wrap: nowrap;               /* ❌ stop stacking */
+}
 
-  .dn-pager{
-    width: 100%;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
+/* LEFT SIDE */
+.dn-showing{
+  font-size: 11px;
+  width: auto;        /* ✅ remove full width */
+  text-align: left;   /* ✅ left align */
+}
 
-  .dn-btn-page{
-    padding: 5px 10px;
-    font-size: 11px;
-    min-width: 60px;
-  }
+/* RIGHT SIDE */
+.dn-pager{
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;  /* ✅ right align */
+  gap: 6px;
+  flex-wrap: nowrap;
+}
 
+/* Buttons smaller */
+.dn-btn-page{
+  padding: 4px 8px;
+  font-size: 11px;
+  min-width: auto;
+}
+
+/* Page text */
+.dn-page-text{
+  font-size: 11px;
+}
 }
