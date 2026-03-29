@@ -594,6 +594,7 @@
   .sales-order-page {
     padding: 12px;
   }
+    
 
   .sales-order-page .header-row {
     flex-direction: column;
@@ -614,7 +615,10 @@
   .sales-order-page .heading-tabs {
     grid-template-columns: repeat(2, 1fr);
   }
-
+    .sales-order-page .table-wrap{
+    overflow-y: auto;   /* only mobile */
+    max-height: 300px;
+  }
   .sales-order-page .table {
     min-width: 700px;
   }
