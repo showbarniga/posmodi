@@ -612,11 +612,12 @@
 
   
 
-  /* TABLE */
+  /* TABLE - ADD BOTTOM PADDING FOR FIXED FOOTER */
   .sales-order-page .table-wrap{
     overflow-x: auto;
     overflow-y: auto;
     max-height: 180px;
+    margin-bottom: 60px;
   }
 
   .sales-order-page .table{
@@ -629,23 +630,25 @@
     padding: 4px 8px;
   }
 
-  /* FOOTER - ALWAYS VISIBLE */
+  /* FOOTER - FIXED AT BOTTOM */
   .sales-order-page .table-footer{
-    flex-shrink: 0;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    
     display: flex;
     justify-content: space-between;
     align-items: center;
     flex-wrap: nowrap;
     gap: 6px;
     
-    position: relative;
-    bottom: auto;
-    
     background: #ffffff;
     border-top: 1px solid #ddd;
-    padding: 6px 8px;
-    margin-top: 8px;
-    z-index: 10;
+    padding: 8px 12px;
+    z-index: 1000;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
   }
 
   .sales-order-page .showing{
