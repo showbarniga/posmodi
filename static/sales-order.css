@@ -616,42 +616,7 @@
     grid-template-columns: repeat(2, 1fr);
   }
 
-  /* BULK BUTTON FIX */
   
-
-  .so-bulkbar{
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .so-bulktext{
-    text-align: center;
-    font-size: 14px;
-  }
-
-  .so-bulkbtns{
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 10px;
-    width: 100%;
-  }
-
-  .so-bulkbtn{
-    flex: 1 1 48%;   /* 2 per row */
-    padding: 8px;
-    font-size: 12px;
-    border-radius: 999px;
-    text-align: center;
-  }
-
-  /* LAST BUTTON FULL WIDTH */
-  .so-bulkbtn:nth-child(3){
-    flex: 1 1 100%;
-  }
-
 
   /* TABLE */
   .sales-order-page .table-wrap{
