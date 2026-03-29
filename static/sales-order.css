@@ -626,6 +626,45 @@
   .sales-order-page .top-controls .search {
     width: 90%;
   }
+  /* ✅ FOOTER FIX FOR TABLET + MOBILE */
+.sales-order-page .table-footer {
+  display: flex;
+  flex-direction: row;              /* ✅ keep in one line */
+  justify-content: space-between;  /* LEFT + RIGHT */
+  align-items: center;
+  gap: 8px;
+  flex-wrap: nowrap;               /* ❌ prevent stacking */
+}
+
+/* LEFT TEXT */
+.sales-order-page .showing {
+  font-size: 12px;
+  width: auto;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* RIGHT SIDE */
+.sales-order-page .pager {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+/* BUTTON SIZE */
+.sales-order-page .pager-btn {
+  min-width: auto;
+  padding: 5px 10px;
+  font-size: 12px;
+}
+
+/* PAGE TEXT */
+.sales-order-page .pager-text {
+  font-size: 12px;
+  white-space: nowrap;
+}
 }
 
 @media (max-width: 520px) {
