@@ -611,7 +611,7 @@
   .sales-order-page .table-wrap{
     overflow-x: auto;
     overflow-y: auto;
-    max-height: 300px;
+    max-height: 250px;
   }
 
   .sales-order-page .table{
