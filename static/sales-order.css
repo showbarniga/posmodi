@@ -417,6 +417,7 @@
 /* =========================================================
    TABLE FOOTER
 ========================================================= */
+
 .sales-order-page .table-footer {
   display: flex;
   justify-content: space-between;
@@ -466,18 +467,6 @@
   cursor: default;
   transform: none;
 }
-
-.sales-order-page .pager-text {
-  font-size: 13px;
-  color: #7a1d1d;
-  white-space: nowrap;
-}
-
-#pageNow,
-#pageTotal {
-  font-weight: 700;
-}
-
 /* =========================================================
    STATUS SORT MENU
 ========================================================= */
@@ -629,57 +618,36 @@
     min-width: 650px;
   }
 
-  /* =========================================
-   🔥 SALES ORDER FOOTER (LIKE CUSTOMER)
-========================================= */
-.sales-order-page .table-footer{
-  flex-shrink: 0;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: nowrap;
-  gap: 8px;
-  position: sticky;
-  bottom: 0;
-  background: #ffffff;
-  border-top: 1px solid #ddd;
-  padding: 6px 8px;
-  z-index: 10;
-}
 
-/* 🔥 LEFT TEXT */
-.sales-order-page .showing{
-  display: flex;
-  align-items: center;
-  font-size: 12px;
-  font-weight: 600;
-  color: #7a1d1d;
-  flex: 1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
-/* 🔥 RIGHT SIDE */
-.sales-order-page .pager{
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-shrink: 0;
-}
+  .sales-order-page .table-footer{
+    position: sticky;
+    bottom: 0;
+    z-index: 10;
 
-/* 🔥 PAGE TEXT */
-.sales-order-page .pager-text{
-  font-size: 11px;
-  white-space: nowrap;
-}
+    padding: 6px 8px;
+    gap: 6px;
+  }
 
-/* 🔥 BUTTON */
-.sales-order-page .pager-btn{
-  padding: 5px 8px;
-  font-size: 11px;
-  min-width: 55px;
-}
+  .sales-order-page .pager-left{
+    font-size: 11px;
+  }
+
+  .sales-order-page .right-pager{
+    gap: 6px;
+  }
+
+  .sales-order-page .pager-btn{
+    padding: 4px 8px;
+    font-size: 11px;
+    min-width: auto;
+  }
+
+  .sales-order-page .pager-text{
+    font-size: 11px;
+  }
+
+
 }
 @media (max-width: 520px) {
   .sales-order-page .main-heading {

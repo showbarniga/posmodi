@@ -137,9 +137,11 @@
 
     <!-- Footer -->
     <div class="table-footer">
-      <div class="showing" id="showingText">Showing 0 Entries</div>
+     <div class="pager-left">
+       <span id="showingCount">Showing 0 Entities</span>
+     </div>
 
-      <div class="pager">
+      <div class="right-pager">
         <button class="pager-btn" id="prevBtn" type="button" disabled>‹ Prev</button>
         <span class="pager-text">
           Page <b id="pageNow">1</b> of <b id="pageTotal">1</b>
@@ -148,7 +150,7 @@
       </div>
     </div>
 
-  </div>
+  
 </div>
 
 <script src="{{ url_for('static', filename='sales-order.js') }}"></script>
