@@ -652,7 +652,7 @@
   }
 
   .sales-order-page .showing{
-    font-size: 11px;
+    font-size: 9px;
     font-weight: 600;
     color: #7a1d1d;
     flex: 1;
@@ -664,19 +664,19 @@
   .sales-order-page .pager{
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 2px;
     flex-shrink: 0;
   }
 
   .sales-order-page .pager-text{
-    font-size: 10px;
+    font-size: 8px;
     white-space: nowrap;
   }
 
   .sales-order-page .pager-btn{
-    padding: 4px 8px;
-    font-size: 10px;
-    min-width: 50px;
+    padding: 3px 6px;
+    font-size: 8px;
+    min-width: 45px;
   }
 
 
