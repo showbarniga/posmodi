@@ -630,7 +630,7 @@
     padding: 4px 8px;
   }
 
-  /* FOOTER - FIXED AT BOTTOM */
+  /* FOOTER - FIXED AT BOTTOM LIKE CUSTOMER PAGE */
   .sales-order-page .table-footer{
     position: fixed;
     bottom: 0;
@@ -638,45 +638,47 @@
     right: 0;
     width: 100%;
     
+    flex-shrink: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    flex-wrap: nowrap;
-    gap: 6px;
     
     background: #ffffff;
     border-top: 1px solid #ddd;
-    padding: 8px 12px;
+    padding: 6px 8px;
     z-index: 1000;
     box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
   }
 
   .sales-order-page .showing{
-    font-size: 9px;
+    display: flex;
+    align-items: center;
+    font-size: 12px;
     font-weight: 600;
     color: #7a1d1d;
+    line-height: 1.2;
     flex: 1;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    white-space: normal;
+    overflow: visible;
+    text-overflow: unset;
   }
 
   .sales-order-page .pager{
     display: flex;
     align-items: center;
-    gap: 2px;
+    gap: 6px;
     flex-shrink: 0;
   }
 
   .sales-order-page .pager-text{
-    font-size: 8px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
   .sales-order-page .pager-btn{
-    padding: 3px 6px;
-    font-size: 8px;
-    min-width: 45px;
+    padding: 5px 8px;
+    font-size: 11px;
+    min-width: 55px;
   }
 
 
