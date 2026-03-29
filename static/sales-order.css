@@ -617,21 +617,41 @@
   }
 
   /* BULK BUTTON FIX */
+  
+
   .so-bulkbar{
+    display: flex;
     flex-direction: column;
-    gap: 10px;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .so-bulktext{
+    text-align: center;
+    font-size: 14px;
   }
 
   .so-bulkbtns{
+    display: flex;
     flex-wrap: wrap;
     justify-content: center;
+    gap: 10px;
+    width: 100%;
   }
 
   .so-bulkbtn{
-    flex: 1 1 45%;
-    font-size: 11px;
-    padding: 6px;
+    flex: 1 1 48%;   /* 2 per row */
+    padding: 8px;
+    font-size: 12px;
+    border-radius: 999px;
+    text-align: center;
   }
+
+  /* LAST BUTTON FULL WIDTH */
+  .so-bulkbtn:nth-child(3){
+    flex: 1 1 100%;
+  }
+
 
   /* TABLE */
   .sales-order-page .table-wrap{
@@ -652,16 +672,16 @@
 
     width: 100%;
     box-sizing: border-box;
-    padding: 6px 4px;
+    padding: 6px 6px;
 
-    gap: 6px;
+    gap: 4px;
   }
 
   /* LEFT */
   .sales-order-page .showing{
     flex: 1;
     min-width: 0;   /* 🔥 MOST IMPORTANT */
-    font-size: 10px;
+    font-size: 11px;
 
     white-space: nowrap;
     overflow: hidden;
@@ -673,15 +693,16 @@
     flex-shrink: 0;
     display: flex;
     gap: 4px;
+     align-items: center;
   }
 
   .sales-order-page .pager-btn{
-    padding: 3px 6px;
-    font-size: 10px;
+    padding: 4px 8px;
+    font-size: 11px;
   }
 
   .sales-order-page .pager-text{
-    font-size: 10px;
+    font-size: 11px;
     white-space: nowrap;
   }
 
