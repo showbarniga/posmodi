@@ -589,20 +589,25 @@
 @media (max-width: 768px){
 
   .sales-order-page{
-    padding: 12px;
+    padding: 8px;
   }
 
   .sales-order-page .header-row{
     flex-direction: column;
-    gap: 8px;
+    gap: 4px;
+    margin-bottom: 6px;
   }
 
   .sales-order-page .btn-primary{
     width: 100%;
+    padding: 6px 12px;
+    font-size: 12px;
   }
 
   .sales-order-page .heading-tabs{
     grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+    margin-bottom: 12px;
   }
 
   
@@ -611,11 +616,17 @@
   .sales-order-page .table-wrap{
     overflow-x: auto;
     overflow-y: auto;
-    max-height: 250px;
+    max-height: 220px;
   }
 
   .sales-order-page .table{
     min-width: 650px;
+    font-size: 12px;
+  }
+
+  .sales-order-page .table th,
+  .sales-order-page .table td {
+    padding: 4px 8px;
   }
 
 
