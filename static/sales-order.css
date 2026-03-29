@@ -616,7 +616,7 @@
   }
 
   .sales-order-page .table {
-    min-width: 900px;
+    min-width: 700px;
   }
 
   .sales-order-page .pager {
@@ -632,14 +632,14 @@
   flex-direction: row !important;              /* ✅ keep in one line */
   justify-content: space-between !important;  /* LEFT + RIGHT */
   align-items: center !important;
-  gap: 8px;
+  gap: 6px;
   flex-wrap: nowrap !important;               /* ❌ prevent stacking */
 }
 
 /* LEFT TEXT */
 .sales-order-page .showing {
-  font-size: 12px;
-  width: auto !important;
+  font-size: 11px;
+    max-width: 45%;
   white-space: nowrap;
   text-align: left !important;
   overflow: hidden;
@@ -651,19 +651,20 @@
   display: flex !important;
   align-items: center !important;
   justify-content: flex-end !important;
-  gap: 8px;
+  gap: 6px;
+   flex-shrink: 0;  
 }
 
 /* BUTTON SIZE */
 .sales-order-page .pager-btn {
   min-width: auto;
-  padding: 5px 10px;
-  font-size: 12px;
+  padding: 4px 8px;
+  font-size: 11px;
 }
 
 /* PAGE TEXT */
 .sales-order-page .pager-text {
-  font-size: 12px;
+  font-size: 11px;
   white-space: nowrap;
 }
 }
