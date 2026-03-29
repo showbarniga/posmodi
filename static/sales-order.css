@@ -630,59 +630,67 @@
     padding: 4px 8px;
   }
 
-  /* FOOTER - FIXED AT BOTTOM LIKE CUSTOMER PAGE */
-  .sales-order-page .table-footer{
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    width: 100%;
-    
-    flex-shrink: 0;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    
-    background: #ffffff;
-    border-top: 1px solid #ddd;
-    padding: 6px 8px;
-    z-index: 1000;
-    box-shadow: 0 -2px 8px rgba(0,0,0,0.1);
-  }
+  /* =========================================
+   ✅ PERFECT FOOTER FIX
+========================================= */
+.sales-order-page .table-footer{
+  position: sticky;   /* 🔥 change from fixed */
+  bottom: 0;
 
-  .sales-order-page .showing{
-    display: flex;
-    align-items: center;
-    font-size: 12px;
-    font-weight: 600;
-    color: #7a1d1d;
-    line-height: 1.2;
-    flex: 1;
-    white-space: normal;
-    overflow: visible;
-    text-overflow: unset;
-  }
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 
-  .sales-order-page .pager{
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    flex-shrink: 0;
-  }
+  width: 100%;
+  box-sizing: border-box;
 
-  .sales-order-page .pager-text{
-    font-size: 11px;
-    white-space: nowrap;
-  }
+  padding: 8px 10px;
+  gap: 8px;
 
-  .sales-order-page .pager-btn{
-    padding: 5px 8px;
-    font-size: 11px;
-    min-width: 55px;
-  }
+  background: #ffffff;
+  border-top: 1px solid #ddd;
 
-
+  z-index: 5;
 }
+
+/* LEFT */
+.sales-order-page .pager-left{
+  display: flex;
+  align-items: center;
+
+  font-size: 12px;
+  font-weight: 600;
+  color: #7a1d1d;
+
+  flex: 1;
+  min-width: 0;
+
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* RIGHT */
+.sales-order-page .right-pager{
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  flex-shrink: 0;
+}
+
+/* TEXT */
+.sales-order-page .pager-text{
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+/* BUTTON */
+.sales-order-page .pager-btn{
+  padding: 5px 8px;
+  font-size: 11px;
+  min-width: auto;
+}}
 @media (max-width: 520px) {
   .sales-order-page .main-heading {
     font-size: 22px;
