@@ -629,13 +629,17 @@
   .sales-order-page .table td {
     padding: 4px 8px;
   }
-
+  .sales-order-page .card{
+  padding-bottom: 70px;
+}
   /* =========================================
    ✅ PERFECT FOOTER FIX
 ========================================= */
 .sales-order-page .table-footer{
-  position: sticky;   /* 🔥 change from fixed */
+  position: fixed;   /* 🔥 change from fixed */
   bottom: 0;
+  left: 0;
+  right: 0;
 
   display: flex;
   justify-content: space-between;
@@ -644,13 +648,13 @@
   width: 100%;
   box-sizing: border-box;
 
-  padding: 4px 6px;
+  padding: 6px 8px;
   gap: 6px;
 
   background: #ffffff;
   border-top: 1px solid #ddd;
 
-  z-index: 5;
+  z-index: 1000;
 }
 
 /* LEFT */
@@ -687,7 +691,7 @@
 
 /* BUTTON */
 .sales-order-page .pager-btn{
-  padding: 5px 8px;
+  padding: 4px 8px;
   font-size: 11px;
   min-width: auto;
 }}
