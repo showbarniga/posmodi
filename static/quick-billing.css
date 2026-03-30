@@ -861,7 +861,6 @@
     overflow: visible !important;
     width: 100%;
     border-top: 1px solid #ead7d7;
-    overflow-x: hidden;
 
   }
 
@@ -899,8 +898,6 @@
     gap: 8px; 
     margin: 8px 0;
     flex: 0 0 auto;
-    width: 100%;
-    min-width: 0; 
   }
 
   /* Row-1: 2-column grid */
@@ -913,11 +910,11 @@
 
   .pill-input,
   .pill-select{
-    width: 100% !important;
+    width: 90% !important;
     min-width: 0 !important;
     height: 26px;
     font-size: 12px;
-     box-sizing: border-box;
+  }
 
   #productCodeInput{ min-width: 100px; }
 
@@ -1038,7 +1035,7 @@
   align-items: center;
 
   flex-wrap: nowrap;
-  gap: 4px;
+  gap: 6px;
 
   width: 100%;
   box-sizing: border-box;
@@ -1051,7 +1048,7 @@
   background: #f3f3f3 !important;
   border-top: 1px solid #e0e0e0 !important;
 
-  padding: 6px 6px !important;
+  padding: 6px 8px !important;
   margin: 0 !important;
 
   z-index: 100 !important;
@@ -1061,7 +1058,7 @@
   .qb-footer-left{
     flex: 1 1 auto;                  /* ❌ REMOVE 100% WIDTH */
     text-align: left !important;
-    font-size: 10px;
+    font-size: 11px;
      min-width: 0;
      white-space: nowrap;
   overflow: hidden;
@@ -1074,14 +1071,14 @@
     align-items: center;
     justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
     flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
-    gap: 4px;
+    gap: 6px;
      min-width: 0; 
       white-space: nowrap;
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-    padding: 3px 6px;
+    padding: 4px 8px;
     font-size: 11px;
      white-space: nowrap;
   }
@@ -1104,7 +1101,9 @@
 
   /* payment grid */
   .qb-pay-grid{ grid-template-columns: 1fr 1fr; }
-}
+
+
+
 
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
