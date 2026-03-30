@@ -861,6 +861,7 @@
     overflow: visible !important;
     width: 100%;
     border-top: 1px solid #ead7d7;
+    overflow-x: hidden;
 
   }
 
@@ -898,6 +899,8 @@
     gap: 8px; 
     margin: 8px 0;
     flex: 0 0 auto;
+    width: 100%;
+    min-width: 0; 
   }
 
   /* Row-1: 2-column grid */
@@ -910,11 +913,11 @@
 
   .pill-input,
   .pill-select{
-    width: 90% !important;
+    width: 100% !important;
     min-width: 0 !important;
     height: 26px;
     font-size: 12px;
-  }
+     box-sizing: border-box;
 
   #productCodeInput{ min-width: 100px; }
 
@@ -1101,7 +1104,7 @@
 
   /* payment grid */
   .qb-pay-grid{ grid-template-columns: 1fr 1fr; }
-
+}
 
 /* 📱 Small Mobiles (≤520px) */
 @media (max-width: 520px){
