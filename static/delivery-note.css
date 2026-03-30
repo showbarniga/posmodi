@@ -582,6 +582,7 @@
     flex-direction: column;
     height: 100vh;
     padding: 10px;
+      padding-bottom: 60px;
   }
 
   /* ✅ Card should also be flexible */
@@ -598,7 +599,7 @@
     min-height: 0;
     overflow-y: auto;   /* ✅ FIX */
     overflow-x: auto;
-    max-height: 260px;  /* ✅ reduce table height */
+    max-height: none;  /* ✅ reduce table height */
   }
 
   /* ✅ Reduce table size */
@@ -615,12 +616,12 @@
   /* ✅ Allow wrapping */
   .dn-filters{
     flex-wrap: wrap !important;
-    gap: 10px;
+    gap: 6px;
   }
 
   /* ✅ Status + Type (same row) */
   .dn-filter{
-    flex: 1 1 48%;
+    flex: 1 1 49%;
   }
 
   /* ✅ Delivery date full row */
@@ -647,18 +648,22 @@
 
 
   /* ✅ Footer always visible */
+/* ✅ FIXED FOOTER (always visible) */
 .dn-footer{
-  flex-shrink: 0;
-  position: sticky;
+  position: fixed;
   bottom: 0;
+  left: 0;
+  width: 100%;
+
   background: #f6f1f1;
-  padding: 8px 6px;
   border-top: 1px solid rgba(170, 70, 70, 0.2);
 
+  padding: 8px 10px;
+  z-index: 999;
+
   display: flex;
-  justify-content: space-between;  /* ✅ LEFT + RIGHT */
+  justify-content: space-between;
   align-items: center;
-  flex-wrap: nowrap;               /* ❌ stop stacking */
 }
 
 /* LEFT SIDE */
