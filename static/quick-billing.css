@@ -1038,7 +1038,7 @@
   align-items: center;
 
   flex-wrap: nowrap;
-  gap: 6px;
+  gap: 4px;
 
   width: 100%;
   box-sizing: border-box;
@@ -1051,7 +1051,7 @@
   background: #f3f3f3 !important;
   border-top: 1px solid #e0e0e0 !important;
 
-  padding: 6px 8px !important;
+  padding: 6px 6px !important;
   margin: 0 !important;
 
   z-index: 100 !important;
@@ -1061,7 +1061,7 @@
   .qb-footer-left{
     flex: 1 1 auto;                  /* ❌ REMOVE 100% WIDTH */
     text-align: left !important;
-    font-size: 11px;
+    font-size: 10px;
      min-width: 0;
      white-space: nowrap;
   overflow: hidden;
@@ -1074,14 +1074,14 @@
     align-items: center;
     justify-content: flex-end !important;       /* ✅ PUSH RIGHT */
     flex: 0 1 auto;                 /* ❌ REMOVE FULL WIDTH */
-    gap: 6px;
+    gap: 4px;
      min-width: 0; 
       white-space: nowrap;
   }
 
   /* ✅ BUTTON SIZE SMALL FOR MOBILE */
   .pager-btn{
-    padding: 4px 8px;
+    padding: 3px 6px;
     font-size: 11px;
      white-space: nowrap;
   }
