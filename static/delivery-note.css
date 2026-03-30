@@ -611,6 +611,41 @@
     padding: 6px 8px;
   }
 
+
+  /* ✅ Allow wrapping */
+  .dn-filters{
+    flex-wrap: wrap !important;
+    gap: 10px;
+  }
+
+  /* ✅ Status + Type (same row) */
+  .dn-filter{
+    flex: 1 1 48%;
+  }
+
+  /* ✅ Delivery date full row */
+  .dn-date-filter{
+    flex: 1 1 100%;
+  }
+
+  /* ✅ From & To in SAME LINE */
+  .dn-date-wrap{
+    display: flex;
+    flex-direction: row;   /* 🔥 important */
+    height: 32px;
+  }
+
+  .dn-date-field{
+    width: 50%;
+    padding: 0 8px;
+    border-bottom: none;
+  }
+
+  .dn-date-field:first-child{
+    border-right: 1px solid #e6bcbc;
+  }
+
+
   /* ✅ Footer always visible */
 .dn-footer{
   flex-shrink: 0;
