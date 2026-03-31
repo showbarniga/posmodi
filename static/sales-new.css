@@ -1196,4 +1196,65 @@ button {
   .so-ch-textarea {
     width: 100%;
   }
+  
+
+  /* 🔥 FIX FOOTER BASE */
+  .action-bar {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    display: flex;
+    flex-direction: column;   /* 🔥 stack rows */
+    gap: 8px;
+
+    background: #fff;
+    padding: 10px;
+    border-top: 1px solid #eee;
+
+    z-index: 9999;
+  }
+
+  /* 🔥 HIDE EXTRA LEFT BUTTON ALIGNMENT ISSUE */
+  .action-bar > .btn.cancel-order {
+    width: 100%;
+    text-align: center;
+  }
+
+  /* 🔥 RIGHT ACTIONS GRID */
+  .right-actions {
+    display: flex;
+    flex-wrap: wrap;           /* 🔥 allow wrapping */
+    gap: 8px;
+    justify-content: center;
+  }
+
+  /* 🔥 2 BUTTON PER ROW */
+  .right-actions .btn,
+  .right-actions #submitBtn {
+    width: 48%;               /* 🔥 2 per row */
+    height: 36px;
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  /* 🔥 ICONS LAST ROW */
+  .btn-icon {
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
+  }
+
+  /* force icons to next row */
+  .right-actions .btn-icon {
+    width: 48%;
+    max-width: 60px;
+  }
+
+  /* 🔥 prevent content hiding */
+  .so-page-body {
+    padding-bottom: 140px;
+  }
+
 }

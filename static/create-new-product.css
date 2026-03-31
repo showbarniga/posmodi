@@ -1156,64 +1156,41 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: auto;
   }
 
-
-  /* 🔥 FIX FOOTER BASE */
-  .action-bar {
+  /* 🔥 STICKY FOOTER (CORRECT WAY) */
+  .actions {
     position: fixed;
     bottom: 0;
-    left: 0;
-    width: 100%;
+     left: 0;
+     width: 100%;
+     margin-top: auto;  
 
     display: flex;
-    flex-direction: column;   /* 🔥 stack rows */
-    gap: 8px;
+    justify-content: center;
+    align-items: center;
+    gap: 0;
 
     background: #fff;
-    padding: 10px;
+    padding: 10px 12px;
     border-top: 1px solid #eee;
-
     z-index: 9999;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.08);
+  }
+  .actions::before {
+    content: "";
   }
 
-  /* 🔥 HIDE EXTRA LEFT BUTTON ALIGNMENT ISSUE */
-  .action-bar > .btn.cancel-order {
-    width: 100%;
-    text-align: center;
-  }
-
-  /* 🔥 RIGHT ACTIONS GRID */
-  .right-actions {
-    display: flex;
-    flex-wrap: wrap;           /* 🔥 allow wrapping */
-    gap: 8px;
-    justify-content: center;
-  }
-
-  /* 🔥 2 BUTTON PER ROW */
-  .right-actions .btn,
-  .right-actions #submitBtn {
-    width: 48%;               /* 🔥 2 per row */
-    height: 36px;
-    font-size: 12px;
-    padding: 6px;
-  }
-
-  /* 🔥 ICONS LAST ROW */
-  .btn-icon {
-    width: 40px;
-    height: 40px;
-    font-size: 16px;
-  }
-
-  /* force icons to next row */
-  .right-actions .btn-icon {
+  /* 🔥 BUTTONS SIDE-BY-SIDE */
+  .actions .btn {
     width: 48%;
-    max-width: 60px;
-  }
+    max-width: 160px;
+    text-align: center;
+    font-size: 13px;
+    padding: 7px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
 
-  /* 🔥 prevent content hiding */
-  .so-page-body {
-    padding-bottom: 140px;
+    margin: 0 6px;   /* 🔥 spacing between buttons */
   }
 
 }
