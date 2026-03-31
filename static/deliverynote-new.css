@@ -969,19 +969,31 @@
 }
 
 @media (max-width: 768px){
+    html, body {
+    height: 100%;
+  }
 
   /* ===== FOOTER STACK ===== */
   .dn2-footer {
     display: flex;
     flex-direction: column;
     gap: 10px;
+     padding-bottom: 12px;
     margin-top: auto;   /* push footer down */
     padding-top: 12px;  /* space above footer */
   }
+   .dn2-form,
+  .dn2-section {
+    flex-shrink: 0;
+  }
+
     .dn2-card {
     min-height: 90vh;   /* 🔥 increase form height */
     display: flex;
     flex-direction: column;
+     min-height: 100vh; 
+     overflow-y: auto;
+      padding-bottom: 80px; 
   }
    .dn2-form {
     flex: 1;   /* 🔥 takes available space */
