@@ -1060,23 +1060,33 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     left: 0;
     width: 100%;
 
-    display: flex;
-    justify-content: space-between;
-    gap: 8px;
+    display: flex !important;
+    flex-direction: row !important;   /* 🔥 force side-by-side */
+    justify-content: center;          /* center them */
+    align-items: center;
+    gap: 10px;
 
     background: #fff;
     padding: 10px;
     border-top: 1px solid #eee;
     z-index: 1000;
+     flex-shrink: 0;
+
+    flex-wrap: nowrap !important;     /* 🔥 prevent breaking */
   }
 
-  /* Buttons */
   .form-actions a,
   .form-actions button {
-    width: 48%;
-    text-align: center;
+    display: inline-flex !important;
+    width: 45% !important;           /* 🔥 equal width */
+    max-width: 160px;
+    justify-content: center;
+    align-items: center;
+
     font-size: 13px;
     padding: 8px;
+    border-radius: 6px;
+    white-space: nowrap;
   }
 
 }
