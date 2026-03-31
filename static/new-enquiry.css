@@ -855,7 +855,7 @@ transform: translateY(-2px);
 #form-enquiry {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 120px !important; /* space for footer */
+  padding-bottom: 140px !important; /* space for footer */
 }
 .section.card:last-of-type {
   margin-bottom: 20px;
