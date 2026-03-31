@@ -969,14 +969,15 @@
 }
 
 @media (max-width: 768px){
-   /* 🔥 FULL FOOTER STACK */
+
+  /* ===== FOOTER STACK ===== */
   .dn2-footer {
     display: flex;
     flex-direction: column;
     gap: 10px;
   }
 
-  /* 🔥 CANCEL DN FULL WIDTH */
+  /* ===== CANCEL DN FULL WIDTH ===== */
   .dn2-left-actions {
     width: 100%;
   }
@@ -985,45 +986,44 @@
     width: 100%;
   }
 
-  /* 🔥 RIGHT ACTIONS → GRID (LIKE SALES ORDER) */
+  /* ===== RIGHT ACTIONS GRID ===== */
   .dn2-right-actions {
     display: grid;
-    grid-template-columns: 1fr 1fr;   /* 🔥 2 per row */
+    grid-template-columns: 1fr 1fr;
     gap: 10px;
-    justify-items: center;
   }
 
-  /* 🔥 NORMAL BUTTONS */
+  /* ===== FIRST ROW BUTTONS ===== */
   .dn2-right-actions .btn-outline,
-  .dn2-right-actions .btn-save-draft
-  {
+  .dn2-right-actions .btn-save-draft {
     width: 100%;
     height: 36px;
     font-size: 12px;
   }
- /* 🔥 SUBMIT + ICONS SAME ROW */
-  .dn2-right-actions .btn-submit {
-    grid-column: 1 / span 1;   /* left side */
-    width: 100%;
-    height: 36px;
+
+  /* ===== SUBMIT + ICONS (SAME ROW) ===== */
+  .submit-group {
+    grid-column: 1 / -1;   /* 🔥 full width row */
+
+    display: flex;
+    align-items: center;
+    gap: 6px;
   }
 
-  /* 🔥 ICON GROUP (right side of submit) */
-  .dn2-right-actions .btn-icon {
+  /* submit button */
+  .submit-group .btn-submit {
+    flex: 1;               /* 🔥 fill remaining space */
+    height: 36px;
+    font-size: 12px;
+  }
+
+  /* icons */
+  .submit-group .btn-icon {
     width: 40px;
     height: 36px;
+    flex-shrink: 0;
   }
 
-  /* group icons together */
-  .dn2-right-actions .btn-icon:nth-last-child(2),
-  .dn2-right-actions .btn-icon:last-child {
-    display: inline-flex;
-  }
-
-  /* wrap icons inside same grid cell */
-  .dn2-right-actions .btn-submit + .btn-icon {
-    margin-left: 5px;
-  }
+}
 
   
-}
