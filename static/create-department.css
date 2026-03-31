@@ -1059,7 +1059,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
 
   /* Footer buttons FIXED */
   .form-actions {
-    position: fixed;
+    position: relative;
     bottom: 0;
     left: 0;
     width: 100%;
