@@ -307,4 +307,48 @@
     .form-group.full {
       grid-column: span 1;
     }
+    
+
+  .customer-page {
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    padding:  6px !important;
+  
   }
+
+  /* FORM FULL HEIGHT */
+  .customer-page #customerForm {
+    flex: 1;
+    max-width: 100% !important;   /* 🔥 remove restriction */
+    height: 100%;
+    overflow-y: auto;
+    padding-bottom: 100px;  
+        width: 100% !important;
+    margin: 0 !important;      /* space for buttons */
+  }
+  
+
+  .form-actions {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+
+    background: #fff;
+    padding: 10px;
+    border-top: 1px solid #eee;
+
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    z-index: 1000;
+  }
+
+  .form-actions button {
+    flex: 1;
+  }
+
+
+}
+  
