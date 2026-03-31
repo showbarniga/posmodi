@@ -1013,7 +1013,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
         width: 100% !important;
     max-width: 100% !important;  /* 🔥 remove restriction */
 
-    padding: 16px 12px ; /* space for footer */
+    padding: 10px; /* space for footer */
   }
 
   /* Title */
@@ -1074,6 +1074,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     border-top: 1px solid #eee;
     z-index: 1000;
      flex-shrink: 0;
+       margin: 0 !important;   /* remove extra gap */
 
     flex-wrap: nowrap !important;     /* 🔥 prevent breaking */
   }
