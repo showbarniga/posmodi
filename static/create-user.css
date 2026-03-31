@@ -488,21 +488,24 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
   /* Buttons */
   .form-actions {
     flex-direction: row;
-    gap: 10px;
+    gap: 6px;
     justify-content: space-between;
      position: sticky;
     bottom: 0;
     background: #fff;
-    padding: 10px 8px;
+    padding: 6px 4px;
     border-top: 1px solid #eee;
     z-index: 10;
+        flex-wrap: nowrap;   
   }
 
   .btn-primary,
   .btn-outline {
     flex: 1;
     font-size: 13px;
-    padding: 9px;
+    padding: 6px 8px;
+     border-radius: 6px;
+    white-space: nowrap;    
   }
     .create-user-page {
     height: 100vh;
