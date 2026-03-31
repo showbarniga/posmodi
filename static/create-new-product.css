@@ -544,156 +544,7 @@ input[type="number"]::-webkit-outer-spin-button {
   display:block;
 }
 
-/* =========================
-   ✅ RESPONSIVE – CREATE PRODUCT
-========================= */
 
-/* 💻 Large tablets / small laptops (≤ 1024px) */
-@media (max-width: 1024px) {
-  .create-product-page {
-    padding: 16px;
-  }
-
-  .create-product-page .container {
-    max-width: 100%;
-    padding: 22px;
-  }
-
-  .product-top-grid {
-    grid-template-columns: 220px 1fr;
-    gap: 18px;
-  }
-
-  .grid-3 {
-    grid-template-columns: repeat(2, 1fr);  /* 3 → 2 columns */
-  }
-}
-
-/* 📱 Tablets & big phones (≤ 768px) */
-@media (max-width: 768px) {
-  /* keep page fixed, no sideways scroll */
-  html,
-  body {
-    margin: 0;
-    padding: 0;
-    width: 100%;
-    max-width: 100%;
-    overflow-x: hidden;
-    box-sizing: border-box;
-    background: #ffffff;
-  }
-
-  
-  .main-head {
-    margin-left: 16px;   /* move a bit to the right */
-    margin-bottom: 10px;
-    text-align: left;
-
-  }
-
-  .create-product-page {
-    padding: 12px;
-  }
-
-  .create-product-page .container {
-    width: 100%;
-    max-width: 100%;
-    padding: 18px 14px;
-    box-sizing: border-box;
-    border-radius: 10px;
-  }
-
-  .main-head {
-    margin-left: 0;
-    margin-bottom: 10px;
-    text-align: left;        /* or center if you like */
-    font-size: 24px;
-  }
-
-  /* upload top, form below */
-  .product-top-grid {
-    grid-template-columns: 1fr;
-    gap: 18px;
-  }
-
-  .upload-box {
-    width: 100%;
-    max-width: 260px;
-    margin: 0 auto;          /* center image box */
-  }
-
-  /* all grids → 1 column or 2 as needed */
-  .grid-2,
-  .grid-3,
-  .grid-1 {
-    grid-template-columns: 1fr;
-    gap: 14px;
-  }
-
-  /* label + input vertical (already flex-column, just ensure full width) */
-  .field input,
-  .field select,
-  .field textarea {
-    width: 100%;
-  }
- .actions {
-    display: flex;
-    flex-direction: row;          /* ✅ same row */
-    justify-content: space-between;
-    align-items: center;
-    gap: 12px;
-  }
-
-  .actions .btn {
-    width: 48%;                   /* ✅ equal buttons */
-    text-align: center;
-  }
-
-  /* modal a bit wider on mobile */
-  .modal-card {
-    width: 92vw;
-    max-width: 420px;
-  }
-}
-
-/* 📱 Small mobiles (≤ 520px) */
-@media (max-width: 520px) {
-  .main-head {
-    margin-left: 16px;
-    font-size: 22px;
-    text-align: center;
-  }
-
-  .create-product-page {
-    padding: 10px 8px 16px;
-  }
-
-  .create-product-page .container {
-    padding: 16px 12px;
-    border-radius: 8px;
-  }
-
-  label {
-    font-size: 11px;
-  }
-
-  input,
-  select,
-  textarea {
-    font-size: 12px;
-    padding: 7px 9px;
-  }
-
-  .upload-box {
-    height: 210px;
-  }
- 
-
-  .actions .btn {
-    width: 48%;                   /* ✅ equal buttons */
-    text-align: center;
-  }
-}
 
 /* -----------------------------------------
    DELETE CATEGORY MODAL
@@ -1226,6 +1077,32 @@ input[type="number"]::-webkit-outer-spin-button {
 #deleteSupplierModal .danger-btn:hover {
   filter: brightness(0.95);
 }
+
+/* =========================
+   ✅ RESPONSIVE – CREATE PRODUCT
+========================= */
+
+/* 💻 Large tablets / small laptops (≤ 1024px) */
+@media (max-width: 1024px) {
+  .create-product-page {
+    padding: 16px;
+  }
+
+  .create-product-page .container {
+    max-width: 100%;
+    padding: 22px;
+  }
+
+  .product-top-grid {
+    grid-template-columns: 220px 1fr;
+    gap: 18px;
+  }
+
+  .grid-3 {
+    grid-template-columns: repeat(2, 1fr);  /* 3 → 2 columns */
+  }
+}
+
 @media (max-width: 768px) {
     html, body {
     height: 100%;
@@ -1248,9 +1125,8 @@ input[type="number"]::-webkit-outer-spin-button {
     width: 100% !important;
     max-width: 100% !important;   /* remove width restriction */
     padding: 12px 12px 90px;
-        padding-bottom: 120px;   /* 🔥 increase scroll space */
-
-    overflow-y: auto;             /* scroll only here */
+        padding-bottom: 110px !important;   /* 🔥 increase scroll space */
+     overflow-y: auto;             /* scroll only here */
   }
    .create-product-page .container > *:not(.actions) {
     flex-shrink: 0;
@@ -1284,26 +1160,37 @@ input[type="number"]::-webkit-outer-spin-button {
   .actions {
     position: fixed;
     bottom: 0;
+     left: 0;
+     width: 100%;
      margin-top: auto;  
 
     display: flex;
     justify-content: center;
     align-items: center;
-    gap: 10px;
+    gap: 0;
 
     background: #fff;
-    padding: 8px;
+    padding: 10px 12px;
     border-top: 1px solid #eee;
-    z-index: 10;
+    z-index: 9999;
+    box-shadow: 0 -4px 10px rgba(0,0,0,0.08);
+  }
+  .actions::before {
+    content: "";
   }
 
   /* 🔥 BUTTONS SIDE-BY-SIDE */
   .actions .btn {
-    width: 45%;
+    width: 48%;
     max-width: 160px;
     text-align: center;
     font-size: 13px;
     padding: 7px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: 0 6px;   /* 🔥 spacing between buttons */
   }
 
 }
