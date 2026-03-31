@@ -1227,27 +1227,34 @@ button {
   }
 
   /* ===== BUTTON GRID ===== */
+ 
+
+  /* ===== BUTTON GRID ===== */
   .right-actions {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    justify-content: center;
+    display: grid;                         /* 🔥 switch to grid */
+    grid-template-columns: 1fr 1fr;        /* 🔥 2 per row */
+    gap: 10px;
+    justify-items: center;
   }
 
-  /* Row 1 + Row 2 */
+  /* ===== NORMAL BUTTONS ===== */
   .right-actions .btn,
   .right-actions #submitBtn {
-    width: 48%;
+    width: 100%;                           /* 🔥 full inside grid */
     height: 36px;
     font-size: 12px;
     padding: 6px;
+    text-align: center;
   }
 
-  /* Icons */
+  /* ===== ICON BUTTONS ===== */
   .right-actions .btn-icon {
-    width: 40px;
+    width: 45px;
     height: 40px;
+    font-size: 16px;
   }
+
+
 
   /* ===== TEXTAREA ===== */
   .so-ch-textarea {
