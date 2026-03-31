@@ -975,6 +975,22 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
+    margin-top: auto;   /* push footer down */
+    padding-top: 12px;  /* space above footer */
+  }
+    .dn2-card {
+    min-height: 90vh;   /* 🔥 increase form height */
+    display: flex;
+    flex-direction: column;
+  }
+   .dn2-form {
+    flex: 1;   /* 🔥 takes available space */
+  }
+
+    .dn2-page {
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
   /* ===== CANCEL DN FULL WIDTH ===== */
