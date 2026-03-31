@@ -496,149 +496,89 @@ input.error::placeholder {
 /* ==========================
    MOBILE (≤ 767px)
 ========================== */
-@media (max-width: 768px) {
+@media (max-width: 767px) {
 
-  /* Page layout */
-  .create-user-page {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    padding: 8px;
-    
-  }
-
-  /* Card scroll */
-  .create-card {
-    flex: 1;
-    overflow-y: auto;
-     width: 100% !important;      /* 🔥 full width */
-    max-width: 100% !important;  /* remove restriction */
-    padding: 16px 12px 100px; /* space for footer */
-  }
-
-  /* Title */
-  .create-title {
-    font-size: 20px;
-  }
-
-  /* Stack form rows */
-  .form-row {
-    flex-direction: column;
-    gap: 10px;
-    margin-bottom: 12px;
-  }
-
-  /* Inputs */
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
-    font-size: 13px;
-    padding: 8px;
+  html,
+  body {
     height: auto;
+    overflow-y: auto;
   }
 
-  /* Phone row inline */
-  .form-field-phone .phone-row {
-    flex-direction: row;
-    gap: 6px;
-  }
-
-  .country-code {
-    flex: 0 0 60px;
-  }
-
-  /* Table scroll */
-  .roles-table-wrap {
-    overflow-x: auto;
-  }
-
-  .roles-table {
-    min-width: 600px;
-  }
-
-  /* Footer buttons FIXED */
-  .form-actions {
-    position: fixed;
-    bottom: 0;
-    left: 0;
+  .signup-container {
+    flex-direction: column;
+    justify-content: flex-start;
+    align-items: center;
     width: 100%;
+    min-height: 100vh;
+    padding: 12px 10px 20px;
+  }
 
+  .left-section {
+    padding: 0;
+    margin-bottom: 8px;
+    text-align: center;
+  }
+
+  .left-section h1 {
+    font-size: 1.6rem;
+    margin-bottom: 4px;
+  }
+
+  .left-section p {
+    display: none; /* save vertical space */
+  }
+
+  /* 🔹 IMPORTANT: reset desktop shift on mobile */
+  .right-section {
+    position: static;      /* cancel left:-80px etc */
+    left: auto;
+    transform: none;
+    width: 100%;
     display: flex;
     justify-content: center;
-     align-items: center;
-   gap: 10px;
-
-    background: #fff;
-    padding: 10px;
-    border-top: 1px solid #eee;
-    z-index: 1000;
   }
 
-  /* Buttons */
-  .form-actions a,
-  .form-actions button {
-    width: 45%;
-     max-width: 180px;
-    text-align: center;
+  .signup-box {
+    width: calc(100% - 24px);
+    max-width: 360px;
+    padding: 14px 14px;
+    border-radius: 18px;
+  }
+
+  .stackly-logo {
+    width: 80px;
+  }
+
+  .input-group {
+    margin-bottom: 4px;
+  }
+
+  .input-group label {
+    font-size: 13px;
+  }
+
+  .input-group input {
+    font-size: 13px;
+    padding: 6px;
+  }
+
+  .otp-btn,
+  .otp-btn1 {
+    font-size: 11px;
+    padding: 5px 7px;
+  }
+
+  .signup-btn {
     font-size: 13px;
     padding: 8px;
-     border-radius: 6px;
   }
 
-}
-@media (max-width: 520px) {
-
-  /* Reduce padding */
-  .create-user-page {
-    padding: 6px;
-  }
-
-  .create-card {
-    padding: 12px 8px 100px;
-  }
-
-  /* Smaller title */
-  .create-title {
-    font-size: 16px;
-  }
-
-  /* Labels */
-  .form-field label {
+  .footer-text {
     font-size: 11px;
+    margin-top: 6px;
   }
-
-  /* Inputs smaller */
-  .form-field input,
-  .form-field select,
-  .form-field textarea {
-    font-size: 12px;
-    padding: 6px;
-  }
-
-  /* Phone inline (important) */
-  .form-field-phone .phone-row {
-    flex-direction: row;
-    gap: 4px;
-  }
-
-  .country-code {
-    flex: 0 0 55px;
-  }
-
-  /* Buttons */
-  .form-actions {
-    padding: 8px;
-    gap: 6px;
-  }
-
-  .form-actions a,
-  .form-actions button {
-    width: 48%;
-    font-size: 12px;
-    padding: 7px;
-  }
-
 }
+
 
 /* ==========================
    EXTRA SMALL PHONES (≤ 360px)
