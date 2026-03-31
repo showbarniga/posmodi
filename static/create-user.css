@@ -478,18 +478,24 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
   }
   /* Phone row fix */
   .form-field-phone .phone-row {
-    flex-direction: row;
-    gap: 6px;
-  }
+      display: flex !important;
+  flex-direction: row !important;   
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+}
+
+  
 
   .country-code {
-    flex: 0 0 55px;
-    font-size: 12px;
+      flex: 0 0 30%;        /* 🔥 takes 30% */
+  max-width: 30%;
+  min-width: 70px;
   }
 
   .phone-input {
     min-width: 0;
-    font-size: 13px;
+    flex: 1;
   }
 
 
