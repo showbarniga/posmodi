@@ -1003,6 +1003,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     flex-direction: column;
     height: 100vh;
     padding: 6px;
+     overflow: hidden; 
     
   }
 
@@ -1013,7 +1014,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
         width: 100% !important;
     max-width: 100% !important;  /* 🔥 remove restriction */
 
-    padding: 10px; /* space for footer */
+    padding: 10px 10px 70px; /* space for footer */
   }
 
   /* Title */
@@ -1058,7 +1059,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
 
   /* Footer buttons FIXED */
   .form-actions {
-    position: sticky;
+    position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
