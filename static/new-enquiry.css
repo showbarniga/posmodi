@@ -828,6 +828,46 @@ transform: translateY(-2px);
           flex-wrap: nowrap;   /* 🔥 keeps buttons in same line */
 
 }
+/* 🔥 PAGE STRUCTURE FIX */
+.container-enquiry {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  overflow: hidden;   /* stop page scroll */
+}
+
+/* 🔥 FORM SCROLL ONLY */
+#form-enquiry {
+  flex: 1;
+  overflow-y: auto;
+  padding-bottom: 80px; /* space for footer */
+}
+
+/* 🔥 FOOTER (actions) FIXED */
+.actions {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+
+  display: flex;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 8px;
+
+  background: #fff;
+  padding: 10px;
+  border-top: 1px solid #eee;
+  z-index: 1000;
+}
+
+/* 🔥 BUTTONS SIDE BY SIDE */
+.actions button {
+  width: 32%;   /* 3 buttons */
+  font-size: 12px;
+  padding: 8px;
+  white-space: nowrap;
+}
 }
 
 
