@@ -434,7 +434,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
 @media (max-width: 768px) {
 
   .create-user-page {
-    padding: 10px;
+    padding: 18px;
   }
 
   .create-title {
@@ -442,7 +442,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
   }
 
   .create-card {
-    padding: 18px 14px;
+    padding: 14px 12px;
     border-radius: 10px;
   }
 
@@ -450,10 +450,25 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
   .create-form .form-row {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    margin-bottom: 14px;
+    gap: 10px;
+    margin-bottom: 10px;
   }
 
+  /* Smaller labels */
+  .form-field label {
+    font-size: 12px;
+    margin-bottom: 3px;
+  }
+
+  /* Compact inputs */
+  .form-field input,
+  .form-field select,
+  .phone-input,
+  .country-code {
+    height: 28px !important;
+    padding: 5px 8px !important;
+    font-size: 13px !important;
+  }
   /* Phone row fix */
   .form-field-phone .phone-row {
     flex-direction: row;
@@ -475,6 +490,12 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     flex-direction: row;
     gap: 10px;
     justify-content: space-between;
+     position: sticky;
+    bottom: 0;
+    background: #fff;
+    padding: 10px 8px;
+    border-top: 1px solid #eee;
+    z-index: 10;
   }
 
   .btn-primary,
@@ -482,6 +503,10 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     flex: 1;
     font-size: 13px;
     padding: 9px;
+  }
+    .create-user-page {
+    height: 100vh;
+    overflow-y: auto;
   }
 }
 
