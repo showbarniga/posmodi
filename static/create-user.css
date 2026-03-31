@@ -501,7 +501,7 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
 
 
   .form-actions {
-    position: fixed;   /* 🔥 use fixed (NOT sticky) */
+    position: sticky;   /* 🔥 use fixed (NOT sticky) */
     bottom: 0;
     left: 0;
     width: 100%;
