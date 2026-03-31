@@ -514,6 +514,12 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     text-align: center;
     border-radius: 6px;
   }
+  .form-actions a,
+.form-actions button {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
 
 }
 
