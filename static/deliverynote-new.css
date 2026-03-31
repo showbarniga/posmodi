@@ -995,17 +995,35 @@
 
   /* 🔥 NORMAL BUTTONS */
   .dn2-right-actions .btn-outline,
-  .dn2-right-actions .btn-save-draft,
-  .dn2-right-actions .btn-submit {
+  .dn2-right-actions .btn-save-draft
+  {
     width: 100%;
     height: 36px;
     font-size: 12px;
   }
-
-  /* 🔥 ICON BUTTONS (LAST ROW) */
-  .dn2-right-actions .btn-icon {
-    width: 45px;
-    height: 40px;
-    justify-self: center;
+ /* 🔥 SUBMIT + ICONS SAME ROW */
+  .dn2-right-actions .btn-submit {
+    grid-column: 1 / span 1;   /* left side */
+    width: 100%;
+    height: 36px;
   }
+
+  /* 🔥 ICON GROUP (right side of submit) */
+  .dn2-right-actions .btn-icon {
+    width: 40px;
+    height: 36px;
+  }
+
+  /* group icons together */
+  .dn2-right-actions .btn-icon:nth-last-child(2),
+  .dn2-right-actions .btn-icon:last-child {
+    display: inline-flex;
+  }
+
+  /* wrap icons inside same grid cell */
+  .dn2-right-actions .btn-submit + .btn-icon {
+    margin-left: 5px;
+  }
+
+  
 }
