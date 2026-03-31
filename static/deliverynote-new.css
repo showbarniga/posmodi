@@ -969,30 +969,43 @@
 }
 
 @media (max-width: 768px){
-  .dn2-top{
+   /* 🔥 FULL FOOTER STACK */
+  .dn2-footer {
+    display: flex;
     flex-direction: column;
-    align-items: stretch;
+    gap: 10px;
   }
 
-  .dn2-form .dn2-row{
-    grid-template-columns: 1fr;
+  /* 🔥 CANCEL DN FULL WIDTH */
+  .dn2-left-actions {
+    width: 100%;
   }
 
-  .dn2-card{
-    padding: 20px;
+  .dn2-left-actions .btn-cancel-dn {
+    width: 100%;
   }
 
-  .dn2-footer{
-    flex-direction: column;
-    align-items: stretch;
+  /* 🔥 RIGHT ACTIONS → GRID (LIKE SALES ORDER) */
+  .dn2-right-actions {
+    display: grid;
+    grid-template-columns: 1fr 1fr;   /* 🔥 2 per row */
+    gap: 10px;
+    justify-items: center;
   }
 
-  .dn2-right-actions{
-    justify-content: flex-start;
+  /* 🔥 NORMAL BUTTONS */
+  .dn2-right-actions .btn-outline,
+  .dn2-right-actions .btn-save-draft,
+  .dn2-right-actions .btn-submit {
+    width: 100%;
+    height: 36px;
+    font-size: 12px;
   }
 
-  .ack-upload{
-    flex-direction: column;
-    align-items: flex-start;
+  /* 🔥 ICON BUTTONS (LAST ROW) */
+  .dn2-right-actions .btn-icon {
+    width: 45px;
+    height: 40px;
+    justify-self: center;
   }
 }
