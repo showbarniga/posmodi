@@ -1156,42 +1156,70 @@ input[type="number"]::-webkit-outer-spin-button {
     margin: auto;
   }
 
-  /* 🔥 STICKY FOOTER (CORRECT WAY) */
-  .actions {
+
+
+  /* 🔥 FIX FOOTER LAYOUT */
+  .action-bar {
     position: fixed;
     bottom: 0;
-     left: 0;
-     width: 100%;
-     margin-top: auto;  
+    left: 0;
+    width: 100%;
 
     display: flex;
-    justify-content: center;
+    flex-direction: row;            /* 🔥 keep in one line */
+    justify-content: space-between;
     align-items: center;
-    gap: 0;
 
+    padding: 8px 10px;
     background: #fff;
-    padding: 10px 12px;
     border-top: 1px solid #eee;
+
     z-index: 9999;
-    box-shadow: 0 -4px 10px rgba(0,0,0,0.08);
-  }
-  .actions::before {
-    content: "";
+    gap: 8px;
   }
 
-  /* 🔥 BUTTONS SIDE-BY-SIDE */
-  .actions .btn {
-    width: 48%;
-    max-width: 160px;
-    text-align: center;
-    font-size: 13px;
-    padding: 7px;
+  /* 🔥 LEFT BUTTON */
+  .action-bar > .btn {
+    flex: 0 0 auto;
+    min-width: 100px;
+    height: 36px;
+    font-size: 12px;
+  }
+
+  /* 🔥 RIGHT SIDE BUTTON GROUP */
+  .right-actions {
     display: flex;
-    justify-content: center;
-    align-items: center;
-
-    margin: 0 6px;   /* 🔥 spacing between buttons */
+    flex-direction: row !important;   /* 🔥 force side-by-side */
+    flex-wrap: nowrap !important;     /* 🔥 prevent wrapping */
+    gap: 6px;
+    overflow-x: auto;                 /* 🔥 scroll if needed */
   }
+
+  /* 🔥 BUTTON SIZE */
+  .right-actions .btn,
+  .right-actions #submitBtn {
+    flex: 0 0 auto;
+    min-width: 90px;
+    height: 34px;
+    font-size: 11px;
+    padding: 6px 10px;
+    white-space: nowrap;
+  }
+
+  /* 🔥 ICON BUTTONS */
+  .btn-icon {
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+    flex: 0 0 auto;
+  }
+
+  /* 🔥 IMPORTANT: prevent content hiding */
+  .so-page-body {
+    padding-bottom: 80px;   /* space for footer */
+  }
+
+
 
 }
 @media (max-width: 520px) {
