@@ -840,12 +840,15 @@ transform: translateY(-2px);
 #form-enquiry {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 80px; /* space for footer */
+  padding-bottom: 120px; /* space for footer */
+}
+.section.card:last-of-type {
+  margin-bottom: 20px;
 }
 
 /* 🔥 FOOTER (actions) FIXED */
 .actions {
-  position: sticky;
+  position: fixed;
   bottom: 0;
   left: 0;
   width: 100%;
