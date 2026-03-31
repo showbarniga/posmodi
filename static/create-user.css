@@ -428,3 +428,131 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
   font-size: 18px;
   font-weight: bold;
 }
+/* ================================
+   📱 TABLET (≤768px)
+================================ */
+@media (max-width: 768px) {
+
+  .create-user-page {
+    padding: 10px;
+  }
+
+  .create-title {
+    font-size: 22px;
+  }
+
+  .create-card {
+    padding: 18px 14px;
+    border-radius: 10px;
+  }
+
+  /* Stack all rows */
+  .create-form .form-row {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 14px;
+  }
+
+  /* Phone row fix */
+  .form-field-phone .phone-row {
+    flex-direction: row;
+    gap: 6px;
+  }
+
+  .country-code {
+    flex: 0 0 55px;
+    font-size: 12px;
+  }
+
+  .phone-input {
+    min-width: 0;
+    font-size: 13px;
+  }
+
+  /* Buttons */
+  .form-actions {
+    flex-direction: row;
+    gap: 10px;
+    justify-content: space-between;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    flex: 1;
+    font-size: 13px;
+    padding: 9px;
+  }
+}
+
+
+/* ================================
+   📱 MOBILE (≤520px)
+================================ */
+@media (max-width: 520px) {
+
+  .create-user-page {
+    padding: 8px;
+  }
+
+  .create-title {
+    font-size: 18px;
+  }
+
+  .create-card {
+    padding: 14px 10px;
+    border-radius: 8px;
+  }
+
+  /* Smaller inputs */
+  .form-field input,
+  .form-field select,
+  .phone-input,
+  .country-code {
+    font-size: 12px !important;
+    padding: 6px 8px !important;
+    height: 28px !important;
+  }
+
+  /* Phone layout (VERY IMPORTANT FIX) */
+  .form-field-phone .phone-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 6px;
+  }
+
+  .country-code {
+    width: 100%;
+  }
+
+  .phone-input {
+    width: 100%;
+  }
+
+  /* Labels */
+  .form-field label {
+    font-size: 12px;
+  }
+
+  /* Buttons stack */
+  .form-actions {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .btn-primary,
+  .btn-outline {
+    width: 100%;
+    font-size: 13px;
+    padding: 10px;
+  }
+
+  /* Toast fix */
+  .success-notification,
+  .error-notification {
+    font-size: 13px;
+    padding: 10px 16px;
+    width: 90%;
+    text-align: center;
+  }
+}
