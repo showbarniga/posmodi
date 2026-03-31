@@ -1226,3 +1226,108 @@ input[type="number"]::-webkit-outer-spin-button {
 #deleteSupplierModal .danger-btn:hover {
   filter: brightness(0.95);
 }
+@media (max-width: 768px) {
+
+  /* 🔥 FULL PAGE LAYOUT */
+  .create-product-page {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    padding: 10px;
+    overflow: hidden;   /* prevent page scroll */
+  }
+
+  /* 🔥 FORM CONTAINER (BIG + SCROLLABLE) */
+  .create-product-page .container {
+    flex: 1;
+    width: 100% !important;
+    max-width: 100% !important;   /* remove width restriction */
+    padding: 16px 12px;
+    overflow-y: auto;             /* scroll only here */
+  }
+
+  /* 🔥 GRID → SINGLE COLUMN */
+  .grid-2,
+  .grid-3,
+  .grid-1,
+  .product-top-grid {
+    grid-template-columns: 1fr !important;
+    gap: 12px;
+  }
+
+  /* 🔥 INPUT SIZE */
+  input,
+  select,
+  textarea {
+    font-size: 13px;
+    padding: 8px;
+  }
+
+  /* 🔥 UPLOAD CENTER */
+  .upload-box {
+    width: 100%;
+    max-width: 260px;
+    margin: auto;
+  }
+
+  /* 🔥 STICKY FOOTER (CORRECT WAY) */
+  .actions {
+    position: sticky;
+    bottom: 0;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+
+    background: #fff;
+    padding: 8px;
+    border-top: 1px solid #eee;
+    z-index: 10;
+  }
+
+  /* 🔥 BUTTONS SIDE-BY-SIDE */
+  .actions .btn {
+    width: 45%;
+    max-width: 160px;
+    text-align: center;
+    font-size: 13px;
+    padding: 7px;
+  }
+
+}
+@media (max-width: 520px) {
+
+  .create-product-page {
+    padding: 6px;
+  }
+
+  .create-product-page .container {
+    padding: 12px 8px;
+  }
+
+  /* smaller text */
+  label {
+    font-size: 11px;
+  }
+
+  input,
+  select,
+  textarea {
+    font-size: 12px;
+    padding: 6px;
+  }
+
+  /* footer compact */
+  .actions {
+    padding: 6px;
+    gap: 6px;
+  }
+
+  .actions .btn {
+    width: 48%;
+    font-size: 12px;
+    padding: 6px;
+  }
+
+}
