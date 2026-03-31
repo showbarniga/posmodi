@@ -1157,8 +1157,7 @@ input[type="number"]::-webkit-outer-spin-button {
   }
 
 
-
-  /* 🔥 FIX FOOTER LAYOUT */
+  /* 🔥 FIX FOOTER BASE */
   .action-bar {
     position: fixed;
     bottom: 0;
@@ -1166,60 +1165,56 @@ input[type="number"]::-webkit-outer-spin-button {
     width: 100%;
 
     display: flex;
-    flex-direction: row;            /* 🔥 keep in one line */
-    justify-content: space-between;
-    align-items: center;
+    flex-direction: column;   /* 🔥 stack rows */
+    gap: 8px;
 
-    padding: 8px 10px;
     background: #fff;
+    padding: 10px;
     border-top: 1px solid #eee;
 
     z-index: 9999;
-    gap: 8px;
   }
 
-  /* 🔥 LEFT BUTTON */
-  .action-bar > .btn {
-    flex: 0 0 auto;
-    min-width: 100px;
-    height: 36px;
-    font-size: 12px;
+  /* 🔥 HIDE EXTRA LEFT BUTTON ALIGNMENT ISSUE */
+  .action-bar > .btn.cancel-order {
+    width: 100%;
+    text-align: center;
   }
 
-  /* 🔥 RIGHT SIDE BUTTON GROUP */
+  /* 🔥 RIGHT ACTIONS GRID */
   .right-actions {
     display: flex;
-    flex-direction: row !important;   /* 🔥 force side-by-side */
-    flex-wrap: nowrap !important;     /* 🔥 prevent wrapping */
-    gap: 6px;
-    overflow-x: auto;                 /* 🔥 scroll if needed */
+    flex-wrap: wrap;           /* 🔥 allow wrapping */
+    gap: 8px;
+    justify-content: center;
   }
 
-  /* 🔥 BUTTON SIZE */
+  /* 🔥 2 BUTTON PER ROW */
   .right-actions .btn,
   .right-actions #submitBtn {
-    flex: 0 0 auto;
-    min-width: 90px;
-    height: 34px;
-    font-size: 11px;
-    padding: 6px 10px;
-    white-space: nowrap;
+    width: 48%;               /* 🔥 2 per row */
+    height: 36px;
+    font-size: 12px;
+    padding: 6px;
   }
 
-  /* 🔥 ICON BUTTONS */
+  /* 🔥 ICONS LAST ROW */
   .btn-icon {
-    width: 34px;
-    height: 34px;
-    font-size: 14px;
-    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    font-size: 16px;
   }
 
-  /* 🔥 IMPORTANT: prevent content hiding */
+  /* force icons to next row */
+  .right-actions .btn-icon {
+    width: 48%;
+    max-width: 60px;
+  }
+
+  /* 🔥 prevent content hiding */
   .so-page-body {
-    padding-bottom: 80px;   /* space for footer */
+    padding-bottom: 140px;
   }
-
-
 
 }
 @media (max-width: 520px) {
