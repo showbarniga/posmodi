@@ -485,34 +485,37 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     font-size: 13px;
   }
 
-  /* Buttons */
+
+
+
   .form-actions {
+    display: flex;
     flex-direction: row;
-    gap: 6px;
     justify-content: space-between;
-     position: sticky;
+    align-items: center;
+    gap: 6px;
+
+    position: sticky;
     bottom: 0;
     background: #fff;
-    padding: 6px 4px;
+    padding: 6px;
     border-top: 1px solid #eee;
     z-index: 10;
-        flex-wrap: nowrap;   
+
+    flex-wrap: nowrap;
   }
 
-  .btn-primary,
-  .btn-outline {
-    flex: 1;
-    font-size: 13px;
-    padding: 6px 8px;
-     border-radius: 6px;
-    white-space: nowrap;    
+  .btn-outline,
+  .btn-primary {
+    flex: 0 0 48%;   /* 🔥 KEY FIX */
+    max-width: 48%;
+    font-size: 12px;
+    padding: 7px 6px;
+    text-align: center;
+    border-radius: 6px;
   }
-    .create-user-page {
-    height: 100vh;
-    overflow-y: auto;
-  }
+
 }
-
 
 /* ================================
    📱 MOBILE (≤520px)
