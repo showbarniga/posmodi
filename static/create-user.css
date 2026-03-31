@@ -509,6 +509,8 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
     flex-direction: row !important;
     justify-content: space-between;
     align-items: center;
+    padding-left: 4px;   /* 🔥 small left shift */
+  padding-right: 10px;
     gap: 8px;
 
   
