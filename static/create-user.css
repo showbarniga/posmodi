@@ -487,39 +487,40 @@ box-shadow: 0 0 6px rgba(185, 71, 62, 0.35);
 
 
 
-
   .form-actions {
-    display: flex;
-    flex-direction: row;
+    display: flex !important;
+    flex-direction: row !important;
     justify-content: space-between;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
 
     position: sticky;
     bottom: 0;
     background: #fff;
-    padding: 6px;
+    padding: 8px;
     border-top: 1px solid #eee;
-    z-index: 10;
+    z-index: 1000;
 
-    flex-wrap: nowrap;
+    flex-wrap: nowrap !important;
   }
 
-  .btn-outline,
-  .btn-primary {
-    flex: 0 0 48%;   /* 🔥 KEY FIX */
-    max-width: 48%;
+  /* 🔥 FORCE BOTH BUTTONS EQUAL */
+  .form-actions > a,
+  .form-actions > button {
+    width: 50% !important;
+    max-width: 50% !important;
+    flex: none !important;
+
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
     font-size: 12px;
-    padding: 7px 6px;
-    text-align: center;
+    padding: 8px 6px;
     border-radius: 6px;
   }
-  .form-actions a,
-.form-actions button {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
+
+
 
 }
 
