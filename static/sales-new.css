@@ -1181,13 +1181,14 @@ button {
     height: 100vh;
     display: flex;
     flex-direction: column;
+    overflow: hidden;
   }
 
   .so-page-body {
     flex: 1;
     overflow-y: auto;
     padding: 20px;
-    padding-bottom: 140px; /* space for footer */
+    padding-bottom: 160px; /* space for footer */
   }
 
 
@@ -1219,7 +1220,7 @@ button {
 
   /* 🔥 FIX FOOTER BASE */
   .action-bar {
-    position: sticky;
+    position: fixed;
     bottom: 0;
     left: 0;
     width: 100%;
@@ -1239,6 +1240,8 @@ button {
   .action-bar > .btn.cancel-order {
     width: 100%;
     text-align: center;
+
+  box-shadow: 0 -4px 12px rgba(0,0,0,0.08);
   }
 
   /* 🔥 RIGHT ACTIONS GRID */
