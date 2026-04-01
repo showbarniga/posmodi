@@ -382,6 +382,20 @@ input[type="checkbox"] {
 
 /* Mobile devices */
 @media (max-width: 768px) {
+  
+
+  html, body {
+    height: 100%;
+    margin: 0;
+  }
+
+  .page-wrapper {   /* or your main parent */
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+
+
   .header {
     margin: 0 10px;
   }
@@ -393,8 +407,14 @@ input[type="checkbox"] {
 }
 
   .container {
-    width: 90%;
-    padding: 18px;
+     flex: 1;                 /* 🔥 fill space */
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+     max-width: 100%;
+    padding: 16px;
+     overflow-y: auto;
+
   }
 
   .form-row {
@@ -424,6 +444,7 @@ input[type="checkbox"] {
     flex-direction: row;
     justify-content: space-between;
     gap: 12px;
+     margin-top: auto;   /* 🔥 push to bottom */
   }
 
   .cancel-btn,
