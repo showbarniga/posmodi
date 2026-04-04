@@ -859,6 +859,7 @@
   flex: 1;
   min-height: 0;
     overflow: visible !important;
+      max-width: 93% !important;
     width: 100%;
     border-top: 1px solid #ead7d7;
 
