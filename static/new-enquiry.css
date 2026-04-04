@@ -848,6 +848,7 @@ transform: translateY(-2px);
   display: flex;
   flex-direction: column;
   height: 100vh;
+   padding: 6px !important;
   overflow: hidden;   /* stop page scroll */
 }
 
@@ -855,7 +856,10 @@ transform: translateY(-2px);
 #form-enquiry {
   flex: 1;
   overflow-y: auto;
-  padding-bottom: 140px !important; /* space for footer */
+  max-width: 100% !important;
+    width: 100% !important;
+    margin: 0 !important;
+  padding-bottom: 12px !important; /* space for footer */
 }
 .section.card:last-of-type {
   margin-bottom: 20px;

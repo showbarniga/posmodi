@@ -28,11 +28,15 @@ from reportlab.lib import colors  # type: ignore[import]
 from reportlab.lib.pagesizes import A4  # type: ignore[import]
 from reportlab.platypus import SimpleDocTemplate, Table, TableStyle, Paragraph, Spacer  # type: ignore[import]
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle  # type: ignore[import]
+from reportlab.lib.enums import TA_CENTER  # type: ignore[import]
 from reportlab.lib.units import inch, mm  # type: ignore[import]
-from dotenv import load_dotenv
+from reportlab.pdfbase import pdfmetrics  # type: ignore[import]
+from reportlab.pdfbase.ttfonts import TTFont  # type: ignore[import]
+from reportlab.pdfbase.pdfmetrics import registerFontFamily  # type: ignore[import]
+from dotenv import load_dotenv  # env loader
+from sqlalchemy import create_engine
 
 # PDF
-
 from flask import make_response, request
 
 #email
@@ -46,9 +50,440 @@ from email.mime.text import MIMEText
 import string
 from collections import defaultdict
 
+import psycopg2
+import psycopg2.extras 
+from psycopg2 import pool as psycopg2_pool
+import atexit
+import traceback
+import socket
+from urllib.parse import urlparse, unquote
+
+DB_POOL = None
+
+
+def _env_truthy(name, default=True):
+    raw = os.getenv(name)
+    if raw is None:
+        return default
+    return str(raw).strip().lower() not in {"0", "false", "no", "off", ""}
+
+
+def _resolve_ipv4_hostaddr(host, port):
+    """Resolve host to IPv4 address so deployments without IPv6 can connect."""
+    try:
+        infos = socket.getaddrinfo(host, int(port), socket.AF_INET, socket.SOCK_STREAM)
+        if infos:
+            return infos[0][4][0]
+    except Exception:
+        return None
+    return None
+
+
+def _supabase_project_ref_from_host(host):
+    """
+    Extract project ref from direct Supabase host:
+    db.<project-ref>.supabase.co -> <project-ref>
+    """
+    m = re.match(r"^db\.([a-z0-9]+)\.supabase\.co$", (host or "").strip(), flags=re.IGNORECASE)
+    return m.group(1) if m else None
+
+
+def _alternate_supabase_pooler_host(host):
+    """
+    Toggle pooler host prefix between aws-0 and aws-1 for same region.
+    Some projects are provisioned on one prefix only.
+    """
+    h = (host or "").strip().lower()
+    m = re.match(r"^aws-(0|1)-([a-z0-9-]+)\.pooler\.supabase\.com$", h)
+    if not m:
+        return None
+    alt_prefix = "1" if m.group(1) == "0" else "0"
+    return f"aws-{alt_prefix}-{m.group(2)}.pooler.supabase.com"
+
+
+class _PooledConnection:
+    """Proxy connection that returns underlying conn to pool on close()."""
+
+    def __init__(self, conn, pool_obj):
+        self._conn = conn
+        self._pool = pool_obj
+
+    def __getattr__(self, name):
+        return getattr(self._conn, name)
+
+    def close(self):
+        if self._conn is None:
+            return
+        try:
+            # Keep pooled connections clean if caller forgot to commit/rollback.
+            if getattr(self._conn, "status", None) != psycopg2.extensions.STATUS_READY:
+                self._conn.rollback()
+        except Exception:
+            pass
+        try:
+            self._pool.putconn(self._conn)
+        finally:
+            self._conn = None
+
+
+def _db_conn_params():
+    # Deployment-friendly DSN support (Vercel/PythonAnywhere/custom envs)
+    # Prefer pooler/prisma-style URLs first; direct DB URLs can be IPv6-only on some hosts.
+    dsn_env_key = None
+    for k in (
+        "DB_DSN",
+        "POSTGRES_PRISMA_URL",
+        "SUPABASE_TRANSACTION_POOLER_URL",
+        "SUPABASE_SESSION_POOLER_URL",
+        "SUPABASE_POOLER_URL",
+        "DATABASE_URL",
+        "NEON_DATABASE_URL",
+        "POSTGRES_URL",
+        "SUPABASE_DB_URL",
+    ):
+        if os.getenv(k):
+            dsn_env_key = k
+            break
+    dsn = (os.getenv(dsn_env_key) if dsn_env_key else "")
+    dsn = (dsn or "").strip()
+
+    db_host = (os.getenv("DB_HOST") or os.getenv("host") or "localhost").strip()
+    db_name = (os.getenv("DB_NAME") or os.getenv("dbname") or "POS_Billing").strip()
+    db_user = (os.getenv("DB_USER") or os.getenv("user") or "postgres").strip()
+    db_pass = (os.getenv("DB_PASSWORD") or os.getenv("password") or "Pos@123").strip()
+    db_port = int((os.getenv("DB_PORT") or os.getenv("port") or 5432))
+    db_sslmode = (os.getenv("DB_SSLMODE") or ("require" if "supabase.co" in (db_host or "") else "prefer")).strip()
+    db_connect_timeout = int(os.getenv("DB_CONNECT_TIMEOUT") or 5)
+    force_ipv4 = _env_truthy("DB_FORCE_IPV4", True)
+    pooler_host = (os.getenv("SUPABASE_POOLER_HOST") or "").strip()
+    pooler_port = int(os.getenv("SUPABASE_POOLER_PORT") or 6543)
+    supabase_region = (os.getenv("SUPABASE_REGION") or "").strip()
+    deployed_region = (os.getenv("SUPABASE_DEFAULT_POOLER_REGION") or "ap-south-1").strip()
+    is_deployed_runtime = bool(
+        os.getenv("PYTHONANYWHERE_SITE")
+        or os.getenv("PA_SITE")
+        or os.getenv("WEBSITE_HOSTNAME")
+        or os.getenv("RENDER")
+        or os.getenv("VERCEL")
+    )
+    # Runtime-aware DSN selection so localhost and deployed can coexist.
+    if is_deployed_runtime and os.getenv("DEPLOY_DB_DSN"):
+        dsn_env_key = "DEPLOY_DB_DSN"
+        dsn = (os.getenv("DEPLOY_DB_DSN") or "").strip()
+    elif (not is_deployed_runtime) and os.getenv("LOCAL_DB_DSN"):
+        dsn_env_key = "LOCAL_DB_DSN"
+        dsn = (os.getenv("LOCAL_DB_DSN") or "").strip()
+    elif (
+        not is_deployed_runtime
+        and dsn_env_key == "DB_DSN"
+        and _env_truthy("LOCAL_PREFER_HOST_CONFIG", True)
+        and not os.getenv("LOCAL_DB_DSN")
+    ):
+        # Keep local dev on host/user/password config unless LOCAL_DB_DSN is set.
+        dsn = ""
+        dsn_env_key = None
+
+    # psycopg2 expects postgres:// or postgresql:// (not sqlalchemy dialect suffixes)
+    if dsn.startswith("postgresql+psycopg2://"):
+        dsn = "postgresql://" + dsn[len("postgresql+psycopg2://") :]
+    elif dsn.startswith("postgres+psycopg2://"):
+        dsn = "postgres://" + dsn[len("postgres+psycopg2://") :]
+
+    # Auto-convert direct Supabase host to pooler host when region is provided.
+    # We avoid guessing regions because wrong poolers cause "Tenant or user not found".
+    project_ref = _supabase_project_ref_from_host(db_host)
+    effective_region = supabase_region or (deployed_region if is_deployed_runtime else "")
+    if not pooler_host and project_ref and effective_region:
+        pooler_host = f"aws-0-{effective_region}.pooler.supabase.com"
+        pooler_port = int(os.getenv("SUPABASE_POOLER_PORT") or 6543)
+        print(f"Using derived Supabase pooler host: {pooler_host}:{pooler_port}")
+
+    if pooler_host:
+        db_host = pooler_host
+        db_port = pooler_port
+        # Supabase pooler expects tenant-suffixed username (e.g. postgres.<project_ref>).
+        if project_ref and db_user and "." not in db_user:
+            db_user = f"{db_user}.{project_ref}"
+
+    if dsn:
+        if dsn_env_key:
+            print(f"DB DSN source: {dsn_env_key}")
+        # Some providers use postgres://; psycopg2 accepts both, but normalize anyway.
+        if dsn.startswith("postgres://"):
+            dsn = "postgresql://" + dsn[len("postgres://") :]
+
+        parsed = urlparse(dsn)
+        host = (parsed.hostname or db_host or "").strip()
+        port = int(parsed.port or db_port)
+        database = ((parsed.path or "").lstrip("/") or db_name).strip()
+        user = (unquote(parsed.username) if parsed.username is not None else db_user).strip()
+        password = (unquote(parsed.password) if parsed.password is not None else db_pass).strip()
+
+        params = {
+            "host": host,
+            "database": database,
+            "user": user,
+            "password": password,
+            "port": port,
+            "sslmode": db_sslmode,
+            "connect_timeout": db_connect_timeout,
+        }
+        explicit_hostaddr = (os.getenv("DB_HOSTADDR") or "").strip()
+        if explicit_hostaddr:
+            params["hostaddr"] = explicit_hostaddr
+            print(f"Using DB_HOSTADDR override: {explicit_hostaddr}")
+        elif force_ipv4 and host and host not in {"localhost", "127.0.0.1"}:
+            hostaddr = _resolve_ipv4_hostaddr(host, port)
+            if hostaddr:
+                params["hostaddr"] = hostaddr
+                print(f"Using IPv4 DB hostaddr for {host}: {hostaddr}")
+        return params
+
+    params = {
+        "host": db_host,
+        "database": db_name,
+        "user": db_user,
+        "password": db_pass,
+        "port": db_port,
+        "sslmode": db_sslmode,
+        "connect_timeout": db_connect_timeout,
+    }
+    explicit_hostaddr = (os.getenv("DB_HOSTADDR") or "").strip()
+    if explicit_hostaddr:
+        params["hostaddr"] = explicit_hostaddr
+        print(f"Using DB_HOSTADDR override: {explicit_hostaddr}")
+    elif force_ipv4 and db_host and db_host not in {"localhost", "127.0.0.1"}:
+        hostaddr = _resolve_ipv4_hostaddr(db_host, db_port)
+        if hostaddr:
+            params["hostaddr"] = hostaddr
+            print(f"Using IPv4 DB hostaddr for {db_host}: {hostaddr}")
+    if (
+        "supabase.co" in (params.get("host") or "")
+        and (params.get("host") or "").startswith("db.")
+        and "hostaddr" not in params
+        and not os.getenv("SUPABASE_POOLER_HOST")
+        and not os.getenv("SUPABASE_REGION")
+        and not os.getenv("DB_DSN")
+    ):
+        print(
+            "Supabase direct host detected without IPv4 override. "
+            "Set DB_DSN to Supabase pooler URL (recommended), "
+            "or set SUPABASE_POOLER_HOST/SUPABASE_REGION."
+        )
+    return params
+
+
+def _init_db_pool():
+    """Initialize global postgres pool once (lazy)."""
+    global DB_POOL
+    if DB_POOL is not None:
+        return DB_POOL
+    min_conn = int(os.getenv("DB_POOL_MINCONN") or 1)
+    max_conn = int(os.getenv("DB_POOL_MAXCONN") or 20)
+    DB_POOL = psycopg2_pool.ThreadedConnectionPool(min_conn, max_conn, **_db_conn_params())
+    return DB_POOL
+
+
+def _close_db_pool():
+    global DB_POOL
+    if DB_POOL is not None:
+        try:
+            DB_POOL.closeall()
+        finally:
+            DB_POOL = None
+
+
+atexit.register(_close_db_pool)
+
+
+def get_db_connection():
+    """Get DB connection from global pool; fallback to direct connect."""
+    params = _db_conn_params()
+    try:
+        p = _init_db_pool()
+        conn = p.getconn()
+        return _PooledConnection(conn, p)
+    except Exception as e:
+        print(f"DB pool get failed, falling back to direct connect: {e}")
+        # Fallback if pool init/get fails for any reason.
+        try:
+            return psycopg2.connect(**params)
+        except Exception as e2:
+            # Supabase pooler can return "Tenant or user not found" when aws-0/aws-1 host
+            # prefix is mismatched for a project. Try the alternate host once.
+            msg = str(e2)
+            host = str(params.get("host") or "")
+            alt_host = _alternate_supabase_pooler_host(host)
+            if alt_host and "Tenant or user not found" in msg:
+                alt_params = dict(params)
+                alt_params["host"] = alt_host
+                alt_params.pop("hostaddr", None)  # recalculate DNS/IP for alternate host
+                try:
+                    print(f"Retrying DB connect with alternate pooler host: {alt_host}")
+                    return psycopg2.connect(**alt_params)
+                except Exception:
+                    pass
+            print(f"Direct DB connect failed: {e2}")
+            print(traceback.format_exc())
+            raise
+
+# Base directory for building absolute paths
+BASE_DIR = os.path.dirname(os.path.abspath(__file__))
 
 load_dotenv()  # Load variables from .env if present
 
+# Pre-warm DB pool on startup to reduce first-login latency.
+try:
+    _init_db_pool()
+except Exception as e:
+    print(f"DB pool warmup skipped: {e}")
+
+# =========================================
+# ✅ SQLALCHEMY ENGINE (optional)
+# - Used for Supabase/Postgres connectivity
+# - Driven by lowercase keys in .env: user/password/host/port/dbname
+# - Exposes `engine` for scripts like `main.py`
+# =========================================
+SQLALCHEMY_ENGINE = None
+engine = None
+
+_USER = os.getenv("user")
+_PASSWORD = os.getenv("password")
+_HOST = os.getenv("host")
+_PORT = os.getenv("port")
+_DBNAME = os.getenv("dbname")
+
+if _USER and _PASSWORD and _HOST and _PORT and _DBNAME and _PASSWORD != "[YOUR-PASSWORD]":
+    _DATABASE_URL = (
+        f"postgresql+psycopg2://{_USER}:{_PASSWORD}@{_HOST}:{_PORT}/{_DBNAME}?sslmode=require"
+    )
+    try:
+        SQLALCHEMY_ENGINE = create_engine(_DATABASE_URL)
+        engine = SQLALCHEMY_ENGINE
+    except Exception as e:
+        # Keep app importable even if DB env is not configured yet.
+        print(f"Failed to create SQLAlchemy engine: {e}")
+
+def get_departments_from_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT id, code, name, branch, description 
+        FROM departments
+        ORDER BY id DESC
+    """)
+
+    rows = cur.fetchall()
+
+    result = []
+    for r in rows:
+        result.append({
+            "id": r[0],
+            "code": r[1],
+            "name": r[2],
+            "branch": r[3],
+            "description": r[4]
+        })
+
+    cur.close()
+    conn.close()
+    return result
+
+def get_roles_from_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT r.id, d.name, r.branch, r.role_name, r.description, r.permissions
+        FROM roles r
+        JOIN departments d ON r.department_name = d.name
+        ORDER BY r.id DESC
+    """)
+
+    rows = cur.fetchall()
+
+    roles = []
+    for r in rows:
+        roles.append({
+            "id": r[0],
+            "department": r[1],
+            "branch": r[2],
+            "role": r[3],
+            "description": r[4],
+            "permissions": r[5]
+        })
+
+    cur.close()
+    conn.close()
+    return roles
+
+def get_customers_from_db():
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+    SELECT 
+        customer_id,      -- 0
+        name,             -- 1
+        company,          -- 2
+        customer_type,    -- 3
+        status,           -- 4
+        email,            -- 5
+        phone,            -- 6  
+        credit_limit,     -- 7
+        city,             -- 8
+        sales_rep,        -- 9
+        company_type,     -- 10
+        billing_address,  -- 11
+        shipping_address  -- 12
+    FROM customers
+""")
+
+    rows = cur.fetchall()
+
+    customers = []
+    for r in rows:
+        customers.append({
+    "customer_id": r[0],
+    "name": r[1],
+    "company": r[2],
+    "customer_type": r[3],
+    "status": r[4],
+    "email": r[5],
+    "phone": r[6],             
+    "credit_limit": float(r[7] or 0),
+    "city": r[8],
+    "sales_rep": r[9],
+    "company_type": r[10],
+    "billing_address": r[11],
+    "shipping_address": r[12]
+})
+
+    cur.close()
+    conn.close()
+    return customers
+
+# =========================================
+# PDF Font Setup (Supports ₹ Indian Rupee Symbol)
+# =========================================
+FONT_DIR = os.path.join(BASE_DIR, "static", "fonts")
+
+pdfmetrics.registerFont(
+    TTFont("DejaVuSans", os.path.join(FONT_DIR, "DejaVuSans.ttf"))
+)
+
+pdfmetrics.registerFont(
+    TTFont("DejaVuSans-Bold", os.path.join(FONT_DIR, "DejaVuSans-Bold.ttf"))
+)
+
+registerFontFamily(
+    "DejaVuSans",
+    normal="DejaVuSans",
+    bold="DejaVuSans-Bold",
+    italic="DejaVuSans",
+    boldItalic="DejaVuSans-Bold"
+)
 
 # =========================================
 # ✅ EMAIL SENDER (SMTP / UNIVERSAL)
@@ -111,7 +546,7 @@ WAREHOUSE_FILE = os.path.join(app.root_path, "product_warehouses.json")
 SIZE_FILE = os.path.join(app.root_path, "product_sizes.json")
 COLOR_FILE = os.path.join(app.root_path, "product_colors.json")
 SUPPLIER_FILE = os.path.join(app.root_path, "product_suppliers.json")
-CUSTOMER_FILE = os.path.join(app.root_path, "customer.json")
+# CUSTOMER_FILE = os.path.join(app.root_path, "customer.json")
 ENQUIRY_FILE = os.path.join(app.root_path, "new-enquiry.json")
 ENQUIRY_PRODUCT_FILE = "data/enquiry_products.json"
 QUOTATION_FILE = os.path.join(app.root_path, "quotation.json")
@@ -122,7 +557,7 @@ BILLS_FILE = os.path.join(app.root_path, "bills.json")
 ATTACHMENTS_FOLDER = os.path.join(app.root_path, "attachments")
 os.makedirs(ATTACHMENTS_FOLDER, exist_ok=True)
 HOLD_FILE = os.path.join(app.root_path, "Hold-Billing.json")
-SALES_ORDERS_FILE = os.path.join(app.root_path, "sales_orders.json")
+
 DELIVERY_NOTE_FILE = os.path.join(app.root_path, "deliverynotes.json")
 
 
@@ -143,7 +578,9 @@ OTP_EXPIRY_MINUTES = int(os.getenv("OTP_EXPIRY_MINUTES", "1"))
 # =========================================
 # ✅ FORGOT PASSWORD + LOCKOUT CONFIG
 # =========================================
-BASE_URL = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000")
+_raw_base_url = os.getenv("APP_BASE_URL", "http://127.0.0.1:5000")
+# Support multiple base URLs in APP_BASE_URL (comma-separated); use the first as primary
+BASE_URL = _raw_base_url.split(",")[0].strip() if _raw_base_url else "http://127.0.0.1:5000"
 RESET_SEND_COUNT = {}
 MAX_RESET_SENDS = 5
 LOCKOUT_THRESHOLD = 5
@@ -213,9 +650,19 @@ otp_storage = {}
 # =========================================
 def wants_json():
     """Check if client wants JSON response (API/Postman).
-    Returns True for: Accept: application/json, ?format=json, or request.is_json"""
-    accept = request.headers.get("Accept", "")
-    return "application/json" in accept or request.args.get("format") == "json" or request.is_json
+    True when: Accept: application/json, ?format=json, request.is_json,
+    or Content-Type: application/json (many clients send this on GET in Postman)."""
+    accept = (request.headers.get("Accept") or "").lower()
+    if "application/json" in accept:
+        return True
+    if request.args.get("format") == "json":
+        return True
+    if request.is_json:
+        return True
+    ct = (request.headers.get("Content-Type") or "").lower()
+    if "application/json" in ct:
+        return True
+    return False
 
 
 # =========================================
@@ -247,10 +694,17 @@ def auto_session_timeout():
         return
 
     # for all other pages → check session timeout
-    # Skip session check for API endpoints (they handle their own auth if needed)
-    # API endpoints can work with or without session (for AJAX calls from authenticated pages)
-    if not request.path.startswith("/api/"):
+    # Skip session check for some public pages above.
+    # Special handling for JSON/API clients: return JSON 401 instead of redirecting to /login.
+    is_api = request.path.startswith("/api/")
+
+    if wants_json():
+        # JSON clients (e.g. Postman) should get a JSON error, not an HTML redirect.
         if not check_session_timeout():
+            return jsonify({"success": False, "message": "session_expired"}), 401
+    else:
+        # Normal browser HTML navigation: redirect to login on timeout for non-API routes.
+        if not is_api and not check_session_timeout():
             return redirect(url_for("login", message="session_expired"))
 
     # =========================================
@@ -281,13 +735,92 @@ def ensure_role():
 
 
 # =========================================
-# ✅ JSON HELPERS
+# ✅ JSON HELPERS — Users storage shape
 # =========================================
+# Persisted users.json records: full branch-user fields + password, never "id".
+# DEFAULT_BRANCH_USER_PASSWORD applies when admin-created users have no password yet.
+_USER_PHONE_COUNTRY_PREFIXES = tuple(
+    sorted(
+        ["+91", "+971", "+974", "+966", "+94", "+880", "+977", "+1", "+44", "+61"],
+        key=len,
+        reverse=True,
+    )
+)
+DEFAULT_BRANCH_USER_PASSWORD = os.getenv("DEFAULT_BRANCH_USER_PASSWORD", "Stackly@123")
+
+
+def _infer_country_and_contact_from_phone(phone: str):
+    """Split +… phone into (country_code, contact_number) when prefix matches a known code."""
+    phone = (phone or "").strip()
+    if not phone:
+        return "", ""
+    if not phone.startswith("+"):
+        return "", re.sub(r"\D", "", phone)
+    digits_only = "".join(c for c in phone[1:] if c.isdigit())
+    for prefix in _USER_PHONE_COUNTRY_PREFIXES:
+        p_digits = prefix[1:]
+        if digits_only.startswith(p_digits):
+            rest = digits_only[len(p_digits) :]
+            return prefix, rest
+    return "", digits_only
+
+
+def normalize_user_record_for_storage(u: dict) -> dict:
+    """Normalize one user dict for users.json: drop id, ensure password + full field set."""
+    if not isinstance(u, dict):
+        return {}
+    out = {k: v for k, v in u.items() if k != "id"}
+    pwd = (out.get("password") or "").strip() if out.get("password") is not None else ""
+    if not pwd:
+        out["password"] = DEFAULT_BRANCH_USER_PASSWORD
+    else:
+        out["password"] = pwd
+    name = (out.get("name") or "").strip()
+    fn = (out.get("first_name") or "").strip()
+    ln = (out.get("last_name") or "").strip()
+    if not fn and name:
+        parts = name.split(None, 1)
+        fn = parts[0]
+        ln = parts[1] if len(parts) > 1 else (ln or "")
+    out["first_name"] = fn
+    out["last_name"] = ln or ""
+    out["name"] = name or f"{fn} {ln}".strip()
+    cc = (out.get("country_code") or "").strip()
+    cn = (out.get("contact_number") or "").strip()
+    phone = (out.get("phone") or "").strip()
+    if cc and cn:
+        out["country_code"] = cc
+        out["contact_number"] = cn
+        out["phone"] = phone or f"{cc}{cn}"
+    elif phone:
+        icc, icn = _infer_country_and_contact_from_phone(phone)
+        out["phone"] = phone
+        out["country_code"] = icc
+        out["contact_number"] = icn
+    else:
+        out["phone"] = phone
+        out["country_code"] = cc
+        out["contact_number"] = cn
+    out["email"] = (out.get("email") or "").strip()
+    out["role"] = (out.get("role") or "").strip() or "User"
+    for key in ("branch", "department", "reporting_to", "available_branches", "employee_id"):
+        val = out.get(key)
+        out[key] = (val or "").strip() if val is not None else ""
+    return out
+
+
+def user_public_dict(u: dict) -> dict:
+    """User object safe for JSON responses (no password or id)."""
+    if not isinstance(u, dict):
+        return {}
+    return {k: v for k, v in u.items() if k not in ("password", "id")}
+
+
 def load_users():
     """Read users from users.json as a list of dicts."""
     if not os.path.exists(USER_FILE):
         return []
-    with open(USER_FILE, "r") as f:
+    with open(USER_FILE, "r", encoding="utf-8") as f:
         try:
             data = json.load(f)
             if isinstance(data, list):
@@ -299,27 +832,21 @@ def load_users():
             return []
 
 
-def load_roles():
-    if not os.path.exists(ROLE_FILE):
-        return []
-    with open(ROLE_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-            if isinstance(data, list):
-                return data
-            if isinstance(data, dict):
-                return list(data.values())
-            return []
-        except json.JSONDecodeError:
-            return []
 
 
 def save_users(data):
-    """Write users back to users.json as list."""
+    """Write users back to users.json as list (no id; always password + full keys)."""
     if isinstance(data, dict):
         data = list(data.values())
-    with open(USER_FILE, "w") as f:
-        json.dump(data, f, indent=2)
+    normalized = []
+    for item in data:
+        if isinstance(item, dict):
+            norm = normalize_user_record_for_storage(item)
+            item.clear()
+            item.update(norm)
+            normalized.append(item)
+    with open(USER_FILE, "w", encoding="utf-8") as f:
+        json.dump(normalized, f, indent=2, ensure_ascii=False)
 
 
 def load_failed_attempts():
@@ -449,20 +976,63 @@ def send_otp_email(to_email, otp):
 # =========================================
 # ✅ DEPARTMENT HELPERS
 # =========================================
+def normalize_department_for_storage(d):
+    """Departments.json stores code, name, branch, description — never id."""
+    if not isinstance(d, dict):
+        return {}
+    return {k: v for k, v in d.items() if k != "id"}
+
+
+def department_for_api(d):
+    """Department dict safe for JSON (no id)."""
+    if not isinstance(d, dict):
+        return {}
+    return {k: v for k, v in d.items() if k != "id"}
+
+
+def _dept_code_key(d):
+    return (d.get("code") or "").strip().lower()
+
+
+def find_department_by_code(departments, code_ref):
+    """Find a department by code (case-insensitive)."""
+    if not code_ref or not isinstance(departments, list):
+        return None
+    cref = str(code_ref).strip().lower()
+    if not cref:
+        return None
+    for d in departments:
+        if isinstance(d, dict) and _dept_code_key(d) == cref:
+            return d
+    return None
+
+
 def load_departments():
     if not os.path.exists(DEPARTMENT_FILE):
         return []
     try:
         with open(DEPARTMENT_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
-            return data if isinstance(data, list) else []
+            if not isinstance(data, list):
+                return []
+            return [normalize_department_for_storage(d) if isinstance(d, dict) else d for d in data]
     except Exception:
         return []
 
 
 def save_departments(departments):
+    """Persist departments without id field."""
+    if not isinstance(departments, list):
+        departments = []
+    normalized = []
+    for d in departments:
+        if isinstance(d, dict):
+            norm = normalize_department_for_storage(d)
+            d.clear()
+            d.update(norm)
+            normalized.append(d)
     with open(DEPARTMENT_FILE, "w", encoding="utf-8") as f:
-        json.dump(departments, f, indent=2, ensure_ascii=False)
+        json.dump(normalized, f, indent=2, ensure_ascii=False)
 
 
 def load_products():
@@ -728,8 +1298,8 @@ def set_security_headers(resp):
 # 4. MASTERS — Department & Roles — /department-roles, /api/departments, /api/roles
 # 5. MASTERS — Products  — /products, /products/create, /import, /api/products
 # 6. MASTERS — Customer  — /customer, /import-customer, /addnew-customer, /api/customer, /api/customers
-# 7. CRM — Enquiry List  — /enquiry-list
-# 8. CRM — New Enquiry   — /new-enquiry, /save-enquiry, /add-product, enquiry APIs
+# 7. CRM — Enquiry List  — /enquiry-list, /api/enquiries (REST for Postman)
+# 8. CRM — New Enquiry   — /new-enquiry, /save-enquiry, /add-product, /api/enquiry/…
 # 9. UTILITY             — /profile, /search, /logout
 # =========================================
 
@@ -809,6 +1379,277 @@ def check_your_mail_page():
 # =========================================
 # 3. MASTERS — Manage Users
 # =========================================
+def _db_fetch_users_ordered(include_id: bool = False):
+    """Return users in the same order as Manage Users table (latest first)."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    if include_id:
+        cur.execute(
+            """
+            SELECT id, name, email, phone, role, first_name, last_name, country_code,
+                   contact_number, branch, department, reporting_to, available_branches, employee_id
+            FROM users
+            ORDER BY id DESC
+            """
+        )
+        rows = cur.fetchall()
+        users = []
+        for r in rows:
+            users.append(
+                {
+                    "id": r[0],
+                    "name": r[1],
+                    "email": r[2],
+                    "phone": r[3],
+                    "role": r[4],
+                    "first_name": r[5],
+                    "last_name": r[6],
+                    "country_code": r[7],
+                    "contact_number": r[8],
+                    "branch": r[9],
+                    "department": r[10],
+                    "reporting_to": r[11],
+                    "available_branches": str(r[12]) if r[12] is not None else "",
+                    "employee_id": r[13],
+                }
+            )
+    else:
+        cur.execute("SELECT name, email, phone, role FROM users ORDER BY id DESC")
+        rows = cur.fetchall()
+        users = [{"name": r[0], "email": r[1], "phone": r[2], "role": r[3]} for r in rows]
+    cur.close()
+    conn.close()
+    return users
+
+
+def _db_get_user_by_email(email: str):
+    """Get single DB user row by email (case-insensitive). Includes branch/department for RBAC."""
+    conn = get_db_connection()
+    cur = conn.cursor()
+    row = None
+    try:
+        cur.execute(
+            """
+            SELECT id, name, email, phone, role, branch, department
+            FROM users
+            WHERE LOWER(email) = LOWER(%s)
+            LIMIT 1
+            """,
+            ((email or "").strip(),),
+        )
+        row = cur.fetchone()
+    except Exception:
+        try:
+            cur.execute(
+                """
+                SELECT id, name, email, phone, role
+                FROM users
+                WHERE LOWER(email) = LOWER(%s)
+                LIMIT 1
+                """,
+                ((email or "").strip(),),
+            )
+            row = cur.fetchone()
+        except Exception:
+            row = None
+    finally:
+        cur.close()
+        conn.close()
+    if not row:
+        return None
+    if len(row) >= 7:
+        return {
+            "id": row[0],
+            "name": row[1],
+            "email": row[2],
+            "phone": row[3],
+            "role": row[4],
+            "branch": row[5] or "",
+            "department": row[6] or "",
+        }
+    return {
+        "id": row[0],
+        "name": row[1],
+        "email": row[2],
+        "phone": row[3],
+        "role": row[4],
+        "branch": "",
+        "department": "",
+    }
+
+
+# --- RBAC: session + roles.json (matrix) + platform Admin / Super Admin ---
+RBAC_MODULES = (
+    "department_roles",
+    "products",
+    "customer",
+    "new_enquiry",
+    "quotation",
+    "sales",
+    "delivery",
+    "invoice",
+)
+
+
+def _rbac_empty_perm():
+    return {"full_access": False, "view": False, "create": False, "edit": False, "delete": False}
+
+
+def _rbac_full_perm():
+    return {"full_access": True, "view": True, "create": True, "edit": True, "delete": True}
+
+
+def _rbac_admin_perm():
+    """Admin policy: create/view/edit allowed, delete denied."""
+    return {"full_access": False, "view": True, "create": True, "edit": True, "delete": False}
+
+
+def normalize_menu_permissions(raw):
+    """Normalize roles.json permission block (nested or flat checkbox keys from create-role UI)."""
+    if not isinstance(raw, dict):
+        return _rbac_empty_perm()
+    if any(k in raw for k in ("full_access", "view", "create", "edit", "delete")):
+        return {
+            "full_access": bool(raw.get("full_access")),
+            "view": bool(raw.get("view")),
+            "create": bool(raw.get("create")),
+            "edit": bool(raw.get("edit")),
+            "delete": bool(raw.get("delete")),
+        }
+    fa = fv = fc = fe = fd = False
+    for k, v in raw.items():
+        if not v:
+            continue
+        ks = str(k).lower()
+        if ks.endswith("_full") or ks == "full_access":
+            fa = True
+        elif ks.endswith("_view"):
+            fv = True
+        elif ks.endswith("_create"):
+            fc = True
+        elif ks.endswith("_edit"):
+            fe = True
+        elif ks.endswith("_delete"):
+            fd = True
+    if fa:
+        return _rbac_full_perm()
+    return {"full_access": False, "view": fv, "create": fc, "edit": fe, "delete": fd}
+
+
+def get_current_user_profile():
+    """
+    Prefer PostgreSQL session + DB row (login uses DB). Fallback to users.json.
+    Fixes RBAC when user exists only in DB or role differs from stale JSON.
+    """
+    email = session.get("user")
+    if not email:
+        return None
+    role = session.get("role")
+    name = "User"
+    department = session.get("department")
+    branch = session.get("branch")
+
+    dbu = _db_get_user_by_email(email)
+    if dbu:
+        name = dbu.get("name") or "User"
+        role = dbu.get("role") or "User"
+        if department is None:
+            department = dbu.get("department")
+        if branch is None:
+            branch = dbu.get("branch")
+    else:
+        role = "User" 
+    return {
+    "email": email,
+    "name": name,
+    "role": role.strip(),
+    "department": (department or "").strip(),
+    "branch": (branch or "").strip() or "Main Branch",
+}
+
+
+   
+def get_effective_permissions_for_session():
+    """Effective menu permissions: platform Admin/Super Admin = full; else roles.json matrix."""
+    empty = {m: _rbac_empty_perm() for m in RBAC_MODULES}
+    if not session.get("user"):
+        return {"is_platform_admin": False, **empty}
+
+    prof = get_current_user_profile()
+    if not prof:
+        return {"is_platform_admin": False, **empty}
+
+    rn = (prof.get("role") or "").strip().lower().replace(" ", "").replace("_", "")
+    if rn in ("superadmin", "admin"):
+        full = {m: _rbac_full_perm() for m in RBAC_MODULES}
+        full["is_platform_admin"] = True
+        return full
+
+    roles = get_roles_from_db()
+    # roles = get_roles_from_db()
+    dept = (prof.get("department") or "").strip().lower()
+    branch = (prof.get("branch") or "Main Branch").strip().lower()
+    role_name = (prof.get("role") or "").strip().lower()
+    matched = None
+    for r in roles:
+        if not isinstance(r, dict):
+            continue
+        rd = (r.get("department") or "").strip().lower()
+        rb = (r.get("branch") or "").strip().lower()
+        rr = (r.get("role") or "").strip().lower()
+        if rd == dept and rb == branch and rr == role_name:
+            matched = r
+            break
+
+    out = {"is_platform_admin": False}
+    perms = (matched or {}).get("permissions") or {}
+    for m in RBAC_MODULES:
+        out[m] = normalize_menu_permissions(perms.get(m) or {})
+    return out
+
+
+@app.context_processor
+def inject_rbac():
+    try:
+        if session.get("user"):
+            return {"rbac": get_effective_permissions_for_session()}
+    except Exception:
+        pass
+    return {"rbac": {}}
+
+
+@app.context_processor
+def inject_profile_display_name():
+    """
+    Inject consistent profile name/email for the top-right dropdown.
+
+    Some routes were passing `user_name` from `users.json` (can be stale).
+    We always prefer the DB-backed `get_current_user_profile()` here.
+    """
+    email = session.get("user")
+    if not email:
+        return {"profile_user_name": "User", "profile_user_email": ""}
+
+    prof = get_current_user_profile() or {}
+    return {
+        "profile_user_name": prof.get("name") or "User",
+        "profile_user_email": email,
+    }
+
+
+def _db_sync_users_id_sequence(cur):
+    """Fix out-of-sync users.id sequence (common after manual imports)."""
+    cur.execute(
+        """
+        SELECT setval(
+            pg_get_serial_sequence('users', 'id'),
+            COALESCE((SELECT MAX(id) FROM users), 0) + 1,
+            false
+        )
+        """
+    )
+
+
 @app.route("/manage-users")
 def manage_users():
     user_email = session.get("user")
@@ -817,7 +1658,8 @@ def manage_users():
             return jsonify({"success": False, "message": "Session expired"}), 401
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
+    users = _db_fetch_users_ordered(include_id=False)
+
     user_name = "User"
     user_role = "User"
 
@@ -853,8 +1695,6 @@ def manage_users():
         user_name=user_name,
         user_role=user_role,
     )
-
-
 # =========================================
 # 4. MASTERS — Department & Roles
 # =========================================
@@ -866,23 +1706,22 @@ def department_roles():
             return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
-    departments = load_departments()
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = u.get("role") or "User"
-            break
+    # departments = load_departments()
+    departments = get_departments_from_db()
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
 
     if wants_json():
-        return jsonify({
-            "success": True,
-            "departments": departments,
-            "total": len(departments),
-            "current_user": {"email": user_email, "name": user_name, "role": user_role}
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "departments": departments,
+                "total": len(departments),
+                "current_user": {"email": user_email, "name": user_name, "role": user_role},
+                "permissions": get_effective_permissions_for_session(),
+            }
+        ), 200
 
     return render_template(
         "department-roles.html",
@@ -896,20 +1735,16 @@ def department_roles():
     )
 
 
+
 @app.route("/department-roles/create", methods=["GET", "POST"])
 def create_department():
     user_email = session.get("user")
     if not user_email:
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = u.get("role") or "User"
-            break
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
 
     branches_list = [
         {"id": "main_branch", "name": "Main Branch"},
@@ -917,7 +1752,7 @@ def create_department():
         {"id": "branch_2", "name": "Branch 2"},
     ]
 
-    roles = load_roles()
+    roles = get_roles_from_db()
     print("ROLES COUNT:", len(roles))
 
     if request.method == "POST":
@@ -978,7 +1813,7 @@ def create_department():
                 roles=roles,
             )
 
-        departments = load_departments()
+        departments = get_departments_from_db()
 
         # Check for duplicates (case-insensitive) - either code OR name should be unique
         for d in departments:
@@ -996,7 +1831,7 @@ def create_department():
                     section="masters",
                     user_email=user_email,
                     user_name=user_name,
-                user_role=user_role,
+                    user_role=user_role,
                     error=error,
                     form={"code": code, "department_name": name, "branch": branch, "description": desc},
                     branches=branches_list,
@@ -1020,14 +1855,30 @@ def create_department():
                 )
 
         new_dept = {
-            "id": str(uuid.uuid4()),
             "code": code,
             "name": name,
             "branch": branch,
             "description": desc,
         }
-        departments.append(new_dept)
-        save_departments(departments)
+        
+        # 🔥 ADD DB INSERT
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO departments (code, name, branch, description)
+            VALUES (%s, %s, %s, %s)
+        """, (
+            code,
+            name,
+            branch,
+            desc
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
         flash("Department has been created successfully", "success")
         return redirect(url_for("department_roles"))
 
@@ -1043,7 +1894,6 @@ def create_department():
         roles=roles,
     )
 
-
 # =========================================
 # 4. MASTERS — Department & Roles — Edit/Delete (UI)
 # =========================================
@@ -1056,26 +1906,29 @@ def edit_department():
 
     try:
         data = request.get_json(silent=True) or {}
-        dept_id = data.get("id")
+        # Original code identifies the row (before rename); legacy clients may send "id" with the old code
+        original_code = (data.get("original_code") or data.get("id") or "").strip()
         code = (data.get("code") or "").strip()
         name = (data.get("name") or "").strip()
         description = data.get("description")
 
-        # Allow 0 as valid id; reject only None or empty string
-        if dept_id is None or (isinstance(dept_id, str) and not dept_id.strip()):
-            return jsonify(success=False, error="Missing department ID"), 400
+        if not original_code:
+            return jsonify(success=False, error="Missing department identifier (original code)"), 400
 
-        departments = load_departments()
+        departments = get_departments_from_db()
         if not isinstance(departments, list):
             departments = []
 
-        # Check for duplicates (case-insensitive) - exclude current department (compare as string)
+        current = find_department_by_code(departments, original_code)
+        if not current:
+            return jsonify(success=False, error="Department not found"), 404
+
+        # Check for duplicates (case-insensitive) - exclude current department
         new_code = code.lower()
         new_name = name.lower()
-        dept_id_str = str(dept_id)
-        
+
         for dept in departments:
-            if str(dept.get("id")) == dept_id_str:
+            if dept is current:
                 continue
             existing_code = (dept.get("code") or "").strip().lower()
             existing_name = (dept.get("name") or "").strip().lower()
@@ -1084,26 +1937,29 @@ def edit_department():
             if existing_name == new_name:
                 return jsonify(success=False, error="Department name already exists. Please use a different name."), 409
 
-        updated = False
-        for dept in departments:
-            if str(dept.get("id")) == dept_id_str:
-                dept["code"] = code
-                dept["name"] = name
-                if description is not None:
-                    dept["description"] = description
-                updated = True
-                break
+        conn = get_db_connection()
+        cur = conn.cursor()
 
-        if not updated:
-            return jsonify(success=False, error="Department ID not found"), 404
+        cur.execute("""
+            UPDATE departments
+            SET code = %s, name = %s, description = %s
+            WHERE LOWER(code) = LOWER(%s)
+        """, (
+            code,
+            name,
+            description,
+            original_code
+        ))
 
-        save_departments(departments)
-        return jsonify(success=True), 200
+        conn.commit()
+        cur.close()
+        conn.close()
 
+        return jsonify(success=True)
+   
     except Exception as e:
         print("EDIT ERROR:", e)
         return jsonify(success=False, error=str(e)), 500
-
 
 @app.route("/department-roles/delete", methods=["POST"])
 def delete_department():
@@ -1112,75 +1968,92 @@ def delete_department():
         return jsonify({"success": False, "error": "session_expired"}), 401
 
     data = request.get_json(silent=True) or {}
-    dept_id = data.get("id")
+    code_ref = (data.get("code") or data.get("id") or "").strip()
 
-    if not dept_id:
-        return jsonify({"success": False, "error": "missing_id"}), 400
+    if not code_ref:
+        return jsonify({"success": False, "error": "missing_code"}), 400
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    departments = load_departments()
-    before_count = len(departments)
+    cur.execute("DELETE FROM departments WHERE LOWER(code) = LOWER(%s)", (code_ref,))
 
-    departments = [d for d in departments if str(d.get("id")) != str(dept_id)]
-    after_count = len(departments)
-
-    if after_count == before_count:
+    if cur.rowcount == 0:
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "error": "not_found"}), 404
 
-    save_departments(departments)
+    conn.commit()
+    cur.close()
+    conn.close()
+
     return jsonify({"success": True})
 
+    
 
 # =========================================
 # =========================================
 # 4. MASTERS — Department & Roles — APIs
 # =========================================
+@app.route("/api/me/permissions", methods=["GET"])
+def api_me_permissions():
+    """JSON: effective RBAC matrix for the logged-in user (session + roles.json)."""
+    if not session.get("user"):
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
+    return jsonify(
+        {
+            "success": True,
+            "permissions": get_effective_permissions_for_session(),
+            "profile": get_current_user_profile(),
+        }
+    ), 200
+
+
 @app.route("/api/departments", methods=["GET"])
 def api_departments():
     """Get all departments - supports JSON response for Postman"""
     user_email = session.get("user")
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
-    
-    users = load_users()
-    departments = load_departments()
-    
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = (u.get("role") or "User").strip()
-            break
-    
-    return jsonify({
-        "success": True,
-        "departments": departments,
-        "total": len(departments),
-        "current_user": {
-            "email": user_email,
-            "name": user_name,
-            "role": user_role
+
+    departments = get_departments_from_db()
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
+    perms = get_effective_permissions_for_session()
+
+    return jsonify(
+        {
+            "success": True,
+            "departments": [department_for_api(d) for d in departments if isinstance(d, dict)],
+            "total": len(departments),
+            "current_user": {
+                "email": user_email,
+                "name": user_name,
+                "role": user_role,
+            },
+            "permissions": perms,
         }
-    }), 200
+    ), 200
 
 
-@app.route("/api/departments/<dept_id>", methods=["GET"])
-def api_get_department(dept_id):
-    """Get single department by ID"""
+@app.route("/api/departments/<path:dept_ref>", methods=["GET"])
+def api_get_department(dept_ref):
+    """Get single department by code (URL path, case-insensitive)."""
     user_email = session.get("user")
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     
-    departments = load_departments()
-    department = next((d for d in departments if str(d.get("id")) == str(dept_id)), None)
+    departments = get_departments_from_db()
+    department = find_department_by_code(departments, dept_ref)
     
     if not department:
         return jsonify({"success": False, "message": "Department not found"}), 404
     
     return jsonify({
         "success": True,
-        "department": department
+        "department": department_for_api(department)
     }), 200
+
 
 
 @app.route("/api/departments", methods=["POST"])
@@ -1218,7 +2091,7 @@ def api_create_department():
     if not name:
         return jsonify({"success": False, "message": "Department name is required."}), 400
     
-    departments = load_departments()
+    departments = get_departments_from_db()
     
     # Check for duplicates (case-insensitive)
     for d in departments:
@@ -1240,24 +2113,24 @@ def api_create_department():
             }), 409
     
     new_dept = {
-        "id": str(uuid.uuid4()),
         "code": code,
         "name": name,
         "branch": branch,
         "description": description,
     }
     departments.append(new_dept)
-    save_departments(departments)
+    # save_departments(departments)
     
     return jsonify({
         "success": True,
         "message": "Department created successfully",
-        "department": new_dept
+        "department": department_for_api(new_dept)
     }), 201
 
 
-@app.route("/api/departments/<dept_id>", methods=["PUT"])
-def api_update_department(dept_id):
+
+@app.route("/api/departments/<path:dept_ref>", methods=["PUT"])
+def api_update_department(dept_ref):
     """Update existing department"""
     user_email = session.get("user")
     if not user_email:
@@ -1283,58 +2156,55 @@ def api_update_department(dept_id):
     name = (data.get("name") or "").strip()
     description = (data.get("description") or "").strip()
     
-    if not dept_id:
-        return jsonify({"success": False, "message": "Department ID is required."}), 400
+    if not dept_ref or not str(dept_ref).strip():
+        return jsonify({"success": False, "message": "Department code is required in the URL."}), 400
     
     departments = load_departments()
+    current = find_department_by_code(departments, dept_ref)
+    if not current:
+        return jsonify({"success": False, "message": "Department not found"}), 404
     
     # Check for duplicates (case-insensitive) - exclude current department
-    new_code = code.lower()
-    new_name = name.lower()
-    
+    merged_code = (code or current.get("code") or "").strip().lower()
+    merged_name = (name or current.get("name") or "").strip().lower()
+
     for dept in departments:
-        if str(dept.get("id")) == str(dept_id):
+        if dept is current:
             continue
-        
+
         existing_code = (dept.get("code") or "").strip().lower()
         existing_name = (dept.get("name") or "").strip().lower()
-        
-        if existing_code == new_code:
+
+        if existing_code == merged_code:
             return jsonify({
                 "success": False,
                 "message": "Department code already exists. Please use a different code."
             }), 409
-        
-        if existing_name == new_name:
+
+        if existing_name == merged_name:
             return jsonify({
                 "success": False,
                 "message": "Department name already exists. Please use a different name."
             }), 409
-    
-    updated = False
-    for dept in departments:
-        if str(dept.get("id")) == str(dept_id):
-            dept["code"] = code
-            dept["name"] = name
-            if description:
-                dept["description"] = description
-            updated = True
-            break
-    
-    if not updated:
-        return jsonify({"success": False, "message": "Department not found"}), 404
+
+    if code:
+        current["code"] = code
+    if name:
+        current["name"] = name
+    if description is not None:
+        current["description"] = description
     
     save_departments(departments)
     return jsonify({
         "success": True,
         "message": "Department updated successfully",
-        "department": next((d for d in departments if str(d.get("id")) == str(dept_id)), None)
+        "department": department_for_api(current)
     }), 200
 
 
-@app.route("/api/departments/<dept_id>", methods=["DELETE"])
-def api_delete_department(dept_id):
-    """Delete department by ID"""
+@app.route("/api/departments/<path:dept_ref>", methods=["DELETE"])
+def api_delete_department(dept_ref):
+    """Delete department by code (URL path segment)."""
     user_email = session.get("user")
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
@@ -1354,13 +2224,14 @@ def api_delete_department(dept_id):
             "message": "Only Super Admin or Admin can delete departments."
         }), 403
     
-    if not dept_id:
-        return jsonify({"success": False, "message": "Department ID is required."}), 400
+    if not dept_ref or not str(dept_ref).strip():
+        return jsonify({"success": False, "message": "Department code is required in the URL."}), 400
     
     departments = load_departments()
     before_count = len(departments)
+    cref = str(dept_ref).strip().lower()
     
-    departments = [d for d in departments if str(d.get("id")) != str(dept_id)]
+    departments = [d for d in departments if _dept_code_key(d) != cref]
     after_count = len(departments)
     
     if after_count == before_count:
@@ -1453,7 +2324,7 @@ def save_role():
                 400,
             )
 
-        roles = load_roles()          # ✅ use same loader
+        roles = get_roles_from_db()        
 
         # -----------------------------------------
         #  DUPLICATE CHECK
@@ -1480,9 +2351,35 @@ def save_role():
                     409,
                 )
 
+        department = (data.get("department") or "").strip()
+        branch = (data.get("branch") or "").strip()
+        role = (data.get("role") or "").strip()
+
+        if not department or not branch or not role:
+            return jsonify({
+                "status": "error",
+                "message": "Department, Branch and Role are required"
+            }), 400
+                
         # No duplicate → append and save
-        roles.append(data)
-        save_roles(roles)             # ✅ use same saver
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO roles (department_name, branch, role_name, description, permissions)
+            VALUES (%s, %s, %s, %s, %s)
+        """, (
+            data.get("department"),
+            data.get("branch"),
+            data.get("role"),
+            data.get("description"),
+            json.dumps(data.get("permissions", {}))
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        # save_roles(roles)             # ✅ use same saver
         return jsonify({"status": "success"})
     except Exception as e:
         print("❌ data save error:", e)
@@ -1506,7 +2403,7 @@ def edit_role():
         if description and len(description) > 50:
             return jsonify(success=False, error="Description must not exceed 50 characters.")
 
-        roles = load_roles()
+        roles = get_roles_from_db()
         
         # -----------------------------------------
         #  DUPLICATE CHECK
@@ -1548,7 +2445,7 @@ def edit_role():
         if not updated:
             return jsonify(success=False, error="Role not found")
 
-        save_roles(roles)
+        # save_roles(roles)
         return jsonify(success=True)
 
     except Exception as e:
@@ -1566,7 +2463,7 @@ def delete_role():
     if not description:
         return jsonify(success=False, error="missing_description"), 400
 
-    roles = load_roles()
+    roles = get_roles_from_db()
     before = len(roles)
 
     roles = [
@@ -1578,7 +2475,7 @@ def delete_role():
     if len(roles) == before:
         return jsonify(success=False, error="not_found"), 404
 
-    save_roles(roles)
+    # save_roles(roles)
     return jsonify(success=True)
 
 
@@ -1592,16 +2489,10 @@ def api_roles():
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     
-    users = load_users()
-    roles = load_roles()
-    
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = (u.get("role") or "User").strip()
-            break
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
+    roles = get_roles_from_db()
     
     return jsonify({
         "success": True,
@@ -1615,6 +2506,7 @@ def api_roles():
     }), 200
 
 
+
 @app.route("/api/roles/<int:role_index>", methods=["GET"])
 def api_get_role(role_index):
     """Get single role by index (0-based)"""
@@ -1622,7 +2514,7 @@ def api_get_role(role_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     
-    roles = load_roles()
+    roles = get_roles_from_db()
     
     if role_index < 0 or role_index >= len(roles):
         return jsonify({"success": False, "message": "Role index out of range"}), 404
@@ -1637,25 +2529,17 @@ def api_get_role(role_index):
 @app.route("/api/roles", methods=["POST"])
 def api_create_role():
     """Create new role"""
+    
     user_email = session.get("user")
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
-    
-    # Check user role
-    users = load_users()
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_role = (u.get("role") or "User").strip()
-            break
-    
+
+    prof = get_current_user_profile() or {}
+    user_role = (prof.get("role") or "User").strip()
+    print("FINAL ROLE IN API:", user_role)
     normalized_role = user_role.replace(" ", "").replace("_", "").lower()
-    if normalized_role not in ["superadmin", "admin"]:
-        return jsonify({
-            "success": False,
-            "message": "User cannot create roles."
-        }), 403
-    
+
+
     data = request.get_json() or {}
     department = (data.get("department") or "").strip()
     branch = (data.get("branch") or "").strip()
@@ -1681,7 +2565,7 @@ def api_create_role():
             "message": "Description must not exceed 50 characters."
         }), 400
     
-    roles = load_roles()
+    roles = get_roles_from_db()
     
     # Check for duplicates (case-insensitive) - combination of department + branch + role
     new_dept = department.lower()
@@ -1710,8 +2594,23 @@ def api_create_role():
     if "permissions" in data:
         new_role_data["permissions"] = data["permissions"]
     
-    roles.append(new_role_data)
-    save_roles(roles)
+    permissions = data.get("permissions", {})
+    conn = get_db_connection()
+    cur = conn.cursor()
+    cur.execute("""
+        INSERT INTO roles (department_name, branch, role_name, description, permissions)
+        VALUES (%s, %s, %s, %s, %s)
+    """, (
+        department,   # ✅ FIXED
+        branch,
+        role_name,
+        description,
+        json.dumps(permissions)
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
     
     return jsonify({
         "success": True,
@@ -1727,13 +2626,9 @@ def api_update_role(role_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     
-    # Check user role
-    users = load_users()
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_role = (u.get("role") or "User").strip()
-            break
+     # ✅ DB role check (NO JSON)
+    prof = get_current_user_profile() or {}
+    user_role = prof.get("role", "User")
     
     normalized_role = user_role.replace(" ", "").replace("_", "").lower()
     if normalized_role not in ["superadmin", "admin"]:
@@ -1742,67 +2637,67 @@ def api_update_role(role_index):
             "message": "Only Super Admin or Admin can edit roles."
         }), 403
     
-    if role_index < 0:
-        return jsonify({"success": False, "message": "Invalid role index"}), 400
-    
     data = request.get_json() or {}
     new_role_name = (data.get("role") or "").strip()
     description = (data.get("description") or "").strip()
     new_department = (data.get("department") or "").strip()
-    
-    roles = load_roles()
-    
-    if role_index >= len(roles):
-        return jsonify({"success": False, "message": "Role index out of range"}), 404
-    
-    old_role = roles[role_index]
-    old_role_name = (old_role.get("role") or "").strip()
-    
-    # Validate description max 50 characters
-    if description and len(description) > 50:
-        return jsonify({
-            "success": False,
-            "message": "Description must not exceed 50 characters."
-        }), 400
-    
-    # Check for duplicates (case-insensitive) - exclude current role
-    new_role_lower = new_role_name.lower()
-    new_dept_lower = new_department.lower() if new_department else ""
-    
-    for idx, r in enumerate(roles):
-        if idx == role_index:
-            continue
-        
-        existing_role = (r.get("role") or "").strip()
-        existing_dept = (r.get("department") or "").strip()
-        
-        if existing_role.lower() == new_role_lower and existing_dept.lower() == new_dept_lower:
-            return jsonify({
-                "success": False,
-                "message": "This combination of Role and Department already exists."
-            }), 409
-    
-    # Update role
-    if new_role_name:
-        roles[role_index]["role"] = new_role_name
-    if description:
-        roles[role_index]["description"] = description
+    branch = (data.get("branch") or "").strip()
+    permissions = data.get("permissions", {})
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # 🔥 get role ID using index
+    cur.execute("""
+        SELECT r.id, d.id
+        FROM roles r
+        JOIN departments d ON r.department_name = d.name
+        ORDER BY r.id
+    """)
+    rows = cur.fetchall()
+    if role_index >= len(rows):
+        cur.close()
+        conn.close()
+        return jsonify({"success": False, "message": "Role not found"}), 404
+
+    role_id = rows[role_index][0]
+     # 🔥 get department_id if changed
+    dept_id = None
     if new_department:
-        roles[role_index]["department"] = new_department
-    
-    # Update other fields if provided
-    if "branch" in data:
-        roles[role_index]["branch"] = data["branch"]
-    if "permissions" in data:
-        roles[role_index]["permissions"] = data["permissions"]
-    
-    save_roles(roles)
+        cur.execute("SELECT id FROM departments WHERE name = %s", (new_department,))
+        dept = cur.fetchone()
+        if not dept:
+            cur.close()
+            conn.close()
+            return jsonify({"success": False, "message": "Department not found"}), 400
+        dept_id = dept[0]
+
+    # 🔥 UPDATE QUERY
+    cur.execute("""
+        UPDATE roles
+        SET 
+            role_name = COALESCE(%s, role_name),
+            description = COALESCE(%s, description),
+            branch = COALESCE(%s, branch),
+            department_id = COALESCE(%s, department_id),
+            permissions = COALESCE(%s, permissions)
+        WHERE id = %s
+    """, (
+        new_role_name if new_role_name else None,
+        description if description else None,
+        branch if branch else None,
+        dept_id,
+        json.dumps(permissions) if permissions else None,
+        role_id
+    ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
     return jsonify({
         "success": True,
-        "message": "Role updated successfully",
-        "role": roles[role_index]
+        "message": "Role updated successfully"
     }), 200
-
 
 @app.route("/api/roles/<int:role_index>", methods=["DELETE"])
 def api_delete_role(role_index):
@@ -1811,37 +2706,46 @@ def api_delete_role(role_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     
-    # Check user role
-    users = load_users()
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_role = (u.get("role") or "User").strip()
-            break
+    prof = get_current_user_profile() or {}
+
+    user_role = (prof.get("role") or "User") \
+        .strip() \
+        .replace(" ", "") \
+        .replace("_", "") \
+        .lower()
+
+    print("DELETE ROLE CHECK:", user_role)
+
+    if user_role not in ["superadmin", "admin"]:
+
     
-    normalized_role = user_role.replace(" ", "").replace("_", "").lower()
-    if normalized_role not in ["superadmin", "admin"]:
         return jsonify({
             "success": False,
             "message": "Only Super Admin or Admin can delete roles."
         }), 403
-    
-    if role_index < 0:
-        return jsonify({"success": False, "message": "Invalid role index"}), 400
-    
-    roles = load_roles()
-    
-    if role_index >= len(roles):
-        return jsonify({"success": False, "message": "Role index out of range"}), 404
-    
-    deleted_role = roles.pop(role_index)
-    save_roles(roles)
-    
+
+    # ✅ SAME SOURCE AS UI
+    roles = get_roles_from_db()
+
+    if role_index < 0 or role_index >= len(roles):
+        return jsonify({"success": False, "message": "Role not found"}), 404
+
+    role_id = roles[role_index]["id"]   # 🔥 KEY FIX
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("DELETE FROM roles WHERE id = %s", (role_id,))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
     return jsonify({
         "success": True,
-        "message": "Role deleted successfully",
-        "deleted_role": deleted_role
+        "message": "Role deleted successfully"
     }), 200
+    
 
 
 # =========================================
@@ -2025,6 +2929,7 @@ def reset_password_submit():
         return jsonify({"status": "error", "message": "Server error while updating password."}), 500
 
 
+
 # =========================================
 # 3. MASTERS — Manage Users — Create User
 # =========================================
@@ -2037,18 +2942,27 @@ def create_user():
             return jsonify({"success": False, "message": "Session expired"}), 401
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
+    # ✅ DB USER FETCH
+    
 
-    user_name = "User"
-    user_role = "User"
+    # ✅ GET CURRENT USER FROM DB
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = u.get("role") or "User"
-            break
+    cursor.execute("""
+        SELECT name, role FROM users WHERE LOWER(email) = LOWER(%s)
+    """, (user_email,))
 
-    # JSON metadata for Fetch/XHR on Create User page
+    current_user = cursor.fetchone()
+
+    cursor.close()
+    conn.close()
+
+    if current_user:
+        user_name, user_role = current_user
+    else:
+        user_name = "User"
+        user_role = "User"
     if request.method == "GET" and wants_json():
         return jsonify({
             "success": True,
@@ -2069,8 +2983,8 @@ def create_user():
             user_email=user_email,
             user_name=user_name,
             user_role=user_role,
-            departments=load_departments(),
-            roles=load_roles(),
+            departments=get_departments_from_db(),
+            roles=get_roles_from_db(),
         )
 
     # -----------------------------------------
@@ -2102,6 +3016,7 @@ def create_user():
         reporting_to = (data.get("reporting_to") or "").strip()
         available_branches = (data.get("available_branches") or "").strip()
         employee_id = (data.get("employee_id") or "").strip()
+        new_password = (data.get("password") or "").strip()
     else:
         first_name = request.form.get("first_name", "").strip()
         last_name = request.form.get("last_name", "").strip()
@@ -2114,6 +3029,7 @@ def create_user():
         reporting_to = request.form.get("reporting_to", "").strip()
         available_branches = request.form.get("available_branches", "").strip()
         employee_id = request.form.get("employee_id", "").strip()
+        new_password = request.form.get("password", "").strip()
 
     # Validation errors list
     errors = []
@@ -2206,28 +3122,30 @@ def create_user():
         errors.append("Employee ID is required")
     elif not re.match(r"^[A-Za-z0-9\-]{1,20}$", employee_id):
         errors.append("Employee ID may have letters, numbers and '-' (max 20 characters)")
+    # 🔥 DB DUPLICATE CHECK
+    conn = get_db_connection()
+    cursor = conn.cursor()
 
-    # Check for duplicate email
-    if email:
-        for u in users:
-            if isinstance(u, dict) and (u.get("email") or "").strip().lower() == email.lower():
-                errors.append("Email already exists")
-                break
+    cursor.execute("SELECT email, contact_number, employee_id FROM users")
+    db_users = cursor.fetchall()
 
-    # Check for duplicate contact number
-    if contact_number:
-        for u in users:
-            if isinstance(u, dict) and (u.get("contact_number") or "") == contact_number:
-                errors.append("Contact number already exists")
-                break
+    for u in db_users:
+        db_email = (u[0] or "").lower()
+        db_contact = u[1]
+        db_emp_id = u[2]
 
-    # Check for duplicate employee ID
-    if employee_id:
-        for u in users:
-            if isinstance(u, dict) and (u.get("employee_id") or "") == employee_id:
-                errors.append("Employee ID already exists")
-                break
+        if email.lower() == db_email:
+            errors.append("Email already exists")
 
+        if contact_number == db_contact:
+            errors.append("Contact number already exists")
+
+        if employee_id == db_emp_id:
+            errors.append("Employee ID already exists")
+
+    cursor.close()
+    conn.close()
+   
     # Return errors if any
     if errors:
         if is_json_request:
@@ -2237,12 +3155,17 @@ def create_user():
                 flash(error, "error")
             return redirect(url_for("create_user"))
 
-    # Create new user
+    # Create new user (no persisted id; password required in file — default if not supplied)
     full_name = (first_name + " " + last_name).strip()
     full_phone = f"{country_code}{contact_number}" if country_code and contact_number else contact_number
+    stored_password = new_password or DEFAULT_BRANCH_USER_PASSWORD
+
+
+
+
+
 
     new_user = {
-        "id": str(uuid.uuid4()),
         "name": full_name,
         "phone": full_phone,
         "first_name": first_name,
@@ -2256,10 +3179,66 @@ def create_user():
         "reporting_to": reporting_to,
         "available_branches": available_branches,
         "employee_id": employee_id,
+        "password": stored_password,
     }
 
-    users.append(new_user)
-    save_users(users)
+    # data = request.get_json() if request.is_json else request.form
+
+    conn = get_db_connection()
+    cursor = conn.cursor()
+
+    print("DEBUG NAME:", full_name)
+    print("DEBUG PHONE:", full_phone)
+
+    insert_sql = """
+    INSERT INTO users (
+        name, phone, first_name, last_name, email,
+        country_code, contact_number, branch, department,
+        role, reporting_to, available_branches, employee_id, password
+    )
+    VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """
+    insert_vals = (
+        full_name,
+        full_phone,
+        first_name,
+        last_name,
+        email,
+        country_code,
+        contact_number,
+        branch,
+        department,
+        role,
+        reporting_to,
+        int(available_branches),
+        employee_id,
+        stored_password,
+    )
+    try:
+        cursor.execute(insert_sql, insert_vals)
+        conn.commit()
+    except psycopg2.errors.UniqueViolation as e:
+        # If users.id sequence is behind, sync once and retry.
+        conn.rollback()
+        if "users_pkey" in str(e):
+            _db_sync_users_id_sequence(cursor)
+            conn.commit()
+            cursor.execute(insert_sql, insert_vals)
+            conn.commit()
+        else:
+            raise
+    except Exception as e:
+        conn.rollback()
+        if is_json_request:
+            return jsonify({"success": False, "message": f"Failed to create user: {e}"}), 500
+        flash("Failed to create user. Please try again.", "error")
+        return redirect(url_for("create_user"))
+    finally:
+        cursor.close()
+        conn.close()
+
+
+
 
     # Return appropriate response
     if is_json_request:
@@ -2267,7 +3246,6 @@ def create_user():
             "success": True,
             "message": "User created successfully",
             "user": {
-                "id": new_user["id"],
                 "name": new_user["name"],
                 "phone": new_user["phone"],
                 "first_name": new_user["first_name"],
@@ -2280,16 +3258,16 @@ def create_user():
                 "role": new_user["role"],
                 "reporting_to": new_user["reporting_to"],
                 "available_branches": new_user["available_branches"],
-                "employee_id": new_user["employee_id"]
-            }
+                "employee_id": new_user["employee_id"],
+            },
         }), 201
     else:
         flash("User created successfully", "success")
         return redirect(url_for("manage_users"))
 
 def normalize_role(role: str) -> str:
-    return (role or "").strip().lower().replace(" ", "").replace("_", "")
-# =========================================
+    return (role or "").strip().lower().replace(" ", "").replace("_", "")# =========================================
+
 # 3. MASTERS — Manage Users — Update User
 # =========================================
 @app.route("/update-user", methods=["POST"])
@@ -2297,27 +3275,6 @@ def update_user():
     user_email = session.get("user")
     if not user_email:
         return jsonify({"success": False, "message": "Session expired"}), 401
-
-    users = load_users()
-
-    current_email = (user_email or "").strip().lower()
-    current_user = None
-
-    for usr in users:
-        if not isinstance(usr, dict):
-            continue
-        u_email = (usr.get("email") or "").strip().lower()
-        if u_email == current_email:
-            current_user = usr
-            break
-
-    if not current_user:
-        return jsonify({"success": False, "message": "Current user not found"}), 403
-
-    current_role = (current_user.get("role") or "").strip().lower()
-    current_role = normalize_role(current_user.get("role"))
-    if current_role not in ["superadmin", "admin"]:
-        return jsonify({"success": False, "message": "Only Super Admin / Admin can edit users."}), 403
 
     data = request.get_json(silent=True) or {}
     try:
@@ -2328,20 +3285,45 @@ def update_user():
     if idx < 0:
         return jsonify({"success": False, "message": "Invalid index"}), 400
 
-    if idx >= len(users):
-        return jsonify({"success": False, "message": "User index out of range"}), 400
+    name = (data.get("name") or "").strip()
+    email = (data.get("email") or "").strip()
+    phone = (data.get("phone") or "").strip()
+    role = (data.get("role") or "").strip() or "Admin"
 
-    u = users[idx]
-    if not isinstance(u, dict):
-        return jsonify({"success": False, "message": "User record invalid"}), 400
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        # one lightweight role check query
+        cur.execute(
+            "SELECT role FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1",
+            ((user_email or "").strip(),),
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "Current user not found"}), 403
+        if normalize_role(row[0]) not in ["superadmin", "admin"]:
+            return jsonify({"success": False, "message": "Only Super Admin / Admin can edit users."}), 403
 
-    u["name"]  = (data.get("name") or "").strip()
-    u["email"] = (data.get("email") or "").strip()
-    u["phone"] = (data.get("phone") or "").strip()
-    u["role"]  = (data.get("role") or "").strip() or "Admin"
+        # map current table index -> DB id
+        cur.execute("SELECT id FROM users ORDER BY id DESC OFFSET %s LIMIT 1", (idx,))
+        target = cur.fetchone()
+        if not target:
+            return jsonify({"success": False, "message": "User index out of range"}), 400
+        user_id = target[0]
 
-    save_users(users)
-    return jsonify({"success": True, "message": "User updated"}), 200
+        cur.execute(
+            """
+            UPDATE users
+            SET name=%s, email=%s, phone=%s, role=%s
+            WHERE id=%s
+            """,
+            (name, email, phone, role, user_id),
+        )
+        conn.commit()
+        return jsonify({"success": True, "message": "User updated"}), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 # =========================================
@@ -2354,30 +3336,23 @@ def products():
         if wants_json():
             return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
         return redirect(url_for("login"))
-    
-    users = load_users()
-    user_name = "User"
-    user_role = "User"
-    current_email = (user_email or "").strip().lower()
-    
-    for u in users:
-        if not isinstance(u, dict):
-            continue
-        u_email = (u.get("email") or "").strip().lower()
-        if u_email == current_email:
-            user_name = u.get("name") or "User"
-            user_role = (u.get("role") or "User").strip()
-            break
-    
+
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
+
     if wants_json():
         products_list = load_products()
-        return jsonify({
-            "success": True,
-            "products": products_list,
-            "total": len(products_list),
-            "current_user": {"email": user_email, "name": user_name, "role": user_role}
-        }), 200
-    
+        return jsonify(
+            {
+                "success": True,
+                "products": products_list,
+                "total": len(products_list),
+                "current_user": {"email": user_email, "name": user_name, "role": user_role},
+                "permissions": get_effective_permissions_for_session(),
+            }
+        ), 200
+
     return render_template(
         "products.html",
         title="Product Master - Stackly",
@@ -2385,7 +3360,7 @@ def products():
         section="masters",
         user_email=user_email,
         user_name=user_name,
-        user_role=user_role
+        user_role=user_role,
     )
 
 
@@ -3578,6 +4553,61 @@ def import_product_metadata():
         }
     ), 200
 
+
+def _product_row_signature_from_excel(row) -> tuple:
+    """
+    Canonical 6-tuple for product duplicate detection (import + validation).
+    Text fields compared case-insensitively; stock/price normalized so Excel 12 vs 12.0 match.
+    """
+    def _s(v):
+        if v is None:
+            return ""
+        try:
+            if pd.isna(v):
+                return ""
+        except (TypeError, ValueError):
+            pass
+        return str(v).strip()
+
+    name = _s(row.get("Product Name"))
+    t = _s(row.get("Type"))
+    cat = _s(row.get("Category"))
+    st = _s(row.get("Status"))
+    stock_raw = row.get("Stock Level")
+    price_raw = row.get("Price")
+    try:
+        stock = int(float(stock_raw)) if not pd.isna(stock_raw) else 0
+    except (TypeError, ValueError):
+        stock = 0
+    try:
+        price = float(price_raw) if not pd.isna(price_raw) else 0.0
+    except (TypeError, ValueError):
+        price = 0.0
+    price_r = round(price + 1e-12, 2)
+    return (name.lower(), t.lower(), cat.lower(), st.lower(), stock, price_r)
+
+
+def _product_signature_from_stored(p: dict) -> tuple:
+    """Same tuple as _product_row_signature_from_excel for products in product.json."""
+    try:
+        stock = int(float(p.get("stock_level", 0) or 0))
+    except (TypeError, ValueError):
+        stock = 0
+    try:
+        price = float(p.get("price", 0) or 0)
+    except (TypeError, ValueError):
+        price = 0.0
+    price_r = round(price + 1e-12, 2)
+    return (
+        str(p.get("product_name") or "").strip().lower(),
+        str(p.get("type") or "").strip().lower(),
+        str(p.get("category") or "").strip().lower(),
+        str(p.get("status") or "").strip().lower(),
+        stock,
+        price_r,
+    )
+
+
 @app.route("/upload", methods=["POST"])
 def upload_file():
     file = request.files.get("file")
@@ -3642,12 +4672,13 @@ def upload_file():
     # Load existing products to check against database
     existing_products = load_products()
     existing_product_ids = {str(p.get("product_id", "")) for p in existing_products if p.get("product_id")}
+    existing_signatures = {_product_signature_from_stored(p) for p in existing_products}
     
     # Track Product IDs for uniqueness validation within uploaded file
     seen_product_ids = {}  # key: Product ID (as string), value: first row number
     
     # Track seen row combinations for duplicate detection (excluding Product ID)
-    seen_rows = {}  # key: tuple of (Product Name, Type, Category, Status, Stock Level, Price), value: first row number
+    seen_rows = {}  # signature -> first Excel row number
 
     # Helper to check blank (NaN or empty/whitespace)
     def is_blank(val):
@@ -3775,25 +4806,20 @@ def upload_file():
             except Exception:
                 errors.append("Price must be a valid number")
 
-        # --- Duplicate Row Check (based on Product Name, Type, Category, Status, Stock Level, Price) ---
-        # Create a signature from the 6 fields (excluding Product ID) for duplicate detection
-        row_signature = (
-            normalize_value(row.get("Product Name")),
-            normalize_value(row.get("Type")),
-            normalize_value(row.get("Category")),
-            normalize_value(row.get("Status")),
-            normalize_value(row.get("Stock Level")),
-            normalize_value(row.get("Price"))
-        )
-        
-        # Check if this row combination (excluding Product ID) was seen before
-        if row_signature in seen_rows:
-            first_row = seen_rows[row_signature]
-            errors.append(f"Duplicate row: This combination of Product Name, Type, Category, Status, Stock Level, and Price is identical to row {first_row}")
+        # --- Duplicate Row Check (same 6-field signature as save_product; normalized numbers) ---
+        sig = _product_row_signature_from_excel(row)
+        if sig in seen_rows:
+            first_row = seen_rows[sig]
+            errors.append(
+                f"Duplicate row: This combination of Product Name, Type, Category, Status, Stock Level, and Price is identical to row {first_row}"
+            )
+        elif sig in existing_signatures:
+            errors.append(
+                "Duplicate product: this combination already exists in the system (same Name, Type, Category, Status, Stock Level, and Price)."
+            )
         else:
-            # Only track non-empty rows (at least one field filled)
-            if any(row_signature):  # If at least one field is not empty
-                seen_rows[row_signature] = index + 2  # Store the row number (Excel row, +2 for header)
+            if any(sig[:4]) or sig[4] != 0 or sig[5] != 0.0:
+                seen_rows[sig] = index + 2
 
         if errors:
             invalid_rows += 1
@@ -3842,6 +4868,9 @@ def import_products_validated():
     
     # Get existing product IDs to determine next sequence number
     existing_ids = {str(p.get("product_id", "")).strip() for p in products if p.get("product_id")}
+    existing_sigs = {_product_signature_from_stored(p) for p in products}
+    batch_sigs = set()
+    skipped_duplicates = 0
     
     # Find the maximum numeric value from existing product IDs
     max_num = 0
@@ -3870,6 +4899,12 @@ def import_products_validated():
 
         if errors:
             # Skip invalid rows, we only import validated rows
+            continue
+
+        # Skip duplicate rows (same 6-field signature as /upload and save_product)
+        sig = _product_row_signature_from_excel(row)
+        if sig in batch_sigs or sig in existing_sigs:
+            skipped_duplicates += 1
             continue
 
         # Basic extraction of remaining fields
@@ -3959,10 +4994,22 @@ def import_products_validated():
 
         products.append(item)
         added += 1
+        batch_sigs.add(sig)
+        existing_sigs.add(sig)
 
     save_products(products)
 
-    return jsonify({"success": True, "added": added, "message": f"Successfully imported {added} product(s)"})
+    msg = f"Successfully imported {added} product(s)"
+    if skipped_duplicates:
+        msg += f" ({skipped_duplicates} duplicate row(s) skipped)"
+    return jsonify(
+        {
+            "success": True,
+            "added": added,
+            "skipped_duplicates": skipped_duplicates,
+            "message": msg,
+        }
+    )
 
   
 @app.route("/save-product", methods=["POST"])
@@ -4093,32 +5140,33 @@ def customer():
         if wants_json():
             return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
         return redirect(url_for("login", message="session_expired"))
-    
-    users = load_users()
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = u.get("role") or "User"
-            break
-    
+
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
+
     if wants_json():
-        customers_list = load_customer()
-        return jsonify({
-            "success": True,
-            "customers": customers_list,
-            "total": len(customers_list),
-            "current_user": {"email": user_email, "name": user_name, "role": user_role}
-        }), 200
-    
+        #============================from here  
+        # customers_list = load_customer()
+        customers_list = get_customers_from_db()
+        #====================replace above
+        return jsonify(
+            {
+                "success": True,
+                "customers": customers_list,
+                "total": len(customers_list),
+                "current_user": {"email": user_email, "name": user_name, "role": user_role},
+                "permissions": get_effective_permissions_for_session(),
+            }
+        ), 200
+
     return render_template(
         "customer.html",
         page="customer",
         section="masters",
         user_email=user_email,
         user_name=user_name,
-        user_role=user_role
+        user_role=user_role,
     )
 
 
@@ -4154,22 +5202,111 @@ def import_customer():
         user_name=user_name,
     )
 
-def load_customer():
-    if not os.path.exists(CUSTOMER_FILE):
-        return []
+# def load_customer():
+#     if not os.path.exists(CUSTOMER_FILE):
+#         return []
+#     try:
+#         with open(CUSTOMER_FILE, "r", encoding="utf-8") as f:
+#             data = json.load(f)
+#             return data if isinstance(data, list) else []
+#     except Exception as e:
+#         print(f"Error loading customer data: {e}")
+#         return []
+
+
+# def save_customer(customer):
+#     """Save customer data to JSON file."""
+#     with open(CUSTOMER_FILE, "w", encoding="utf-8") as f:
+#         json.dump(customer, f, indent=2, ensure_ascii=False)
+
+
+# Excel template + CSV import: canonical labels (case-insensitive match)
+_CUSTOMER_TYPE_ALLOWED = (
+    "Retail",
+    "Wholesale",
+    "Corporate",
+    "Online",
+    "Distributor",
+    "Individual",
+    "Business",
+    "Organization",
+)
+_CUSTOMER_TYPE_BY_LOWER = {t.lower(): t for t in _CUSTOMER_TYPE_ALLOWED}
+
+
+def normalize_customer_type(value):
+    """Return canonical customer type, or None if empty/invalid. Accepts any casing (e.g. DISTRIBUTOR -> Distributor)."""
+    if value is None:
+        return None
     try:
-        with open(CUSTOMER_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
-    except Exception as e:
-        print(f"Error loading customer data: {e}")
-        return []
+        if pd.isna(value):
+            return None
+    except (TypeError, ValueError):
+        pass
+    s = str(value).strip()
+    if not s:
+        return None
+    return _CUSTOMER_TYPE_BY_LOWER.get(s.lower())
 
 
-def save_customer(customer):
-    """Save customer data to JSON file."""
-    with open(CUSTOMER_FILE, "w", encoding="utf-8") as f:
-        json.dump(customer, f, indent=2, ensure_ascii=False)
+def _customer_row_signature_from_excel(row) -> tuple:
+    """
+    Canonical 7-tuple for customer duplicate detection (same logical row as upload duplicate check).
+    Excludes Customer ID. Credit limit normalized like product price (Excel 100 vs 100.0).
+    """
+    def _s(v):
+        if v is None:
+            return ""
+        try:
+            if pd.isna(v):
+                return ""
+        except (TypeError, ValueError):
+            pass
+        return str(v).strip()
+
+    name = _s(row.get("Name")).lower()
+    company = _s(row.get("Company")).lower()
+    ct_raw = row.get("Customer Type")
+    if _s(ct_raw) == "":
+        ctype_key = ""
+    else:
+        cn = normalize_customer_type(ct_raw)
+        ctype_key = (cn or _s(ct_raw)).lower()
+
+    email = _s(row.get("Email")).lower()
+    status = _s(row.get("Status")).lower()
+    cr = row.get("Credit Limit")
+    try:
+        credit = float(cr) if not pd.isna(cr) else 0.0
+    except (TypeError, ValueError):
+        credit = 0.0
+    credit_r = round(credit + 1e-12, 2)
+    city = _s(row.get("City")).lower()
+    return (name, company, ctype_key, email, status, credit_r, city)
+
+
+def _customer_signature_from_stored(c: dict) -> tuple:
+    """Same tuple as _customer_row_signature_from_excel for rows in customer.json."""
+    cr_raw = c.get("credit_limit", "")
+    try:
+        credit = float(str(cr_raw).replace(",", "").strip() or 0)
+    except (TypeError, ValueError):
+        credit = 0.0
+    credit_r = round(credit + 1e-12, 2)
+    ct = normalize_customer_type(c.get("customer_type") or c.get("company_type"))
+    if ct is None:
+        ctype_key = str(c.get("customer_type") or c.get("company_type") or "").strip().lower()
+    else:
+        ctype_key = ct.lower()
+    return (
+        str(c.get("name") or "").strip().lower(),
+        str(c.get("company") or "").strip().lower(),
+        ctype_key,
+        str(c.get("email") or "").strip().lower(),
+        str(c.get("status") or "").strip().lower(),
+        credit_r,
+        str(c.get("city") or "").strip().lower(),
+    )
 
 
 @app.route("/import-customers-validated", methods=["POST"])
@@ -4205,8 +5342,10 @@ def import_customers_validated():
     for col in required_columns:
         if col not in df.columns:
             return jsonify(success=False, message=f"Missing column: {col}"), 400
-
-    customers = load_customer()  # your existing function
+#============================================from here
+    # customers = load_customer()
+    customers = get_customers_from_db()
+    #============================================upto here replace
     # Normalize Customer IDs for comparison (lowercase for case-insensitive matching)
     existing_ids = {str(c.get("customer_id", "")).strip().lower() for c in customers if c.get("customer_id")}
 
@@ -4215,6 +5354,9 @@ def import_customers_validated():
         for c in customers
         if str(c.get("email", "")).strip() != ""
     }
+    existing_sigs = {_customer_signature_from_stored(c) for c in customers}
+    batch_sigs = set()
+    skipped_duplicates = 0
 
     added = 0
     updated = 0
@@ -4304,7 +5446,8 @@ def import_customers_validated():
             # Extract fields first
             name = str(row.get("Name", "")).strip()
             company = str(row.get("Company", "")).strip()
-            ctype = str(row.get("Customer Type", "")).strip()
+            ctype_raw = row.get("Customer Type")
+            ctype = ""
             email = str(row.get("Email", "")).strip().lower()
             status = str(row.get("Status", "")).strip()
             # Keep raw value for correct NaN/blank detection (must match /upload-customer logic)
@@ -4337,13 +5480,17 @@ def import_customers_validated():
                 elif not re.fullmatch(r"^[A-Za-z0-9 &.,'()\/-]+$", company):
                     validation_errors.append("Company contains invalid characters")
             
-            # Customer Type validation (mandatory)
-            if is_blank(ctype):
+            # Customer Type validation (mandatory; case-insensitive vs Excel/CSV)
+            if is_blank(ctype_raw):
                 validation_errors.append("Customer Type is required")
             else:
-                allowed_types = ["Retail", "Wholesale", "Corporate", "Online", "distributor", "Individual", "Business", "Organization"]
-                if ctype not in allowed_types:
-                    validation_errors.append(f"Customer Type must be one of: {', '.join(allowed_types)}")
+                ctype_canon = normalize_customer_type(ctype_raw)
+                if ctype_canon is None:
+                    validation_errors.append(
+                        f"Customer Type must be one of: {', '.join(_CUSTOMER_TYPE_ALLOWED)}"
+                    )
+                else:
+                    ctype = ctype_canon
             
             # Email validation (mandatory, valid format, unique)
             if is_blank(email):
@@ -4468,6 +5615,27 @@ def import_customers_validated():
                 skipped += 1
                 errors.append(f"Row {row_no}: Customer ID validation failed")
                 continue
+
+            sig = _customer_row_signature_from_excel(row)
+            if sig in batch_sigs:
+                skipped += 1
+                skipped_duplicates += 1
+                continue
+            if is_existing_id:
+                c_match = next(
+                    (c for c in customers if str(c.get("customer_id", "")).strip().lower() == customer_id_lower),
+                    None,
+                )
+                my_sig = _customer_signature_from_stored(c_match) if c_match else None
+                if sig in existing_sigs and my_sig is not None and sig != my_sig:
+                    skipped += 1
+                    skipped_duplicates += 1
+                    continue
+            else:
+                if sig in existing_sigs:
+                    skipped += 1
+                    skipped_duplicates += 1
+                    continue
             
             # Update existing_ids to track IDs in this batch (for duplicate prevention)
             if customer_id_lower not in existing_ids:
@@ -4475,6 +5643,13 @@ def import_customers_validated():
 
             # ---- Update if duplicate ID exists in original database ----
             if is_existing_id:
+                c_match = next(
+                    (c for c in customers if str(c.get("customer_id", "")).strip().lower() == customer_id_lower),
+                    None,
+                )
+                old_sig = _customer_signature_from_stored(c_match) if c_match else None
+                if old_sig is not None:
+                    existing_sigs.discard(old_sig)
                 for c in customers:
                     if str(c.get("customer_id", "")).strip().lower() == customer_id_lower:
                         c["name"] = name
@@ -4486,24 +5661,10 @@ def import_customers_validated():
                         c["credit_limit"] = credit_raw
                         c["city"] = city
                         break
+                existing_sigs.add(sig)
+                batch_sigs.add(sig)
                 updated += 1
                 continue
-
-            # # ✅ Duplicate row check (inside same file)
-            # row_key = (
-            #     str(customer_id).strip().lower(),
-            #     str(name).strip().lower(),
-            #     str(company).strip().lower(),
-            #     str(email).strip().lower()
-            # )
-
-            # if row_key in seen_rows:
-            #     skipped += 1
-            #     errors.append(f"Row {row_no}: Duplicate row found in file (same as row {seen_rows[row_key]})")
-            #     continue
-            # else:
-            #     seen_rows[row_key] = row_no
-
 
             # ---- Add new customer ----
             customers.append({
@@ -4521,19 +5682,22 @@ def import_customers_validated():
             existing_ids.add(customer_id_lower)
             email_key = email.strip().lower()
             existing_emails.add(email_key)
+            existing_sigs.add(sig)
+            batch_sigs.add(sig)
             added += 1
 
         except Exception as e:
             errors.append(f"Row {row_no}: {e}")
 
-    save_customer(customers)
+    # save_customer(customers)
 
     return jsonify(
         success=True,
         added=added,
         updated=updated,
         skipped=skipped,
-        error_details=errors
+        skipped_duplicates=skipped_duplicates,
+        error_details=errors,
     )
 
 # =========================================
@@ -4546,7 +5710,10 @@ def api_customer():
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
     try:
-        customers = load_customer()
+        #==================================from here
+        # customers = load_customer()
+        customers = get_customers_from_db()
+        #======================================upto replace
         
         # Ensure we return an array, even if empty
         if not isinstance(customers, list):
@@ -4660,7 +5827,10 @@ def api_get_customer(customer_id):
     Returns a single customer by ID (same pattern as /api/products/<product_id>)
     """
     try:
-        customers = load_customer()
+        #===================================from here
+        # customers = load_customer()
+        customers = get_customers_from_db()
+        #=======================================upto here replace
         customer = next((c for c in customers if str(c.get("customer_id")) == str(customer_id)), None)
         
         if not customer:
@@ -4707,36 +5877,79 @@ def api_update_customer(customer_id):
         return jsonify({"success": False, "message": "Customer name is required"}), 400
 
     try:
-        customers = load_customer()
-        if not isinstance(customers, list):
-            customers = []
+        # customers = load_customer()
+        # if not isinstance(customers, list):
+        #     customers = []
 
-        email = (data.get("email") or data.get("Email") or "").strip().lower()
+        # email = (data.get("email") or data.get("Email") or "").strip().lower()
 
-        for cust in customers:
-            if str(cust.get("customer_id")) != str(customer_id) and (cust.get("email") or "").strip().lower() == email and email:
-                return jsonify({"success": False, "message": "Duplicate email already exists."}), 409
+        # for cust in customers:
+        #     if str(cust.get("customer_id")) != str(customer_id) and (cust.get("email") or "").strip().lower() == email and email:
+        #         return jsonify({"success": False, "message": "Duplicate email already exists."}), 409
 
-        found = False
-        for cust in customers:
-            if str(cust.get("customer_id")) == str(customer_id):
-                cust["name"] = (data.get("name") or data.get("Name") or cust.get("name", "")).strip()
-                cust["company"] = (data.get("company") or data.get("Company") or cust.get("company", "")).strip()
-                cust["customer_type"] = (data.get("customer_type") or data.get("Customer Type") or cust.get("customer_type", "")).strip()
-                cust["company_type"] = cust["customer_type"]
-                cust["email"] = (data.get("email") or data.get("Email") or cust.get("email", "")).strip().lower()
-                cust["credit_limit"] = str(data.get("credit_limit") or data.get("Credit Limit") or cust.get("credit_limit", "")).strip()
-                cust["status"] = (data.get("status") or data.get("Status") or cust.get("status", "")).strip()
-                cust["city"] = (data.get("city") or data.get("City") or cust.get("city", "")).strip()
-                found = True
-                break
+        # found = False
+        # for cust in customers:
+        #     if str(cust.get("customer_id")) == str(customer_id):
+        #         cust["name"] = (data.get("name") or data.get("Name") or cust.get("name", "")).strip()
+        #         cust["company"] = (data.get("company") or data.get("Company") or cust.get("company", "")).strip()
+        #         cust["customer_type"] = (data.get("customer_type") or data.get("Customer Type") or cust.get("customer_type", "")).strip()
+        #         cust["company_type"] = cust["customer_type"]
+        #         cust["email"] = (data.get("email") or data.get("Email") or cust.get("email", "")).strip().lower()
+        #         cust["credit_limit"] = str(data.get("credit_limit") or data.get("Credit Limit") or cust.get("credit_limit", "")).strip()
+        #         cust["status"] = (data.get("status") or data.get("Status") or cust.get("status", "")).strip()
+        #         cust["city"] = (data.get("city") or data.get("City") or cust.get("city", "")).strip()
+        #         found = True
+        #         break
 
-        if not found:
+        # if not found:
+        #     return jsonify({"success": False, "message": "Customer not found"}), 404
+
+        # save_customer(customers)
+        # updated = next((c for c in customers if str(c.get("customer_id")) == str(customer_id)), None)
+        # return jsonify({"success": True, "message": "Customer updated", "customer": updated}), 200
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        # Check customer exists
+        cur.execute("SELECT customer_id FROM customers WHERE customer_id = %s", (customer_id,))
+        if not cur.fetchone():
+            cur.close()
+            conn.close()
             return jsonify({"success": False, "message": "Customer not found"}), 404
 
-        save_customer(customers)
-        updated = next((c for c in customers if str(c.get("customer_id")) == str(customer_id)), None)
-        return jsonify({"success": True, "message": "Customer updated", "customer": updated}), 200
+        # Update customer
+        cur.execute("""
+            UPDATE customers
+            SET name=%s,
+                company=%s,
+                customer_type=%s,
+                company_type=%s,
+                email=%s,
+                credit_limit=%s,
+                status=%s,
+                city=%s
+            WHERE customer_id=%s
+        """, (
+            (data.get("name") or "").strip(),
+            (data.get("company") or "").strip(),
+            (data.get("customer_type") or "").strip(),
+            (data.get("customer_type") or "").strip(),  # same as company_type
+            (data.get("email") or "").strip().lower(),
+            float(data.get("credit_limit") or 0),
+            (data.get("status") or "").strip(),
+            (data.get("city") or "").strip(),
+            customer_id
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+
+        return jsonify({
+            "success": True,
+            "message": "Customer updated successfully"
+        }), 200
+    #======================================upto here=============================
     except Exception as e:
         print(f"Error in api_update_customer: {e}")
         import traceback
@@ -4754,15 +5967,36 @@ def api_delete_customer(customer_id):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    customers = load_customer()
-    new_list = [c for c in customers if str(c.get("customer_id")) != str(customer_id)]
+    # customers = load_customer()
+    # new_list = [c for c in customers if str(c.get("customer_id")) != str(customer_id)]
 
-    if len(new_list) == len(customers):
+    # if len(new_list) == len(customers):
+    #     return jsonify({"success": False, "message": "Customer not found"}), 404
+
+    # save_customer(new_list)
+    # return jsonify({"success": True, "message": "Customer deleted successfully"}), 200
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # Check exists
+    cur.execute("SELECT customer_id FROM customers WHERE customer_id = %s", (customer_id,))
+    if not cur.fetchone():
+        cur.close()
+        conn.close()
         return jsonify({"success": False, "message": "Customer not found"}), 404
 
-    save_customer(new_list)
-    return jsonify({"success": True, "message": "Customer deleted successfully"}), 200
+    # Delete
+    cur.execute("DELETE FROM customers WHERE customer_id = %s", (customer_id,))
 
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({
+        "success": True,
+        "message": "Customer deleted successfully"
+    }), 200
+##############################################upto here
 
 @app.route("/update-customer/<customer_id>", methods=["POST"])
 def update_customer(customer_id):
@@ -4771,7 +6005,10 @@ def update_customer(customer_id):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    customer = load_customer()
+    #======================from here
+    # customer = load_customer()
+    customers = get_customers_from_db()
+    #============================upto replace
     data = request.get_json(silent=True) or {}
 
     name = (data.get("name") or "").strip()
@@ -4815,25 +6052,32 @@ def update_customer(customer_id):
     if not found:
         return jsonify({"success": False, "message": "Customer not found"}), 404
 
-    save_customer(customer)
+    # save_customer(customer)
     return jsonify({"success": True, "message": "Customer updated"}), 200
 
-
+#==============================================from here
 # =========================================
 # ✅ DELETE CUSTOMER (POST)
 # =========================================
 @app.route("/delete-customer/<cust_id>", methods=["POST"])
 def delete_customer(cust_id):
-    customer = load_customer()
-    # 🔽 safer: compare as string
-    new_list = [c for c in customer if str(c.get("customer_id")) != str(cust_id)]
+   conn = get_db_connection()
+   cur = conn.cursor()
 
-    if len(new_list) == len(customer):
-        return jsonify({"ok": False, "message": "Customer not found"}), 404
+   cur.execute("SELECT customer_id FROM customers WHERE customer_id=%s", (cust_id,))
+   if not cur.fetchone():
+       cur.close()
+       conn.close()
+       return jsonify({"ok": False, "message": "Customer not found"}), 404
 
-    save_customer(new_list)
-    return jsonify({"ok": True, "message": "Customer deleted"})
+   cur.execute("DELETE FROM customers WHERE customer_id=%s", (cust_id,))
 
+   conn.commit()
+   cur.close()
+   conn.close()
+
+   return jsonify({"ok": True, "message": "Customer deleted"})
+#==============================================upto here fully replace
 
 # =========================================
 # 6. MASTERS — Customer — Add New Customer
@@ -4861,16 +6105,13 @@ def addnew_customer():
     )
 
 
-NEW_CUSTOMER = os.path.join(app.root_path, "New_Customer.json")
-
-
 # =========================================
 # ✅ API — Get All Customers (Add New Customer)
 # =========================================
 @app.route("/api/customers", methods=["GET"])
 def get_customers():
     # Load customers from customer.json (same file used for Customer Master)
-    customers = load_customer()
+    customers = get_customers_from_db()
     return jsonify(customers)
 
 
@@ -4887,9 +6128,10 @@ def create_customer():
     gst_id = (data.get("gstNumber") or "").strip().upper()
 
     try:
+        ######################################################from here cust########################
         # Load existing customers from customer.json
-        customers = load_customer()
-
+        customers = get_customers_from_db()
+######################################################upto here cust########################
         # DUPLICATE GST CHECK
         if gst_id:
             for c in customers:
@@ -4934,17 +6176,46 @@ def create_customer():
             "creditTerm": (data.get("creditTerm") if data.get("creditTerm") != "custom" else data.get("creditTermCustom")) or "",
             "availableLimit": str(data.get("availableLimit") or "0")
         }
-
+######################################################from here cust########################
         # ✅ SAVE CUSTOMER to customer.json
-        customers.append(customer_data)
-        save_customer(customers)
+        conn = get_db_connection()
+        cur = conn.cursor()
+
+        cur.execute("""
+            INSERT INTO customers (
+                customer_id, name, company, customer_type,
+                status, email, credit_limit, city,
+                sales_rep, company_type
+            )
+            VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            customer_id,
+            customer_data["name"],
+            customer_data["company"],
+            customer_data["customer_type"],
+            customer_data["status"],
+            customer_data["email"],
+            float(customer_data["credit_limit"] or 0),
+            customer_data["city"],
+            customer_data["sales_rep"],
+            customer_data["company_type"]
+        ))
+
+        conn.commit()
+        cur.close()
+        conn.close()
+        
 
         return jsonify({
             "message": "Customer saved successfully",
             "customerId": customer_id
         }), 201
+    
+    #############################upto this cust################################3
 
     except Exception as e:
+        import traceback
+        traceback.print_exc()
         print(f"Error saving customer: {e}")
         return jsonify({"error": str(e)}), 500
 
@@ -4953,49 +6224,48 @@ def create_customer():
 # ✅ ID GENERATION
 # =========================================
 def generate_customer_id():
-    prefix = "CUST-"
-    last_id = 0
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if os.path.exists(NEW_CUSTOMER):
-        with open(NEW_CUSTOMER, 'r', encoding='utf-8') as f:
-            try:
-                customers = json.load(f)
-                ids = []
-                for c in customers:
-                    cust_id = c.get('customerId', '')
-                    parts = cust_id.split('-')
-                    if len(parts) == 2 and parts[1].isdigit():
-                        ids.append(int(parts[1]))
-                if ids:
-                    last_id = max(ids)
-            except json.JSONDecodeError:
-                print("JSON file empty or corrupt, resetting IDs")
-                pass
+    cur.execute("SELECT customer_id FROM customers ORDER BY id DESC LIMIT 1")
+    row = cur.fetchone()
 
-    return f"{prefix}{str(last_id + 1).zfill(4)}"
+    cur.close()
+    conn.close()
+
+    if row and row[0]:
+        try:
+            num = int(row[0].replace("C", ""))
+            return f"C{str(num + 1).zfill(3)}"   # ✅ zero padding
+        except:
+            return "C001"
+    else:
+        return "C001"
 
 
-# =========================================
+# =========================================from here to full code replace with this
 # ✅ ID GENERATION FOR CUSTOMER MASTER (C101, C102, etc.)
 # =========================================
 def generate_customer_id_for_master():
-    prefix = "C"
-    last_id = 0
+    customers = get_customers_from_db()
 
-    customers = load_customer()
-    if customers:
-        ids = []
-        for c in customers:
-            cust_id = c.get('customer_id', '')
-            # Extract number from C101, C102, etc.
-            if cust_id.startswith('C') and len(cust_id) > 1:
-                num_str = cust_id[1:]
-                if num_str.isdigit():
-                    ids.append(int(num_str))
-        if ids:
-            last_id = max(ids)
+    ids = []
+    for c in customers:
+        cust_id = c.get("customer_id")   # ✅ DEFINE HERE
 
-    return f"{prefix}{last_id + 1:03d}"
+        if cust_id and str(cust_id).startswith('C'):
+            try:
+                num = int(str(cust_id).replace("C", ""))
+                ids.append(num)
+            except:
+                pass
+
+    if ids:
+        new_id = max(ids) + 1
+    else:
+        new_id = 1
+
+    return f"C{str(new_id).zfill(3)}"
 
 
 @app.route('/api/customers/new-id', methods=['GET'])
@@ -5037,7 +6307,12 @@ def upload_customer_file():
     skipped_row_numbers = []  # Track which rows were skipped (completely blank)
     
     # Load existing customers to check against database
-    existing_customers = load_customer()
+    #================================from here
+    # existing_customers = load_customer()
+    existing_customers = get_customers_from_db()
+    #==============upto replace
+
+
     # Normalize Customer IDs for comparison (same pattern as product import)
     existing_customer_ids = {str(c.get("customer_id", "")).strip().lower() for c in existing_customers if c.get("customer_id")}
     
@@ -5053,9 +6328,10 @@ def upload_customer_file():
         for c in existing_customers
         if str(c.get("email", "")).strip() != ""
     }
+    existing_customer_signatures = {_customer_signature_from_stored(c) for c in existing_customers}
     
     # Track seen row combinations for duplicate detection (excluding Customer ID)
-    seen_rows = {}  # key: tuple of (Name, Company, Customer Type, Email, Status, Credit Limit, City), value: first row number
+    seen_rows = {}  # signature -> first Excel row number
 
     # Helper to check blank (NaN or empty/whitespace)
     def is_blank(val):
@@ -5238,15 +6514,16 @@ def upload_customer_file():
             if not re.fullmatch(r"^[A-Za-z0-9 &.,'()\/-]+$", company):
                 errors.append("Company contains invalid characters")
 
-        # ---------------- Customer Type (mandatory) ----------------
+        # ---------------- Customer Type (mandatory; case-insensitive vs Excel/CSV) ----------------
         customer_type_raw = row.get("Customer Type")
         if is_blank(customer_type_raw):
             errors.append("Customer Type is required")
         else:
-            customer_type = str(customer_type_raw).strip()
-            allowed_types = ["Retail", "Wholesale", "Corporate", "Online", "distributor", "Individual", "Business", "Organization"]
-            if customer_type not in allowed_types:
-                errors.append(f"Customer Type must be one of: {', '.join(allowed_types)}")
+            customer_type_canon = normalize_customer_type(customer_type_raw)
+            if customer_type_canon is None:
+                errors.append(
+                    f"Customer Type must be one of: {', '.join(_CUSTOMER_TYPE_ALLOWED)}"
+                )
 
         # ---------------- Email (mandatory, valid format, must be unique) ----------------
         email_raw = row.get("Email")
@@ -5318,27 +6595,20 @@ def upload_customer_file():
             elif len(city) > 40:
                 errors.append("City must not exceed 40 characters")
 
-        # --- Duplicate Row Check (based on Name, Company, Customer Type, Email, Status, Credit Limit, City) ---
-        # Create a signature from the 7 fields (excluding Customer ID) for duplicate detection
-        # Same pattern as product import: use normalize_value() without lowercase (except Email which should be case-insensitive)
-        row_signature = (
-            normalize_value(row.get("Name")),
-            normalize_value(row.get("Company")),
-            normalize_value(row.get("Customer Type")),
-            normalize_value(row.get("Email")).lower(),  # Email should be case-insensitive
-            normalize_value(row.get("Status")),
-            normalize_value(row.get("Credit Limit")),
-            normalize_value(row.get("City"))
-        )
-        
-        # Check if this row combination (excluding Customer ID) was seen before
-        if row_signature in seen_rows:
-            first_row = seen_rows[row_signature]
-            errors.append(f"Duplicate row: This combination of Name, Company, Customer Type, Email, Status, Credit Limit, and City is identical to row {first_row}")
+        # --- Duplicate row / duplicate-in-system (normalized signature; credit limit like product price) ---
+        sig = _customer_row_signature_from_excel(row)
+        if sig in seen_rows:
+            first_row = seen_rows[sig]
+            errors.append(
+                f"Duplicate row: This combination of Name, Company, Customer Type, Email, Status, Credit Limit, and City is identical to row {first_row}"
+            )
+        elif sig in existing_customer_signatures:
+            errors.append(
+                "Duplicate customer: this combination already exists in the system (same Name, Company, Type, Email, Status, Credit Limit, and City)."
+            )
         else:
-            # Only track non-empty rows (at least one field filled)
-            if any(row_signature):  # If at least one field is not empty
-                seen_rows[row_signature] = row_no  # Store the row number (Excel row, +2 for header)
+            if sig != ("", "", "", "", "", 0.0, ""):
+                seen_rows[sig] = row_no
 
         if errors:
             invalid_rows += 1
@@ -5599,35 +6869,87 @@ def login_post():
             return jsonify({"success": False, "message": "Password is required"}), 400
 
         # Load users and failed attempts with error handling
+        
+        # ✅ DB LOGIN
         try:
-            users = load_users()
-            failed_attempts = load_failed_attempts()
-        except Exception as e:  # pragma: no cover - defensive
-            print(f"❌ Error loading users/failed attempts: {e}")
-            return (
-                jsonify(
-                    {
-                        "success": False,
-                        "message": "Server error. Please try again later.",
-                    }
-                ),
-                500,
-            )
+            conn = get_db_connection()
+            cursor = conn.cursor()
 
-        # Find user
-        user = next(
-            (
-                u
-                for u in users
-                if (u.get("email") or "").strip().lower() == email
-            ),
-            None,
-        )
-        if not user:
-            return (
-                jsonify({"success": False, "message": "User not found"}),
-                404,
-            )
+            db_user = None
+            try:
+                cursor.execute(
+                    """
+                    SELECT name, role, password, branch, department FROM users
+                    WHERE email = %s
+                    LIMIT 1
+                    """,
+                    (email,),
+                )
+                db_user = cursor.fetchone()
+            except Exception:
+                cursor.execute(
+                    """
+                    SELECT name, role, password FROM users
+                    WHERE email = %s
+                    LIMIT 1
+                    """,
+                    (email,),
+                )
+                db_user = cursor.fetchone()
+
+            if not db_user:
+                try:
+                    cursor.execute(
+                        """
+                        SELECT name, role, password, branch, department FROM users
+                        WHERE LOWER(email) = LOWER(%s)
+                        LIMIT 1
+                        """,
+                        (email,),
+                    )
+                    db_user = cursor.fetchone()
+                except Exception:
+                    cursor.execute(
+                        """
+                        SELECT name, role, password FROM users
+                        WHERE LOWER(email) = LOWER(%s)
+                        LIMIT 1
+                        """,
+                        (email,),
+                    )
+                    db_user = cursor.fetchone()
+
+            cursor.close()
+            conn.close()
+
+        except Exception as e:
+            print("❌ DB error:", e)
+            return jsonify({"success": False, "message": "Database error"}), 500
+
+
+        # ❌ User not found
+        if not db_user:
+            return jsonify({"success": False, "message": "User not found"}), 404
+
+        db_name = db_user[0]
+        db_role = db_user[1]
+        db_password = db_user[2]
+        db_branch = db_user[3] if len(db_user) > 3 else ""
+        db_department = db_user[4] if len(db_user) > 4 else ""
+
+        # ❌ Password wrong
+        if db_password != password:
+            return jsonify({"success": False, "message": "Incorrect password"}), 401
+
+        # ✅ Login success (store branch/department for roles.json RBAC matching)
+        session.permanent = bool(remember_me)
+        session["user"] = email
+        session["role"] = db_role
+        session["branch"] = (db_branch or "").strip() or "Main Branch"
+        session["department"] = (db_department or "").strip()
+        session["last_active"] = time.time()
+
+        return jsonify({"success": True, "message": "Login successful"}), 200
 
         # Check if account is locked
         info = failed_attempts.get(email, {})
@@ -6071,7 +7393,7 @@ def api_get_users():
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    users = load_users()
+    users = _db_fetch_users_ordered(include_id=False)
 
     user_name = "User"
     user_role = "User"
@@ -6089,7 +7411,7 @@ def api_get_users():
 
     return jsonify({
         "success": True,
-        "users": users,
+        "users": [user_public_dict(u) for u in users if isinstance(u, dict)],
         "total": len(users),
         "current_user": {
             "email": user_email,
@@ -6107,18 +7429,47 @@ def api_get_user(user_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    users = load_users()
-
-    if user_index < 0 or user_index >= len(users):
+    if user_index < 0:
         return jsonify({"success": False, "message": "User index out of range"}), 404
 
-    user = users[user_index]
-    if not isinstance(user, dict):
-        return jsonify({"success": False, "message": "Invalid user data"}), 400
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            """
+            SELECT name, email, phone, role, first_name, last_name, country_code,
+                   contact_number, branch, department, reporting_to, available_branches, employee_id
+            FROM users
+            ORDER BY id DESC
+            OFFSET %s LIMIT 1
+            """,
+            (user_index,),
+        )
+        row = cur.fetchone()
+        if not row:
+            return jsonify({"success": False, "message": "User index out of range"}), 404
+        user = {
+            "name": row[0],
+            "email": row[1],
+            "phone": row[2],
+            "role": row[3],
+            "first_name": row[4],
+            "last_name": row[5],
+            "country_code": row[6],
+            "contact_number": row[7],
+            "branch": row[8],
+            "department": row[9],
+            "reporting_to": row[10],
+            "available_branches": str(row[11]) if row[11] is not None else "",
+            "employee_id": row[12],
+        }
+    finally:
+        cur.close()
+        conn.close()
 
     return jsonify({
         "success": True,
-        "user": user,
+        "user": user_public_dict(user),
         "index": user_index
     }), 200
 
@@ -6133,12 +7484,8 @@ def api_create_user():
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    users = load_users()
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_role = (u.get("role") or "User").strip()
-            break
+    prof = get_current_user_profile() or {}
+    user_role = prof.get("role") or "User"
 
     if normalize_role(user_role) not in ["superadmin", "admin"]:
         return jsonify({"success": False, "message": "Only Super Admin/Admin can create users."}), 403
@@ -6146,6 +7493,8 @@ def api_create_user():
     data = request.get_json(silent=True)
     if not data:
         return jsonify({"success": False, "message": "JSON body required"}), 400
+
+    users = load_users()
 
     first_name = (data.get("first_name") or "").strip()
     last_name = (data.get("last_name") or "").strip()
@@ -6195,21 +7544,32 @@ def api_create_user():
 
     full_name = (first_name + " " + last_name).strip()
     full_phone = f"{country_code}{contact_number}" if country_code and contact_number else contact_number
+    api_password = (data.get("password") or "").strip() or DEFAULT_BRANCH_USER_PASSWORD
 
     new_user = {
-        "id": str(uuid.uuid4()),
-        "name": full_name, "phone": full_phone, "first_name": first_name, "last_name": last_name,
-        "email": email, "country_code": country_code, "contact_number": contact_number,
-        "branch": branch, "department": department, "role": role,
-        "reporting_to": reporting_to, "available_branches": available_branches, "employee_id": employee_id,
+        "name": full_name,
+        "phone": full_phone,
+        "first_name": first_name,
+        "last_name": last_name,
+        "email": email,
+        "country_code": country_code,
+        "contact_number": contact_number,
+        "branch": branch,
+        "department": department,
+        "role": role,
+        "reporting_to": reporting_to,
+        "available_branches": available_branches,
+        "employee_id": employee_id,
+        "password": api_password,
     }
     users.append(new_user)
     save_users(users)
 
+    safe_user = {k: v for k, v in new_user.items() if k != "password"}
     return jsonify({
         "success": True,
         "message": "User created successfully",
-        "user": new_user
+        "user": safe_user,
     }), 201
 
 
@@ -6223,31 +7583,68 @@ def api_update_user(user_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    users = load_users()
-    current_user = next((u for u in users if isinstance(u, dict) and (u.get("email") or "").strip().lower() == user_email.strip().lower()), None)
-    if not current_user or normalize_role(current_user.get("role")) not in ["superadmin", "admin"]:
-        return jsonify({"success": False, "message": "Only Super Admin/Admin can edit users."}), 403
-
-    if user_index < 0 or user_index >= len(users):
+    if user_index < 0:
         return jsonify({"success": False, "message": "User index out of range"}), 404
 
     data = request.get_json(silent=True) or {}
-    u = users[user_index]
-    if data.get("name") is not None:
-        u["name"] = str(data.get("name", "")).strip()
-    if data.get("email") is not None:
-        u["email"] = str(data.get("email", "")).strip()
-    if data.get("phone") is not None:
-        u["phone"] = str(data.get("phone", "")).strip()
-    if data.get("role") is not None:
-        u["role"] = str(data.get("role", "")).strip() or "User"
-    if data.get("department") is not None:
-        u["department"] = str(data.get("department", "")).strip()
-    if data.get("branch") is not None:
-        u["branch"] = str(data.get("branch", "")).strip()
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT role FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1",
+            ((user_email or "").strip(),),
+        )
+        current = cur.fetchone()
+        if not current or normalize_role(current[0]) not in ["superadmin", "admin"]:
+            return jsonify({"success": False, "message": "Only Super Admin/Admin can edit users."}), 403
 
-    save_users(users)
-    return jsonify({"success": True, "message": "User updated", "user": users[user_index]}), 200
+        cur.execute(
+            """
+            SELECT id, name, email, phone, role, department, branch
+            FROM users
+            ORDER BY id DESC
+            OFFSET %s LIMIT 1
+            """,
+            (user_index,),
+        )
+        base = cur.fetchone()
+        if not base:
+            return jsonify({"success": False, "message": "User index out of range"}), 404
+
+        user_id = base[0]
+        new_name = str(data.get("name", base[1] or "")).strip()
+        new_email = str(data.get("email", base[2] or "")).strip()
+        new_phone = str(data.get("phone", base[3] or "")).strip()
+        new_role = str(data.get("role", base[4] or "User")).strip() or "User"
+        new_department = str(data.get("department", base[5] or "")).strip()
+        new_branch = str(data.get("branch", base[6] or "")).strip()
+
+        cur.execute(
+            """
+            UPDATE users
+            SET name=%s, email=%s, phone=%s, role=%s, department=%s, branch=%s
+            WHERE id=%s
+            """,
+            (new_name, new_email, new_phone, new_role, new_department, new_branch, user_id),
+        )
+        conn.commit()
+
+        refreshed = {
+            "name": new_name,
+            "email": new_email,
+            "phone": new_phone,
+            "role": new_role,
+            "department": new_department,
+            "branch": new_branch,
+        }
+        return jsonify({
+            "success": True,
+            "message": "User updated",
+            "user": user_public_dict(refreshed),
+        }), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 # =========================================
@@ -6260,21 +7657,39 @@ def api_delete_user(user_index):
     if not user_email:
         return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
-    users = load_users()
-    current_user = next((u for u in users if isinstance(u, dict) and (u.get("email") or "").strip().lower() == user_email.strip().lower()), None)
-    if not current_user or normalize_role(current_user.get("role")) not in ["superadmin", "admin"]:
-        return jsonify({"success": False, "message": "Only Super Admin/Admin can delete users."}), 403
-
-    if user_index < 0 or user_index >= len(users):
+    if user_index < 0:
         return jsonify({"success": False, "message": "User index out of range"}), 404
 
-    deleted_user = users.pop(user_index)
-    save_users(users)
-    return jsonify({
-        "success": True,
-        "message": "User deleted successfully",
-        "deleted_email": deleted_user.get("email", "")
-    }), 200
+    conn = get_db_connection()
+    cur = conn.cursor()
+    try:
+        cur.execute(
+            "SELECT role FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1",
+            ((user_email or "").strip(),),
+        )
+        current = cur.fetchone()
+        if not current or normalize_role(current[0]) not in ["superadmin", "admin"]:
+            return jsonify({"success": False, "message": "Only Super Admin/Admin can delete users."}), 403
+
+        cur.execute(
+            "SELECT id, email FROM users ORDER BY id DESC OFFSET %s LIMIT 1",
+            (user_index,),
+        )
+        target = cur.fetchone()
+        if not target:
+            return jsonify({"success": False, "message": "User index out of range"}), 404
+
+        user_id, deleted_email = target
+        cur.execute("DELETE FROM users WHERE id=%s", (user_id,))
+        conn.commit()
+        return jsonify({
+            "success": True,
+            "message": "User deleted successfully",
+            "deleted_email": deleted_email or "",
+        }), 200
+    finally:
+        cur.close()
+        conn.close()
 
 
 # 3. MASTERS — Manage Users — Delete API
@@ -6285,40 +7700,44 @@ def delete_user(user_id):
         if not user_email:
             return jsonify({"success": False, "message": "Not logged in"}), 401
 
-        users = load_users()
+        conn = get_db_connection()
+        cur = conn.cursor()
+        try:
+            cur.execute(
+                "SELECT role FROM users WHERE LOWER(email)=LOWER(%s) LIMIT 1",
+                ((user_email or "").strip(),),
+            )
+            current = cur.fetchone()
+            if not current:
+                return jsonify({"success": False, "message": "Current user not found"}), 403
+            if normalize_role(current[0]) != "superadmin":
+                return jsonify({
+                    "success": False,
+                    "message": "Only super admins can delete users."
+                }), 403
 
-        current_email = (user_email or "").strip().lower()
-        current_user = None
+            if user_id < 0:
+                return jsonify({"success": False, "message": "Invalid user ID"}), 404
 
-        for u in users:
-            if not isinstance(u, dict):
-                continue
-            u_email = (u.get("email") or "").strip().lower()
-            if u_email == current_email:
-                current_user = u
-                break
+            cur.execute(
+                "SELECT id, email FROM users ORDER BY id DESC OFFSET %s LIMIT 1",
+                (user_id,),
+            )
+            target = cur.fetchone()
+            if not target:
+                return jsonify({"success": False, "message": "Invalid user ID"}), 404
+            db_id, deleted_email = target
 
-        if not current_user:
-            return jsonify({"success": False, "message": "Current user not found"}), 403
-
-        current_role = (current_user.get("role") or "").strip().lower()
-        if current_role != "admin":
+            cur.execute("DELETE FROM users WHERE id=%s", (db_id,))
+            conn.commit()
             return jsonify({
-                "success": False,
-                "message": "Only admins can delete users."
-            }), 403
-
-        if user_id < 0 or user_id >= len(users):
-            return jsonify({"success": False, "message": "Invalid user ID"}), 404
-
-        deleted_user = users.pop(user_id)
-        save_users(users)
-
-        return jsonify({
-            "success": True,
-            "message": "User deleted successfully",
-            "deleted_email": deleted_user.get("email", "")
-        }), 200
+                "success": True,
+                "message": "User deleted successfully",
+                "deleted_email": deleted_email or ""
+            }), 200
+        finally:
+            cur.close()
+            conn.close()
 
     except Exception as e:
         print("❌ Delete user error:", e)
@@ -6333,34 +7752,93 @@ def delete_user(user_id):
 # 7. CRM — Enquiry List
 # =========================================
 
-def generate_enquiry_id():
-    """Generate next enquiry ID based on the file at ENQUIRY_FILE."""
+def _load_enquiry_file():
+    """Load new-enquiry.json as a dict keyed by enquiry_id."""
     if not os.path.exists(ENQUIRY_FILE):
-        return "ENQ0001"
-
+        return {}
     try:
         with open(ENQUIRY_FILE, "r", encoding="utf-8") as f:
             data = json.load(f)
+        return data if isinstance(data, dict) else {}
+    except (json.JSONDecodeError, OSError, TypeError):
+        return {}
 
-        # if file is empty or not list
-        if not data or not isinstance(data, list):
-            return "ENQ0001"
 
-        last_id = data[-1].get("enquiry_id", "ENQ-0000")
-        number = int(last_id.replace("ENQ", ""))
-        return f"ENQ-{number + 1:04d}"
+def _save_enquiry_file(data):
+    """Persist enquiry dict to new-enquiry.json."""
+    if not isinstance(data, dict):
+        data = {}
+    with open(ENQUIRY_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=4, ensure_ascii=False)
 
-    except Exception:
-        return "ENQ0001"
+
+def generate_enquiry_id():
+    """Next ENQ-#### id from existing keys in ENQUIRY_FILE (dict format)."""
+    data = _load_enquiry_file()
+    if not data:
+        return "ENQ-0001"
+    max_n = 0
+    for key in data.keys():
+        if not isinstance(key, str):
+            continue
+        k = key.strip().upper()
+        if not k.startswith("ENQ"):
+            continue
+        try:
+            tail = k.split("-")[-1] if "-" in k else k[3:]
+            tail = tail.lstrip("0") or "0"
+            n = int(tail)
+            max_n = max(max_n, n)
+        except ValueError:
+            continue
+    return f"ENQ-{max_n + 1:04d}"
+
+
+def _normalize_incoming_enquiry_details(details: dict) -> dict:
+    """Accept phone_number from API clients; store as phone."""
+    if not isinstance(details, dict):
+        return {}
+    out = dict(details)
+    if out.get("phone_number") and not out.get("phone"):
+        out["phone"] = str(out.pop("phone_number", "")).strip()
+    elif "phone_number" in out:
+        out.pop("phone_number", None)
+    return out
+
+
+def _enquiry_to_api_dict(enquiry_id: str, enq_data: dict, include_items: bool = True) -> dict:
+    """Single enquiry payload for JSON APIs."""
+    if not isinstance(enq_data, dict):
+        enq_data = {}
+    details = _normalize_incoming_enquiry_details(enq_data.get("enquiry_details") or {})
+    row = {
+        "enquiry_id": enquiry_id,
+        "enquiry_details": details,
+        "first_name": details.get("first_name", ""),
+        "last_name": details.get("last_name", ""),
+        "email": details.get("email", ""),
+        "phone": details.get("phone", ""),
+        "phone_number": details.get("phone", ""),
+        "status": details.get("status", "New"),
+    }
+    if include_items:
+        row["items"] = enq_data.get("items") if isinstance(enq_data.get("items"), dict) else {}
+    return row
 
 
 
 
 def _get_current_user_role():
-    """Get current user's role from session; returns normalized role (superadmin, admin, user)."""
+    """Get current user's role from session / DB profile (not users.json alone)."""
     user_email = session.get("user")
     if not user_email:
         return None
+    sr = session.get("role")
+    if sr:
+        return (str(sr).strip()).replace(" ", "").replace("_", "").lower()
+    prof = get_current_user_profile()
+    if prof and prof.get("role"):
+        return (prof.get("role") or "User").strip().replace(" ", "").replace("_", "").lower()
     users = load_users()
     for u in users:
         if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
@@ -6369,27 +7847,32 @@ def _get_current_user_role():
     return "user"
 
 
+def _get_logged_in_user_name():
+    """Helper to fetch the current logged-in user's display name for profile dropdown."""
+    user_email = session.get("user")
+    if not user_email:
+        return "User"
+
+    prof = get_current_user_profile()
+    if prof and prof.get("name"):
+        return prof.get("name")
+    return "User"
+
+
 @app.route("/enquiry-list")
 def enquiry_list():
     user_email = session.get("user")
     if not user_email:
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
-    user_name = "User"
-    user_role = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            user_role = (u.get("role") or "User").strip()
-            break
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
 
     # Load enquiries from JSON file (new-enquiry.json)
     enquiries = []
-    if os.path.exists(ENQUIRY_FILE):
-        with open(ENQUIRY_FILE, "r", encoding="utf-8") as f:
-            data = json.load(f)
-
+    data = _load_enquiry_file()
+    if data:
         # Convert dict to list
         for enq_id, enq_data in data.items():
             details = enq_data.get("enquiry_details", {})
@@ -6405,16 +7888,19 @@ def enquiry_list():
 
     # JSON API variant for Fetch/XHR (same pattern as manage users)
     if wants_json():
-        return jsonify({
-            "success": True,
-            "data": enquiries,
-            "total": len(enquiries),
-            "current_user": {
-                "email": user_email,
-                "name": user_name,
-                "role": user_role,
-            },
-        }), 200
+        return jsonify(
+            {
+                "success": True,
+                "data": enquiries,
+                "total": len(enquiries),
+                "current_user": {
+                    "email": user_email,
+                    "name": user_name,
+                    "role": user_role,
+                },
+                "permissions": get_effective_permissions_for_session(),
+            }
+        ), 200
 
     return render_template(
         "enquiry-list.html",
@@ -6521,7 +8007,181 @@ def delete_enquiry(enquiry_id):
     return jsonify(success=True, message="Enquiry deleted successfully")
 
 
+# =========================================
+# 7b. CRM — Enquiries REST API (Postman / JSON clients)
+#   GET    /api/enquiries              — list (optional ?search=&status=)
+#   GET    /api/enquiries/<id>         — one enquiry (details + items)
+#   POST   /api/enquiries              — create (optional enquiry_id; auto if omitted)
+#   PUT    /api/enquiries/<id>         — update details (merge) + optional items (merge)
+#   DELETE /api/enquiries/<id>         — delete (Super Admin only)
+# =========================================
+@app.route("/api/enquiries", methods=["GET"])
+def api_enquiries_list():
+    """List all enquiries. Requires login. Use Accept: application/json from Postman."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
 
+    data = _load_enquiry_file()
+    q = (request.args.get("search") or "").strip().lower()
+    status_filter = (request.args.get("status") or "").strip()
+
+    users = load_users()
+    user_name = "User"
+    user_role = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            user_role = (u.get("role") or "User").strip()
+            break
+
+    enquiries = []
+    for enq_id, enq_data in data.items():
+        row = _enquiry_to_api_dict(enq_id, enq_data, include_items=True)
+        st = row.get("status") or "New"
+        if status_filter and st != status_filter:
+            continue
+        if q:
+            blob = " ".join(
+                [
+                    str(enq_id),
+                    row.get("first_name") or "",
+                    row.get("last_name") or "",
+                    row.get("email") or "",
+                    row.get("phone") or "",
+                    st,
+                ]
+            ).lower()
+            if q not in blob:
+                continue
+        enquiries.append(row)
+
+    return jsonify(
+        {
+            "success": True,
+            "enquiries": enquiries,
+            "total": len(enquiries),
+            "current_user": {"email": user_email, "name": user_name, "role": user_role},
+        }
+    ), 200
+
+
+@app.route("/api/enquiries/<enquiry_id>", methods=["GET"])
+def api_enquiries_get_one(enquiry_id):
+    """Get one enquiry by id (full details + items)."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
+
+    data = _load_enquiry_file()
+    enq_data = data.get(enquiry_id)
+    if not enq_data:
+        return jsonify({"success": False, "message": "Enquiry not found"}), 404
+
+    return jsonify({"success": True, "enquiry": _enquiry_to_api_dict(enquiry_id, enq_data, include_items=True)}), 200
+
+
+@app.route("/api/enquiries", methods=["POST"])
+def api_enquiries_create():
+    """Create enquiry. Admin / Super Admin only. Body: { enquiry_details, items?, enquiry_id? }."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
+
+    role = _get_current_user_role()
+    if role not in ("admin", "superadmin"):
+        return jsonify({"success": False, "message": "Only Admin or Super Admin can create enquiries."}), 403
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"success": False, "message": "JSON body required"}), 400
+
+    enquiry_id = (body.get("enquiry_id") or "").strip() or generate_enquiry_id()
+    details = _normalize_incoming_enquiry_details(body.get("enquiry_details") or {})
+    items = body.get("items") if isinstance(body.get("items"), dict) else {}
+
+    data = _load_enquiry_file()
+    if enquiry_id in data:
+        return jsonify({"success": False, "message": "Enquiry ID already exists. Omit enquiry_id to auto-generate."}), 409
+
+    if not details.get("status"):
+        details["status"] = "New"
+
+    data[enquiry_id] = {"enquiry_details": details, "items": items}
+    _save_enquiry_file(data)
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Enquiry created",
+            "enquiry": _enquiry_to_api_dict(enquiry_id, data[enquiry_id], include_items=True),
+        }
+    ), 201
+
+
+@app.route("/api/enquiries/<enquiry_id>", methods=["PUT"])
+def api_enquiries_update(enquiry_id):
+    """Update enquiry: merge enquiry_details; merge items if provided."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
+
+    role = _get_current_user_role()
+    if role not in ("admin", "superadmin"):
+        return jsonify({"success": False, "message": "Only Admin or Super Admin can update enquiries."}), 403
+
+    body = request.get_json(silent=True)
+    if not body:
+        return jsonify({"success": False, "message": "JSON body required"}), 400
+
+    data = _load_enquiry_file()
+    if enquiry_id not in data:
+        return jsonify({"success": False, "message": "Enquiry not found"}), 404
+
+    if "enquiry_details" in body and isinstance(body["enquiry_details"], dict):
+        existing = data[enquiry_id].setdefault("enquiry_details", {})
+        merged = _normalize_incoming_enquiry_details(body["enquiry_details"])
+        for k, v in merged.items():
+            existing[k] = v
+        data[enquiry_id]["enquiry_details"] = existing
+
+    if "items" in body:
+        if not isinstance(body["items"], dict):
+            return jsonify({"success": False, "message": "items must be an object"}), 400
+        old_items = data[enquiry_id].setdefault("items", {})
+        old_items.update(body["items"])
+        data[enquiry_id]["items"] = old_items
+
+    _save_enquiry_file(data)
+
+    return jsonify(
+        {
+            "success": True,
+            "message": "Enquiry updated",
+            "enquiry": _enquiry_to_api_dict(enquiry_id, data[enquiry_id], include_items=True),
+        }
+    ), 200
+
+
+@app.route("/api/enquiries/<enquiry_id>", methods=["DELETE"])
+def api_enquiries_delete(enquiry_id):
+    """Delete enquiry. Super Admin only (same as /delete-enquiry)."""
+    user_email = session.get("user")
+    if not user_email:
+        return jsonify({"success": False, "message": "Session expired. Please login first."}), 401
+
+    role = _get_current_user_role()
+    if role != "superadmin":
+        return jsonify({"success": False, "message": "Only Super Admin can delete enquiries."}), 403
+
+    data = _load_enquiry_file()
+    if enquiry_id not in data:
+        return jsonify({"success": False, "message": "Enquiry not found"}), 404
+
+    del data[enquiry_id]
+    _save_enquiry_file(data)
+
+    return jsonify({"success": True, "message": "Enquiry deleted", "deleted_id": enquiry_id}), 200
 
 
 
@@ -6620,24 +8280,13 @@ def new_enquiry():
 
 
 def load_data():
-    if not os.path.exists(ENQUIRY_FILE):
-        return {}
-    with open(ENQUIRY_FILE, "r") as f:
-        return json.load(f)
+    """Backward-compatible alias for enquiry JSON dict (used by /add-item, /save-enquiry)."""
+    return _load_enquiry_file()
+
 
 def save_data(data):
-    with open(ENQUIRY_FILE, "w") as f:
-        json.dump(data, f, indent=4)
-
-def generate_enquiry_id():
-    data = load_data()
-    if not data:
-        return "ENQ-0001"
-
-    last_id = list(data.keys())[-1]
-    last_num = int(last_id.split("-")[1])
-    return f"ENQ-{last_num + 1:04d}"
-
+    """Backward-compatible save for enquiry JSON dict."""
+    _save_enquiry_file(data)
 
 
 @app.route("/generate-enquiry-id")
@@ -6663,11 +8312,7 @@ def save_enquiry():
     enquiry_details = payload.get("enquiry_details") or {}
     new_items = payload.get("items") or {}
 
-    if os.path.exists(ENQUIRY_FILE):
-        with open(ENQUIRY_FILE, "r") as f:
-            data = json.load(f)
-    else:
-        data = {}
+    data = _load_enquiry_file()
 
     if enquiry_id in data:
         # update details
@@ -6684,8 +8329,7 @@ def save_enquiry():
             "items": new_items
         }
 
-    with open(ENQUIRY_FILE, "w") as f:
-        json.dump(data, f, indent=4)
+    _save_enquiry_file(data)
 
     return jsonify({"success": True})
 
@@ -6938,12 +8582,9 @@ def quotation():
     if not user_email:
        return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
-    user_name = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            break
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
 
     return render_template(
         "quotation.html",
@@ -6952,6 +8593,7 @@ def quotation():
         section="crm",
         user_email=user_email,
         user_name=user_name,
+        user_role=user_role,
     )
 
 # ============ API LIST ============
@@ -7042,12 +8684,17 @@ def add_new_quotation():
     if not user_email:
         return redirect(url_for("login", message="session_expired"))
 
-    users = load_users()
-    user_name = "User"
-    for u in users:
-        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
-            user_name = u.get("name") or "User"
-            break
+    prof = get_current_user_profile() or {}
+    user_name = prof.get("name") or "User"
+    user_role = prof.get("role") or "User"
+
+    # RBAC guard: users without quotation create/edit access cannot open this page.
+    role_norm = normalize_role(user_role)
+    can_by_role = role_norm in ["superadmin", "admin"]
+    q_perm = (get_effective_permissions_for_session() or {}).get("quotation", {})
+    can_by_matrix = bool(q_perm.get("full_access") or q_perm.get("create") or q_perm.get("edit"))
+    if not (can_by_role or can_by_matrix):
+        return redirect(url_for("quotation"))
 
     return render_template(
         "add-new-quotation.html", 
@@ -7056,14 +8703,16 @@ def add_new_quotation():
         section="crm",
         user_email=user_email,
         user_name=user_name,
+        user_role=user_role,
     )
 
 # automatically fill dropdown customer type,sales rep,payment term
 @app.route("/get-customers-quotation")
 def get_customers_quotation():
     try:
-        with open(CUSTOMER_FILE, "r") as file:
-            customers = json.load(file)
+        # with open(CUSTOMER_FILE, "r") as file:
+        #     customers = json.load(file)
+        customers = get_customers_from_db()
         return jsonify(customers)
     except Exception as e:
         return jsonify({"error": str(e)}), 500
@@ -7842,7 +9491,7 @@ def generate_pdf(quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -7896,7 +9545,7 @@ def generate_pdf(quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8028,7 +9677,7 @@ def generate_pdf(quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -8302,13 +9951,13 @@ def get_email_count(quotation_id, customer_email):
     return len(email_attempts.get(key, []))
 
 # ===================================================
-# SEND OTP EMAIL
+# SEND QUOTATION OTP EMAIL (signup uses send_otp_email above — do not shadow it)
 # ===================================================
 
-def send_otp_email(email, otp, quotation_id=None):
-    """Send OTP via email"""
+def send_quotation_otp_email(email, otp, quotation_id=None):
+    """Send OTP via email for quotation / email flow (not signup)."""
     try:
-        print(f"📧 Sending OTP to {email}")
+        print(f"📧 Sending quotation OTP to {email}")
         
         msg = MIMEMultipart()
         msg['Subject'] = f"Your OTP for Quotation {quotation_id}" if quotation_id else "Your OTP for Quotation"
@@ -8510,7 +10159,7 @@ def generate_quotation_pdf(quotation, quotation_id):
         
         info_table = Table(info_data, colWidths=[100, 150, 100, 150])
         info_table.setStyle(TableStyle([
-            ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+            ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
             ('FONTSIZE', (0, 0), (-1, -1), 10),
             ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
             ('BACKGROUND', (0, 0), (0, -1), colors.lightgrey),
@@ -8564,7 +10213,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             # Create items table
             items_table = Table(table_data, colWidths=[40, 150, 50, 45, 80, 55, 55, 80])
             items_table.setStyle(TableStyle([
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -1), 9),
                 ('GRID', (0, 0), (-1, -1), 0.5, colors.grey),
                 ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#2C3E50')),
@@ -8613,7 +10262,7 @@ def generate_quotation_pdf(quotation, quotation_id):
             
             # Table styling
             table_style = [
-                ('FONTNAME', (0, 0), (-1, -1), 'Helvetica'),
+                ('FONTNAME', (0, 0), (-1, -1), 'DejaVuSans'),
                 ('FONTSIZE', (0, 0), (-1, -2), 10),
                 ('FONTSIZE', (0, -1), (-1, -1), 12),
                 ('ALIGN', (0, 0), (0, -1), 'LEFT'),
@@ -8914,7 +10563,7 @@ def api_send_otp():
         }
         
         # Send OTP email
-        result = send_otp_email(email, otp, quotation_id)
+        result = send_quotation_otp_email(email, otp, quotation_id)
         
         if result:
             record_otp_attempt(email, quotation_id, True)
@@ -9020,7 +10669,7 @@ def api_resend_otp():
         }
         
         # Send OTP email
-        result = send_otp_email(email, otp, quotation_id)
+        result = send_quotation_otp_email(email, otp, quotation_id)
         
         if result:
             remaining = record_resend_attempt(email, quotation_id)
@@ -10014,193 +11663,380 @@ def api_quick_billing_new_id():
     next_id = generate_bill_id(bills)
     return jsonify({"billId": next_id}), 200
 
+#======SALES ORDER====#
 
-# ---------- Helpers ----------
-def load_sales_orders():
-    """
-    Load all sales orders from JSON storage.
-    Creates the file if it does not exist.
-    Returns an empty list if the file is invalid.
-    """
-    if not os.path.exists(SALES_ORDERS_FILE):
-        with open(SALES_ORDERS_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f)
-        return []
+# def find_sales_order_by_id(so_id: str):
+#     """
+#     Find a sales order by SO ID.
+#     """
+#     orders = load_sales_orders()
+#     so_id = (so_id or "").strip()
 
-    with open(SALES_ORDERS_FILE, "r", encoding="utf-8") as f:
-        try:
-            data = json.load(f)
-            return data if isinstance(data, list) else []
-        except json.JSONDecodeError:
-            return []
+#     return next(
+#         (order for order in orders if str(order.get("so_id", "")).strip() == so_id),
+#         None
+#     )
 
-def save_sales_orders(data):
-    """
-    Save all sales orders back to JSON storage.
-    """
-    with open(SALES_ORDERS_FILE, "w", encoding="utf-8") as f:
-        json.dump(data, f, indent=4, ensure_ascii=False)
+# def generate_sales_order_id():
+#     """
+#     Generate the next Sales Order ID in SO-0001 format.
+#     Supports older formats like SO0001 or SO_0001.
+#     """
+#     orders = load_sales_orders()
+#     last_num = 0
 
-def find_sales_order_by_id(so_id: str):
-    """
-    Find a sales order by SO ID.
-    """
-    orders = load_sales_orders()
-    so_id = (so_id or "").strip()
+#     for order in orders:
+#         so = str(
+#             order.get("so_id") or
+#             order.get("order_id") or
+#             order.get("id") or
+#             ""
+#         ).strip()
 
-    return next(
-        (order for order in orders if str(order.get("so_id", "")).strip() == so_id),
-        None
-    )
+#         cleaned = so.replace("SO-", "").replace("SO_", "").replace("SO", "")
+#         match = re.search(r"(\d+)$", cleaned)
+
+#         if match:
+#             try:
+#                 last_num = max(last_num, int(match.group(1)))
+#             except Exception:
+#                 pass
+
+#     return f"SO-{last_num + 1:04d}"
+
+# def upsert_sales_order(payload: dict, status_value: str):
+#     """
+#     Insert a new sales order or update an existing one.
+#     Supports older key names like order_id for backward compatibility.
+#     """
+#     orders = load_sales_orders()
+
+#     so_id = (payload.get("so_id") or payload.get("order_id") or "").strip()
+#     if not so_id:
+#         so_id = generate_sales_order_id()
+
+#     existing = next(
+#         (
+#             order for order in orders
+#             if str(order.get("so_id") or order.get("order_id") or "").strip() == so_id
+#         ),
+#         None
+#     )
+
+#     # Ignore placeholder customer names
+#     customer_name = (payload.get("customer_name") or "").strip()
+#     if customer_name.lower() in ["select customer", "—", "-", ""]:
+#         customer_name = ""
+
+#     # Autofill customer details from master
+#     customer = find_customer_by_name(customer_name) if customer_name else None
+#     if customer:
+#         payload["customer_id"] = customer.get("customer_id", "")
+#         payload["email"] = customer.get("email", "")
+#         payload["phone"] = customer.get("phone", "")
+#         payload["billing_address"] = customer.get("billingAddress", "")
+#         payload["shipping_address"] = customer.get("shippingAddress", "")
+
+#     now_iso = datetime.now().isoformat(timespec="seconds")
+
+#     base = {
+#         "so_id": so_id,
+#         "order_date": "",
+#         "sales_rep": "",
+#         "order_type": "",
+#         "status": status_value,
+#         "stock_status": "",
+
+#         "customer_name": "",
+#         "customer_id": "",
+#         "billing_address": "",
+#         "shipping_address": "",
+#         "email": "",
+#         "phone": "",
+
+#         "payment_method": "",
+#         "currency": "",
+#         "due_date": "",
+#         "terms": "",
+
+#         "shipping_method": "",
+#         "delivery_date": "",
+#         "tracking_number": "",
+#         "internal_notes": "",
+#         "customer_notes": "",
+
+#         "items": [],
+
+#         "subtotal": 0,
+#         "tax_total": 0,
+#         "rounding": 0,
+#         "global_discount": 0,
+#         "shipping_charges": 0,
+#         "grand_total": 0,
+
+#         "comments": [],
+#         "status_history": [],
+
+#         "cancel_reason": "",
+#         "cancelled_by": "",
+#         "cancelled_at": "",
+
+#         "created_at": existing.get("created_at") if existing else now_iso,
+#         "updated_at": now_iso,
+#     }
+
+#     # Merge in the correct order:
+#     # defaults -> existing data -> incoming payload -> forced system fields
+#     doc = {**base, **(existing or {}), **payload}
+#     doc["so_id"] = so_id
+#     doc["status"] = status_value
+#     doc["updated_at"] = now_iso
+
+#     if not doc.get("created_at"):
+#         doc["created_at"] = now_iso
+
+#     # Remove older key if present
+#     doc.pop("order_id", None)
+
+#     # Ensure expected list types
+#     if not isinstance(doc.get("items"), list):
+#         doc["items"] = []
+
+#     if not isinstance(doc.get("comments"), list):
+#         doc["comments"] = []
+
+#     if not isinstance(doc.get("status_history"), list):
+#         doc["status_history"] = []
+
+#     # Update existing or insert new
+#     if existing:
+#         idx = orders.index(existing)
+#         orders[idx] = doc
+#     else:
+#         orders.insert(0, doc)
+
+#     save_sales_orders(orders)
+#     return so_id
+
+#======SALES ORDER====#
 
 def generate_sales_order_id():
-    """
-    Generate the next Sales Order ID in SO-0001 format.
-    Supports older formats like SO0001 or SO_0001.
-    """
-    orders = load_sales_orders()
-    last_num = 0
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    for order in orders:
-        so = str(
-            order.get("so_id") or
-            order.get("order_id") or
-            order.get("id") or
-            ""
-        ).strip()
+    cur.execute("SELECT COUNT(*) FROM sales_orders")
+    count = cur.fetchone()[0] + 1
 
-        cleaned = so.replace("SO-", "").replace("SO_", "").replace("SO", "")
-        match = re.search(r"(\d+)$", cleaned)
+    cur.close()
+    conn.close()
 
-        if match:
-            try:
-                last_num = max(last_num, int(match.group(1)))
-            except Exception:
-                pass
+    return f"SO-{str(count).zfill(4)}"
 
-    return f"SO-{last_num + 1:04d}"
+@app.post("/api/sales-orders")
+def create_sales_order():
+    data = request.get_json()
 
-def upsert_sales_order(payload: dict, status_value: str):
-    """
-    Insert a new sales order or update an existing one.
-    Supports older key names like order_id for backward compatibility.
-    """
-    orders = load_sales_orders()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    so_id = (payload.get("so_id") or payload.get("order_id") or "").strip()
-    if not so_id:
-        so_id = generate_sales_order_id()
+    # INSERT HEADER
+    cur.execute("""
+        INSERT INTO sales_orders (
+            so_id, order_date, sales_rep, order_type, status,
+            customer_id, billing_address, shipping_address,
+            email, phone,
+            payment_method, currency, due_date, terms,
+            shipping_method, delivery_date, tracking_number,internal_notes, customer_notes,
+            subtotal, tax_total, global_discount, shipping_charges, grand_total
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        data["so_id"],
+        data["order_date"],
+        data["sales_rep"],
+        data["order_type"],
+        data["status"],
+        data["customer_id"],
+        data["billing_address"],
+        data["shipping_address"],
+        data["email"],
+        data["phone"],
+        data["payment_method"],
+        data["currency"],
+        data["due_date"],
+        data["terms"],
+        data["shipping_method"],
+        data["delivery_date"],
+        data["tracking_number"],
+        data["internal_notes"],   
+        data["customer_notes"], 
+        data["subtotal"],
+        data["tax_total"],
+        data["global_discount"],
+        data["shipping_charges"],
+        data["grand_total"]
+    ))
 
-    existing = next(
-        (
-            order for order in orders
-            if str(order.get("so_id") or order.get("order_id") or "").strip() == so_id
-        ),
-        None
-    )
+    # INSERT ITEMS
+    for item in data["items"]:
+        cur.execute("""
+            INSERT INTO sales_order_items (
+                so_id, product_id, product_name,
+                qty, uom, price, tax_pct, disc_pct, line_total
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            data["so_id"],
+            item["product_id"],
+            item["product_name"],
+            item["qty"],
+            item["uom"],
+            item["price"],
+            item["tax_pct"],
+            item["disc_pct"],
+            item["line_total"]
+        ))
 
-    # Ignore placeholder customer names
-    customer_name = (payload.get("customer_name") or "").strip()
-    if customer_name.lower() in ["select customer", "—", "-", ""]:
-        customer_name = ""
+    conn.commit()
+    cur.close()
+    conn.close()
 
-    # Autofill customer details from master
-    customer = find_customer_by_name(customer_name) if customer_name else None
-    if customer:
-        payload["customer_id"] = customer.get("customer_id", "")
-        payload["email"] = customer.get("email", "")
-        payload["phone"] = customer.get("phone", "")
-        payload["billing_address"] = customer.get("billingAddress", "")
-        payload["shipping_address"] = customer.get("shippingAddress", "")
+    return jsonify({"success": True})
 
-    now_iso = datetime.now().isoformat(timespec="seconds")
+@app.get("/api/sales-orders/<so_id>")
+def get_sales_order(so_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    base = {
-        "so_id": so_id,
-        "order_date": "",
-        "sales_rep": "",
-        "order_type": "",
-        "status": status_value,
-        "stock_status": "",
+    # HEADER
+    cur.execute("SELECT * FROM sales_orders WHERE so_id=%s", (so_id,))
+    row = cur.fetchone()
 
-        "customer_name": "",
-        "customer_id": "",
-        "billing_address": "",
-        "shipping_address": "",
-        "email": "",
-        "phone": "",
+    if not row:
+        return jsonify({"success": False}), 404
 
-        "payment_method": "",
-        "currency": "",
-        "due_date": "",
-        "terms": "",
+    columns = [desc[0] for desc in cur.description]
+    data = dict(zip(columns, row))
 
-        "shipping_method": "",
-        "delivery_date": "",
-        "tracking_number": "",
-        "internal_notes": "",
-        "customer_notes": "",
+    # ✅ DATE FIXES
+    data["order_date"] = str(data.get("order_date") or "")
+    data["due_date"] = str(data.get("due_date") or "")
+    data["delivery_date"] = str(data.get("delivery_date") or "")
+    data["internal_notes"] = data.get("internal_notes") or ""
+    data["customer_notes"] = data.get("customer_notes") or ""
 
-        "items": [],
+    # ✅ CUSTOMER NAME
+    cur.execute("SELECT name FROM customers WHERE customer_id=%s", (data["customer_id"],))
+    cust = cur.fetchone()
+    data["customer_name"] = cust[0] if cust else ""
+    # 🔥 ADD ITEMS
+    cur.execute("SELECT * FROM sales_order_items WHERE so_id=%s", (so_id,))
+    items_rows = cur.fetchall()
 
-        "subtotal": 0,
-        "tax_total": 0,
-        "rounding": 0,
-        "global_discount": 0,
-        "shipping_charges": 0,
-        "grand_total": 0,
+    items = []
+    for i in items_rows:
+        items.append({
+            "product_id": i[2],
+            "product_name": i[3],
+            "qty": i[4],
+            "uom": i[5],
+            "price": i[6],
+            "tax_pct": i[7],
+            "disc_pct": i[8],
+            "line_total": i[9]
+        })
 
-        "comments": [],
-        "status_history": [],
+    data["items"] = items
+    cur.execute("""
+        SELECT comment, created_by, created_at
+        FROM sales_order_comments
+        WHERE so_id=%s
+        ORDER BY created_at ASC
+    """, (so_id,))
 
-        "cancel_reason": "",
-        "cancelled_by": "",
-        "cancelled_at": "",
+    rows = cur.fetchall()
 
-        "created_at": existing.get("created_at") if existing else now_iso,
-        "updated_at": now_iso,
-    }
+    comments = []
+    for r in rows:
+        comments.append({
+            "text": r[0],                     # comment
+            "user": r[1],                     # created_by
+            "created_at": str(r[2])
+        })
 
-    # Merge in the correct order:
-    # defaults -> existing data -> incoming payload -> forced system fields
-    doc = {**base, **(existing or {}), **payload}
-    doc["so_id"] = so_id
-    doc["status"] = status_value
-    doc["updated_at"] = now_iso
+    data["comments"] = comments
 
-    if not doc.get("created_at"):
-        doc["created_at"] = now_iso
+    cur.close()
+    conn.close()
 
-    # Remove older key if present
-    doc.pop("order_id", None)
+    return jsonify({
+    "success": True,
+    "order": data
+})
 
-    # Ensure expected list types
-    if not isinstance(doc.get("items"), list):
-        doc["items"] = []
+@app.get("/api/sales-orders")
+def list_sales_orders():
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if not isinstance(doc.get("comments"), list):
-        doc["comments"] = []
+    try:
+        cur.execute("""
+            SELECT so_id, order_type, customer_id, sales_rep,
+                   order_date, status, stock_status, grand_total
+            FROM sales_orders
+            ORDER BY created_at DESC
+        """)
 
-    if not isinstance(doc.get("status_history"), list):
-        doc["status_history"] = []
+        rows = cur.fetchall()
+        print("ROWS:", rows)   # 🔥 ADD THIS
 
-    # Update existing or insert new
-    if existing:
-        idx = orders.index(existing)
-        orders[idx] = doc
-    else:
-        orders.insert(0, doc)
+        orders = []
+        for r in rows:
+            print("ROW:", r)   # 🔥 ADD THIS
 
-    save_sales_orders(orders)
-    return so_id
+            orders.append({
+                "so_id": r[0],
+                "order_type": r[1],
+                "customer_name": r[2],
+                "sales_rep": r[3],
+                "order_date": str(r[4]),
+                "status": r[5],
+                "stock_status": r[6],
+                "grand_total": float(r[7] or 0)
+            })
 
+        return jsonify({"orders": orders})
 
+    except Exception as e:
+        print("🔥 ERROR:", e)   # 🔥 VERY IMPORTANT
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        cur.close()
+        conn.close()
 # =========================================
 # SALES ORDER - PAGE ROUTES
 # =========================================
 @app.get("/sales-order")
 def sales_order():
-    return render_template("sales-order.html", page="sales_order")
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+
+
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
+    return render_template(
+        "sales-order.html",
+        page="sales_order",
+        title="Sales Order - Stackly",
+        user_email=user_email,
+        user_name=user_name,
+    )
 
 
 @app.get("/sales_order")
@@ -10210,35 +12046,172 @@ def sales_order_compat():
 
 @app.get("/sales-order/new")
 def sales_order_new():
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    # =========================
+    # GENERATE SO ID
+    # =========================
     so_id = generate_sales_order_id()
 
-    users = load_users()
-    sales_reps = [u for u in users if u.get("role") in ["Admin", "User", "Sales"]]
+    # =========================
+    # GET LOGGED-IN USER NAME FROM DB
+    # =========================
+    user_name = "User"
 
-    customers = load_customer()
+    conn = get_db_connection()
+    cur = conn.cursor()
 
+    cur.execute("""
+        SELECT name 
+        FROM users 
+        WHERE LOWER(email)=LOWER(%s)
+    """, (user_email,))
+
+    row = cur.fetchone()
+
+    if row:
+        user_name = (row[0] or "").strip() or "User"
+
+    print("SESSION EMAIL:", user_email)
+    print("FINAL USER NAME:", user_name)
+
+    # =========================
+    # GET SALES REPS FROM DB
+    # =========================
+    cur.execute("""
+        SELECT name, email, role 
+        FROM users 
+        WHERE role IN ('Admin','User','Sales')
+    """)
+
+    sales_reps_rows = cur.fetchall()
+
+    sales_reps = []
+    for r in sales_reps_rows:
+        sales_reps.append({
+            "name": r[0],
+            "email": r[1],
+            "role": r[2]
+        })
+
+    # =========================
+    # GET CUSTOMERS FROM DB
+    # =========================
+    customers = get_customers_from_db()
+
+    cur.close()
+    conn.close()
+
+    # =========================
+    # RENDER PAGE
+    # =========================
     response = make_response(render_template(
         "sales-new.html",
         mode="new",
         so_id=so_id,
         sales_reps=sales_reps,
         customers=customers,
-        page="sales_order"
+        page="sales_order",
+        user_email=user_email,
+        user_name=user_name,
     ))
 
-    # Prevent browser cache from reusing an old SO page
+    # =========================
+    # PREVENT CACHE
+    # =========================
     response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+
     return response
 
+    # =========================
+    # GENERATE SO ID
+    # =========================
+    so_id = generate_sales_order_id()
+
+    # =========================
+    # GET LOGGED-IN USER NAME FROM DB
+    # =========================
+    user_name = "User"
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT name 
+        FROM users 
+        WHERE LOWER(email)=LOWER(%s)
+    """, (user_email,))
+
+    row = cur.fetchone()
+
+    if row:
+        user_name = (row[0] or "").strip() or "User"
+
+    print("SESSION EMAIL:", user_email)
+    print("FINAL USER NAME:", user_name)
+
+    # =========================
+    # GET SALES REPS FROM DB
+    # =========================
+    cur.execute("""
+        SELECT name, email, role 
+        FROM users 
+        WHERE role IN ('Admin','User','Sales')
+    """)
+
+    sales_reps_rows = cur.fetchall()
+
+    sales_reps = []
+    for r in sales_reps_rows:
+        sales_reps.append({
+            "name": r[0],
+            "email": r[1],
+            "role": r[2]
+        })
+
+    # =========================
+    # GET CUSTOMERS FROM DB
+    # =========================
+    customers = get_customers_from_db()
+
+    cur.close()
+    conn.close()
+
+    # =========================
+    # RENDER PAGE
+    # =========================
+    response = make_response(render_template(
+        "sales-new.html",
+        mode="new",
+        so_id=so_id,
+        sales_reps=sales_reps,
+        customers=customers,
+        page="sales_order",
+        user_email=user_email,
+        user_name=user_name,
+    ))
+
+    # =========================
+    # PREVENT CACHE
+    # =========================
+    response.headers["Cache-Control"] = "no-store, no-cache, must-revalidate, max-age=0"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
+
+    return response
 
 @app.get("/sales-order/edit/<so_id>")
 def sales_order_edit(so_id):
     users = load_users()
     sales_reps = [u for u in users if u.get("role") in ["Admin", "User", "Sales"]]
-
-    customers = load_customer()
+#==================================from here
+    # customers = load_customer()
+    customers = get_customers_from_db()
+    #=======================================upto replace
 
     return render_template(
         "sales-new.html",
@@ -10261,50 +12234,175 @@ def api_sales_orders_next_id():
     })
 
 
-@app.get("/api/sales-orders/all")
-def api_sales_orders_all():
-    orders = load_sales_orders()
-    return jsonify({"orders": orders})
+# @app.get("/api/sales-orders")
+# def api_sales_orders_list():
+#     """
+#     Return all sales orders from sales_orders.json.
+#     Used by Delivery Note 'Sales Order Reference' dropdown.
+#     """
+#     orders = load_sales_orders()
+#     return jsonify(orders)
 
 
-@app.get("/api/sales-orders/<so_id>")
-def get_one_sales_order(so_id):
-    so = find_sales_order_by_id(so_id)
+# @app.get("/api/sales-orders/all")
+# def api_sales_orders_all():
+#     orders = load_sales_orders()
+#     return jsonify({"orders": orders})
 
-    if not so:
-        return jsonify({
-            "success": False,
-            "message": "Not found"
-        }), 404
 
-    return jsonify({
-        "success": True,
-        "order": so
-    })
+# @app.get("/api/sales-orders/<so_id>")
+# def get_one_sales_order(so_id):
+#     so = find_sales_order_by_id(so_id)
+
+#     if not so:
+#         return jsonify({
+#             "success": False,
+#             "message": "Not found"
+#         }), 404
+
+#     return jsonify({
+#         "success": True,
+#         "order": so
+#     })
 
 
 @app.post("/api/sales-orders/save-draft")
 def api_sales_orders_save_draft():
-    payload = request.get_json(force=True) or {}
-    so_id = upsert_sales_order(payload, "Draft")
+    data = request.get_json()
 
-    return jsonify({
-        "success": True,
-        "so_id": so_id,
-        "status": "Draft"
-    })
+    conn = get_db_connection()
+    cur = conn.cursor()
 
+    # INSERT HEADER
+    cur.execute("""
+        INSERT INTO sales_orders (
+            so_id, order_date, sales_rep, order_type, status,
+            customer_id, billing_address, shipping_address,
+            email, phone,
+            payment_method, currency, due_date, terms,
+            shipping_method, delivery_date, tracking_number,internal_notes, customer_notes,
+            subtotal, tax_total, global_discount, shipping_charges, grand_total
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        data["so_id"],
+        data["order_date"],
+        data["sales_rep"],
+        data["order_type"],
+        "Draft",   # 🔥 IMPORTANT
+        data["customer_id"],
+        data["billing_address"],
+        data["shipping_address"],
+        data["email"],
+        data["phone"],
+        data["payment_method"],
+        data["currency"],
+        data["due_date"],
+        data["terms"],
+        data["shipping_method"],
+        data["delivery_date"],
+        data["tracking_number"],
+        data["internal_notes"],   
+        data["customer_notes"],
+        data["subtotal"],
+        data["tax_total"],
+        data["global_discount"],
+        data["shipping_charges"],
+        data["grand_total"]
+    ))
+
+    # INSERT ITEMS
+    for item in data["items"]:
+        cur.execute("""
+            INSERT INTO sales_order_items (
+                so_id, product_id, product_name,
+                qty, uom, price, tax_pct, disc_pct, line_total
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            data["so_id"],
+            item["product_id"],
+            item["product_name"],
+            item["qty"],
+            item["uom"],
+            item["price"],
+            item["tax_pct"],
+            item["disc_pct"],
+            item["line_total"]
+        ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True})
 
 @app.post("/api/sales-orders/submit")
 def api_sales_orders_submit():
-    payload = request.get_json(force=True) or {}
-    so_id = upsert_sales_order(payload, "Submitted")
+    data = request.get_json()
 
-    return jsonify({
-        "success": True,
-        "so_id": so_id,
-        "status": "Submitted"
-    })
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    # INSERT HEADER
+    cur.execute("""
+        INSERT INTO sales_orders (
+            so_id, order_date, sales_rep, order_type, status,
+            customer_id, billing_address, shipping_address,
+            email, phone,
+            payment_method, currency, due_date, terms,
+            shipping_method, delivery_date, tracking_number,internal_notes, customer_notes,
+            subtotal, tax_total, global_discount, shipping_charges, grand_total
+        ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
+    """, (
+        data["so_id"],
+        data["order_date"],
+        data["sales_rep"],
+        data["order_type"],
+        "Submitted",
+        data["customer_id"],
+        data["billing_address"],
+        data["shipping_address"],
+        data["email"],
+        data["phone"],
+        data["payment_method"],
+        data["currency"],
+        data["due_date"],
+        data["terms"],
+        data["shipping_method"],
+        data["delivery_date"],
+        data["tracking_number"],
+        data["internal_notes"],   
+        data["customer_notes"],
+        data["subtotal"],
+        data["tax_total"],
+        data["global_discount"],
+        data["shipping_charges"],
+        data["grand_total"]
+    ))
+
+    # INSERT ITEMS
+    for item in data["items"]:
+        cur.execute("""
+            INSERT INTO sales_order_items (
+                so_id, product_id, product_name,
+                qty, uom, price, tax_pct, disc_pct, line_total
+            ) VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s)
+        """, (
+            data["so_id"],
+            item["product_id"],
+            item["product_name"],
+            item["qty"],
+            item["uom"],
+            item["price"],
+            item["tax_pct"],
+            item["disc_pct"],
+            item["line_total"]
+        ))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True})
 
 
 @app.get("/api/sales-products")
@@ -10315,26 +12413,128 @@ def api_sales_products():
         "products": products
     })
 
+@app.post("/api/sales-orders/<so_id>/comments")
+def add_sales_order_comment(so_id):
+    data = request.get_json()
+    comment = (data.get("comment") or "").strip()
+    user = (data.get("user") or "User").strip()
+
+    if not comment:
+        return jsonify({"success": False, "message": "Empty comment"}), 400
+
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        INSERT INTO sales_order_comments (so_id, comment, created_by)
+        VALUES (%s, %s, %s)
+    """, (so_id, comment, user))
+
+    conn.commit()
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True})
+
+@app.get("/api/sales-orders/<so_id>/comments")
+def get_sales_order_comments(so_id):
+    conn = get_db_connection()
+    cur = conn.cursor()
+
+    cur.execute("""
+        SELECT comment, created_by, created_at
+        FROM sales_order_comments
+        WHERE so_id=%s
+        ORDER BY created_at DESC
+    """, (so_id,))
+
+    rows = cur.fetchall()
+
+    comments = []
+    for r in rows:
+        comments.append({
+            "comment": r[0],
+            "user": r[1],
+            "time": r[2].strftime("%d/%m/%Y, %I:%M %p")
+        })
+
+    cur.close()
+    conn.close()
+
+    return jsonify({"success": True, "comments": comments})
 
 # =========================================
 # SALES ORDER - PDF
 # =========================================
 @app.get("/api/sales-orders/<so_id>/pdf")
 def sales_order_pdf(so_id):
-    so = find_sales_order_by_id(so_id)
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if not so:
+    # ========================
+    # FETCH HEADER
+    # ========================
+    cur.execute("SELECT * FROM sales_orders WHERE so_id=%s", (so_id,))
+    order = cur.fetchone()
+
+    if not order:
+        cur.close()
+        conn.close()
         return jsonify({
             "success": False,
             "message": "Sales Order not found"
         }), 404
 
+    # ========================
+    # FETCH ITEMS
+    # ========================
+    cur.execute("SELECT * FROM sales_order_items WHERE so_id=%s", (so_id,))
+    items = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # ========================
+    # CONVERT DB → DICT
+    # ========================
+    columns = [
+        "so_id","order_date","sales_rep","order_type","status",
+        "customer_id","billing_address","shipping_address",
+        "email","phone",
+        "payment_method","currency","due_date","terms",
+        "shipping_method","delivery_date","tracking_number",
+        "subtotal","tax_total","global_discount","shipping_charges","grand_total",
+        "created_at"
+    ]
+
+    so = dict(zip(columns, order))
+
+    # ========================
+    # ATTACH ITEMS
+    # ========================
+    so["items"] = []
+    for i in items:
+        so["items"].append({
+            "product_id": i[2],
+            "product_name": i[3],
+            "qty": float(i[4] or 0),
+            "uom": i[5],
+            "price": float(i[6] or 0),
+            "tax_pct": float(i[7] or 0),
+            "disc_pct": float(i[8] or 0),
+            "line_total": float(i[9] or 0)
+        })
+
+    # ========================
+    # GENERATE PDF
+    # ========================
     try:
         pdf_bytes = generate_sales_order_pdf_bytes(so)
 
         response = make_response(pdf_bytes)
         response.headers["Content-Type"] = "application/pdf"
         response.headers["Content-Disposition"] = f'inline; filename="{so_id}.pdf"'
+
         return response
 
     except Exception as e:
@@ -10371,7 +12571,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=8,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     company_style = ParagraphStyle(
@@ -10382,7 +12582,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.black,
         alignment=1,
         spaceAfter=2,
-        fontName="Helvetica"
+        fontName="DejaVuSans"
     )
 
     status_style = ParagraphStyle(
@@ -10393,7 +12593,7 @@ def generate_sales_order_pdf_bytes(so):
         alignment=1,
         textColor=colors.HexColor("#148a08"),
         spaceAfter=14,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     heading_style = ParagraphStyle(
@@ -10404,7 +12604,7 @@ def generate_sales_order_pdf_bytes(so):
         textColor=colors.HexColor("#8c1f1f"),
         spaceBefore=8,
         spaceAfter=8,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     table_cell_style = ParagraphStyle(
@@ -10412,7 +12612,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="Helvetica",
+        fontName="DejaVuSans",
         wordWrap="CJK"
     )
 
@@ -10421,7 +12621,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.6,
         leading=9,
-        fontName="Helvetica-Bold",
+        fontName="DejaVuSans-Bold",
         textColor=colors.HexColor("#5f2d2d"),
         wordWrap="CJK"
     )
@@ -10433,7 +12633,7 @@ def generate_sales_order_pdf_bytes(so):
         leading=13,
         textColor=colors.HexColor("#8c1f1f"),
         spaceAfter=6,
-        fontName="Helvetica-Bold"
+        fontName="DejaVuSans-Bold"
     )
 
     terms_style = ParagraphStyle(
@@ -10441,7 +12641,7 @@ def generate_sales_order_pdf_bytes(so):
         parent=styles["Normal"],
         fontSize=7.4,
         leading=10,
-        fontName="Helvetica"
+        fontName="DejaVuSans"
     )
 
     footer_style = ParagraphStyle(
@@ -10514,7 +12714,7 @@ def generate_sales_order_pdf_bytes(so):
 
     info_table = Table(info_data, colWidths=[110, 145, 95, 130])
     info_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 7.5),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (0, -1), colors.HexColor("#efefef")),
@@ -10589,7 +12789,7 @@ def generate_sales_order_pdf_bytes(so):
 
     items_table = Table(table_data, colWidths=[32, 170, 42, 40, 60, 44, 44, 58])
     items_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -1), "Helvetica"),
+        ("FONTNAME", (0, 0), (-1, -1), "DejaVuSans"),
         ("FONTSIZE", (0, 0), (-1, -1), 7),
         ("GRID", (0, 0), (-1, -1), 0.5, colors.grey),
         ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#a12828")),
@@ -10634,8 +12834,8 @@ def generate_sales_order_pdf_bytes(so):
 
     summary_table = Table(summary_data, colWidths=[300, 200])
     summary_table.setStyle(TableStyle([
-        ("FONTNAME", (0, 0), (-1, -2), "Helvetica"),
-        ("FONTNAME", (0, -1), (-1, -1), "Helvetica-Bold"),
+        ("FONTNAME", (0, 0), (-1, -2), "DejaVuSans"),
+        ("FONTNAME", (0, -1), (-1, -1), "DejaVuSans-Bold"),
         ("FONTSIZE", (0, 0), (-1, -2), 8),
         ("FONTSIZE", (0, -1), (-1, -1), 9),
         ("ALIGN", (0, 0), (0, -1), "LEFT"),
@@ -10691,14 +12891,59 @@ def generate_sales_order_pdf_bytes(so):
 # =========================================
 @app.post("/api/sales-orders/<so_id>/email")
 def sales_order_email(so_id):
-    so = find_sales_order_by_id(so_id)
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if not so:
+    # HEADER
+    cur.execute("SELECT * FROM sales_orders WHERE so_id=%s", (so_id,))
+    order = cur.fetchone()
+
+    if not order:
+        cur.close()
+        conn.close()
         return jsonify({
             "success": False,
             "message": "Sales Order not found"
         }), 404
 
+    # ITEMS
+    cur.execute("SELECT * FROM sales_order_items WHERE so_id=%s", (so_id,))
+    items = cur.fetchall()
+
+    cur.close()
+    conn.close()
+
+    # ========================
+    # CONVERT DB → DICT
+    # ========================
+    columns = [
+        "so_id","order_date","sales_rep","order_type","status",
+        "customer_id","billing_address","shipping_address",
+        "email","phone",
+        "payment_method","currency","due_date","terms",
+        "shipping_method","delivery_date","tracking_number",
+        "subtotal","tax_total","global_discount","shipping_charges","grand_total",
+        "created_at"
+    ]
+
+    so = dict(zip(columns, order))
+
+    so["items"] = []
+    for i in items:
+        so["items"].append({
+            "product_id": i[2],
+            "product_name": i[3],
+            "qty": float(i[4] or 0),
+            "uom": i[5],
+            "price": float(i[6] or 0),
+            "tax_pct": float(i[7] or 0),
+            "disc_pct": float(i[8] or 0),
+            "line_total": float(i[9] or 0)
+        })
+
+    # ========================
+    # EMAIL LOGIC
+    # ========================
     customer_email = (so.get("email") or "").strip()
     if not customer_email:
         return jsonify({
@@ -10722,18 +12967,14 @@ Dear {customer_name},
 
 Greetings from Stackly.
 
-Please find attached the Sales Order document for your reference.
+Please find attached the Sales Order document.
 
-Sales Order Details:
-- Sales Order No : {so_no}
-- Order Date     : {order_date}
-- Grand Total    : {currency} {grand_total}
-
-Kindly review the attached document and let us know if any clarification is required.
+Sales Order No : {so_no}
+Order Date     : {order_date}
+Grand Total    : {currency} {grand_total}
 
 Thanks & Regards,
 Stackly Team
-Email: {SENDER_EMAIL}
 """.strip()
 
         msg = EmailMessage()
@@ -10755,27 +12996,19 @@ Email: {SENDER_EMAIL}
             server.login(SENDER_EMAIL, SENDER_PASSWORD)
             server.send_message(msg)
 
-        return jsonify({
-            "success": True,
-            "message": "Email sent successfully"
-        })
+        return jsonify({"success": True})
 
     except Exception as e:
-        print("Sales Order email error:", e)
-        return jsonify({
-            "success": False,
-            "message": str(e)
-        }), 500
-
+        print("Email error:", e)
+        return jsonify({"success": False, "message": str(e)}), 500
 
 # =========================================
 # SALES ORDER - CANCEL API
 # =========================================
 @app.post("/api/sales-orders/<so_id>/cancel")
 def cancel_sales_order(so_id):
-    data = request.get_json(silent=True) or {}
+    data = request.get_json()
     reason = (data.get("reason") or "").strip()
-    cancelled_by = (data.get("cancelled_by") or "Admin").strip()
 
     if not reason:
         return jsonify({
@@ -10783,85 +13016,36 @@ def cancel_sales_order(so_id):
             "message": "Cancellation reason is required"
         }), 400
 
-    orders = load_sales_orders()
-    so = next((x for x in orders if str(x.get("so_id")) == str(so_id)), None)
+    conn = get_db_connection()
+    cur = conn.cursor()
 
-    if not so:
+    # check exists
+    cur.execute("SELECT status FROM sales_orders WHERE so_id=%s", (so_id,))
+    row = cur.fetchone()
+
+    if not row:
+        cur.close()
+        conn.close()
         return jsonify({
             "success": False,
             "message": "Sales Order not found"
         }), 404
 
-    now = datetime.now().isoformat(timespec="seconds")
+    # update status
+    cur.execute("""
+        UPDATE sales_orders
+        SET status='Cancelled'
+        WHERE so_id=%s
+    """, (so_id,))
 
-    so["status"] = "Cancelled"
-    so["cancel_reason"] = reason
-    so["cancelled_by"] = cancelled_by
-    so["cancelled_at"] = now
-    so["updated_at"] = now
-
-    history = so.get("status_history", [])
-    if not isinstance(history, list):
-        history = []
-
-    history.append({
-        "status": "Cancelled",
-        "date": now,
-        "user": cancelled_by,
-        "notes": f"Order cancelled. Reason: {reason}"
-    })
-    so["status_history"] = history
-
-    save_sales_orders(orders)
+    conn.commit()
+    cur.close()
+    conn.close()
 
     return jsonify({
         "success": True,
-        "message": "Sales Order cancelled successfully",
-        "so_id": so_id
+        "message": "Order cancelled"
     })
-
-
-@app.route("/save_sales", methods=["POST"])
-def save_sales():
-    BASE_DIR = os.path.dirname(os.path.abspath(__file__))
-    SALES_FILE = os.path.join(BASE_DIR, "sales_orders.json")
-
-    data = request.get_json() or {}   # ✅ safer than request.json
-
-    # ✅ AUTO FETCH CUSTOMER DETAILS into sales order
-    customer_name = (data.get("customer_name") or data.get("name") or "").strip()
-    customer = find_customer_by_name(customer_name)
-
-    if customer:
-        data["customer_id"] = customer.get("customer_id", "")
-        data["email"] = customer.get("email", "")
-        data["phone"] = customer.get("phone", "")
-        data["billing_address"] = customer.get("billingAddress", "")
-        data["shipping_address"] = customer.get("shippingAddress", "")
-    else:
-        data["customer_id"] = ""
-        data["email"] = ""
-        data["phone"] = ""
-
-    # create file if missing
-    if not os.path.exists(SALES_FILE):
-        with open(SALES_FILE, "w", encoding="utf-8") as f:
-            json.dump([], f, ensure_ascii=False, indent=4)
-
-    # load existing
-    with open(SALES_FILE, "r", encoding="utf-8") as f:
-        try:
-            orders = json.load(f)
-        except json.JSONDecodeError:
-            orders = []
-
-    # append + save
-    orders.append(data)
-
-    with open(SALES_FILE, "w", encoding="utf-8") as f:
-        json.dump(orders, f, ensure_ascii=False, indent=4)
-
-    return jsonify({"success": True, "message": "Saved"})
 
 # =========================================
 # DELIVERY NOTE - UTILITIES / HELPERS
@@ -10879,13 +13063,15 @@ def find_customer_by_name(name: str):
         return None
 
     target_name = str(name).strip().lower()
-    customers = load_customer()
-
+    #==============================from here
+    # customers = load_customer()
+   
+    customers = get_customers_from_db()
+     #===============================upto replace
     for customer in customers:
         customer_name = str(customer.get("name", "")).strip().lower()
         if customer_name == target_name:
             return customer
-
     return None
 
 
@@ -10976,7 +13162,22 @@ def send_email_with_attachments(to_email, subject, body, from_email, password, a
 
 @app.route("/delivery_note")
 def delivery_note():
-    return render_template("delivery-note.html", page="delivery_note")
+    user_email = session.get("user")
+    user_name = "User"
+
+    if user_email:
+        users = load_users()
+        for u in users:
+            if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+                user_name = u.get("name") or "User"
+                break
+
+    return render_template(
+        "delivery-note.html",
+        page="delivery_note",
+        user_email=user_email,
+        user_name=user_name,
+    )
 
 
 # =========================================
@@ -10986,11 +13187,19 @@ def delivery_note():
 
 @app.route("/delivery_note/new")
 def delivery_note_new():
+    # Preload data needed for the New Delivery Note page
     sales_orders = load_sales_orders()
+    notes = load_delivery_notes()
+    next_id = next_dn_id(notes)
+
     return render_template(
         "deliverynote-new.html",
         page="delivery_note",
         sales_orders=sales_orders,
+        next_dn_id=next_id,
+        so_id=request.args.get("so_id", "").strip(),
+        user_email=session.get("user"),
+        user_name=_get_logged_in_user_name(),
     )
 
 
@@ -11005,6 +13214,8 @@ def delivery_note_form():
         dn_id=dn_id,
         mode=mode,
         sales_orders=sales_orders,
+        user_email=session.get("user"),
+        user_name=_get_logged_in_user_name(),
     )
 
 
@@ -11145,27 +13356,26 @@ def cancel_delivery_note(dn_id):
 
 
 # =========================================
-# DELIVERY NOTE - API (PDF)
+# DELIVERY NOTE - API (PDF) - REPORTLAB
 # =========================================
-
 @app.get("/api/delivery-notes/<dn_id>/pdf")
 def delivery_note_pdf(dn_id):
-    notes = load_delivery_notes()
-    dn = next((x for x in notes if x.get("dn_id") == dn_id), None)
+    dn = get_dn_by_id(dn_id)
 
     if not dn:
-        return {"success": False, "message": "Delivery Note not found"}, 404
+        return jsonify({"success": False, "message": "Delivery Note not found"}), 404
 
-    html = render_template("delivery-note-pdf.html", dn=dn)
+    pdf_bytes = generate_delivery_note_pdf_bytes(dn)
 
-    
-
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'inline; filename="{dn_id}.pdf"'
+    return response
 
 
 # =========================================
-# DELIVERY NOTE - API (Email with PDF)
+# DELIVERY NOTE - API (Email with PDF) - REPORTLAB
 # =========================================
-
 @app.post("/api/delivery-notes/<dn_id>/email")
 def email_delivery_note(dn_id):
     dns = load_delivery_notes()
@@ -11195,15 +13405,17 @@ def email_delivery_note(dn_id):
     if not customer_email:
         return jsonify({"success": False, "message": "Customer email not available"}), 400
 
-    html = render_template("delivery-note-pdf.html", dn=dn)
-
+    pdf_bytes = generate_delivery_note_pdf_bytes(dn)
 
     ok = send_email_with_attachments(
         to_email=customer_email,
         subject=f"Delivery Note {dn_id}",
-        body=f"Dear {dn.get('customer_name','')},\n\nPlease find attached Delivery Note {dn_id}.",
+        body=f"Dear {dn.get('customer_name','Customer')},\n\nPlease find attached Delivery Note {dn_id}.\n\nRegards,\nStackly POS",
         from_email=EMAIL_ADDRESS,
         password=EMAIL_PASSWORD,
+        attachments=[
+            {"filename": f"{dn_id}.pdf", "content_bytes": pdf_bytes}
+        ],
     )
 
     if not ok:
@@ -11214,17 +13426,432 @@ def email_delivery_note(dn_id):
 
 # =========================================
 # DELIVERY NOTE - PRINT PAGE (Optional route)
+# Uses same PDF generator and streams inline
 # =========================================
-
 @app.get("/delivery-note/<dn_id>/print")
 def delivery_note_print(dn_id):
     dn = get_dn_by_id(dn_id)
     if not dn:
         return "DN not found", 404
-    return render_template("delivery-note-pdf.html", dn=dn)
+
+    pdf_bytes = generate_delivery_note_pdf_bytes(dn)
+    response = make_response(pdf_bytes)
+    response.headers["Content-Type"] = "application/pdf"
+    response.headers["Content-Disposition"] = f'inline; filename="{dn_id}.pdf"'
+    return response
+
+
+# =========================================
+# DELIVERY NOTE - PDF GENERATOR (REPORTLAB)
+# =========================================
+def generate_delivery_note_pdf_bytes(dn):
+    buffer = io.BytesIO()
+
+    doc = SimpleDocTemplate(
+        buffer,
+        pagesize=A4,
+        rightMargin=18,
+        leftMargin=18,
+        topMargin=16,
+        bottomMargin=18
+    )
+
+    styles = getSampleStyleSheet()
+
+    # ---------------------------------------------------
+    # STYLES
+    # ---------------------------------------------------
+    company_style = ParagraphStyle(
+        name="CompanyName",
+        parent=styles["Normal"],
+        fontName="DejaVuSans-Bold",
+        fontSize=20,
+        leading=24,
+        textColor=colors.HexColor("#8c1f1f"),
+        alignment=TA_CENTER,
+        spaceAfter=4,
+    )
+
+    company_info_style = ParagraphStyle(
+        name="CompanyInfo",
+        parent=styles["Normal"],
+        fontName="DejaVuSans",
+        fontSize=9,
+        leading=12,
+        textColor=colors.black,
+        alignment=TA_CENTER,
+        spaceAfter=1,
+    )
+
+    page_title_style = ParagraphStyle(
+        name="PageTitle",
+        parent=styles["Heading1"],
+        fontName="DejaVuSans-Bold",
+        fontSize=16,
+        leading=20,
+        textColor=colors.green,
+        alignment=TA_CENTER,
+        spaceBefore=12,
+        spaceAfter=12,
+    )
+
+    section_style = ParagraphStyle(
+        name="DNSection",
+        parent=styles["Heading3"],
+        fontName="DejaVuSans-Bold",
+        fontSize=11,
+        leading=14,
+        textColor=colors.HexColor("#8c1f1f"),
+        spaceAfter=6,
+        spaceBefore=10,
+    )
+
+    label_style = ParagraphStyle(
+        name="DNLabel",
+        parent=styles["Normal"],
+        fontName="DejaVuSans-Bold",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.HexColor("#6b1a1a"),
+    )
+
+    value_style = ParagraphStyle(
+        name="DNValue",
+        parent=styles["Normal"],
+        fontName="DejaVuSans",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.black,
+    )
+
+    summary_white_style = ParagraphStyle(
+        name="DNSummaryWhite",
+        parent=styles["Normal"],
+        fontName="DejaVuSans-Bold",
+        fontSize=8.5,
+        leading=11,
+        textColor=colors.white,
+    )
+
+    small_style = ParagraphStyle(
+        name="DNSmall",
+        parent=styles["Normal"],
+        fontName="DejaVuSans",
+        fontSize=8,
+        leading=10,
+        textColor=colors.HexColor("#444444"),
+    )
+
+    header_small_style = ParagraphStyle(
+        name="DNHeaderSmall",
+        parent=styles["Normal"],
+        fontName="DejaVuSans-Bold",
+        fontSize=8,
+        leading=10,
+        textColor=colors.white,
+        alignment=TA_CENTER,
+    )
+
+    terms_style = ParagraphStyle(
+        name="TermsStyle",
+        parent=styles["Normal"],
+        fontName="DejaVuSans",
+        fontSize=8,
+        leading=11,
+        textColor=colors.black,
+        leftIndent=8,
+    )
+
+    elements = []
+
+    # ---------------------------------------------------
+    # SAFE HELPERS
+    # ---------------------------------------------------
+    def safe_str(val, default="-"):
+        if val is None:
+            return default
+        s = str(val).strip()
+        return s if s else default
+
+    def safe_float(val, default=0.0):
+        try:
+            if val in (None, ""):
+                return default
+            return float(val)
+        except Exception:
+            return default
+
+    # ---------------------------------------------------
+    # COMPANY HEADER
+    # ---------------------------------------------------
+    elements.append(Paragraph("STACKLY", company_style))
+    elements.append(Paragraph(
+        "MMR Complex, Chinna Thirupathi, near Chinna Muniyappan Kovil, Salem, Tamil Nadu - 636008",
+        company_info_style
+    ))
+    elements.append(Paragraph("Phone: +91 7010792745", company_info_style))
+    elements.append(Paragraph("Email: info@stackly.com", company_info_style))
+    elements.append(Spacer(1, 10))
+
+    # ---------------------------------------------------
+    # PAGE TITLE
+    # ---------------------------------------------------
+    status_text = safe_str(dn.get("delivery_status") or dn.get("status") or "SUBMITTED").upper()
+    elements.append(Paragraph(f"DELIVERY NOTE - {status_text}", page_title_style))
+    elements.append(Spacer(1, 2))
+
+    # ---------------------------------------------------
+    # TOP DETAILS TABLE
+    # ---------------------------------------------------
+    dn_details_data = [
+        [
+            Paragraph("<b>Delivery Note Number:</b>", label_style),
+            Paragraph(safe_str(dn.get("dn_id")), value_style),
+            Paragraph("<b>Date:</b>", label_style),
+            Paragraph(safe_str(dn.get("delivery_date")), value_style),
+        ],
+        [
+            Paragraph("<b>Customer:</b>", label_style),
+            Paragraph(safe_str(dn.get("customer_name")), value_style),
+            Paragraph("<b>Sales Order Ref:</b>", label_style),
+            Paragraph(safe_str(dn.get("so_ref")), value_style),
+        ],
+        [
+            Paragraph("<b>Delivery Type:</b>", label_style),
+            Paragraph(safe_str(dn.get("delivery_type")), value_style),
+            Paragraph("<b>Delivery By:</b>", label_style),
+            Paragraph(safe_str(dn.get("delivery_by")), value_style),
+        ],
+        [
+            Paragraph("<b>Vehicle Number:</b>", label_style),
+            Paragraph(safe_str(dn.get("vehicle_no")), value_style),
+            Paragraph("<b>Tracking ID:</b>", label_style),
+            Paragraph(safe_str(dn.get("tracking_id")), value_style),
+        ],
+        [
+            Paragraph("<b>Destination Address:</b>", label_style),
+            Paragraph(safe_str(dn.get("destination_address")), value_style),
+            Paragraph("<b>Status:</b>", label_style),
+            Paragraph(status_text, value_style),
+        ],
+    ]
+
+    details_table = Table(dn_details_data, colWidths=[110, 170, 95, 145])
+    details_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#f3f3f3")),
+        ("BOX", (0, 0), (-1, -1), 0.8, colors.HexColor("#8a8a8a")),
+        ("INNERGRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#a5a5a5")),
+        ("VALIGN", (0, 0), (-1, -1), "TOP"),
+        ("LEFTPADDING", (0, 0), (-1, -1), 6),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 6),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(details_table)
+    elements.append(Spacer(1, 16))
+
+    # ---------------------------------------------------
+    # DELIVERY NOTE ITEMS
+    # ---------------------------------------------------
+    elements.append(Paragraph("DELIVERY NOTE ITEMS", section_style))
+    elements.append(Spacer(1, 2))
+
+    items = dn.get("items", []) or []
+
+    item_data = [[
+        Paragraph("S.No", header_small_style),
+        Paragraph("Product Name", header_small_style),
+        Paragraph("Product ID", header_small_style),
+        Paragraph("Qty", header_small_style),
+        Paragraph("UOM", header_small_style),
+        Paragraph("Rate", header_small_style),
+        Paragraph("Tax %", header_small_style),
+        Paragraph("Disc %", header_small_style),
+        Paragraph("Total", header_small_style),
+    ]]
+
+    grand_total = 0.0
+    subtotal_sum = 0.0
+    total_tax_sum = 0.0
+    total_discount_sum = 0.0
+
+    for idx, item in enumerate(items, start=1):
+        product_name = safe_str(item.get("product_name"))
+        product_id = safe_str(item.get("product_id"))
+        qty = safe_float(item.get("qty"), 0.0)
+        uom = safe_str(item.get("uom"))
+        rate = safe_float(item.get("rate"), 0.0)
+        tax = safe_float(item.get("tax"), 0.0)
+        discount = safe_float(item.get("discount"), 0.0)
+
+        line_subtotal = rate * qty
+        line_tax = (line_subtotal * tax) / 100
+        line_discount = (line_subtotal * discount) / 100
+
+        total = item.get("total", None)
+        if total in (None, ""):
+            total = line_subtotal + line_tax - line_discount
+        total = safe_float(total, 0.0)
+
+        subtotal_sum += line_subtotal
+        total_tax_sum += line_tax
+        total_discount_sum += line_discount
+        grand_total += total
+
+        item_data.append([
+            Paragraph(str(idx), value_style),
+            Paragraph(product_name, value_style),
+            Paragraph(product_id, value_style),
+            Paragraph(f"{qty:.2f}".rstrip("0").rstrip("."), value_style),
+            Paragraph(uom, value_style),
+            Paragraph(f"₹{rate:.2f}", value_style),
+            Paragraph(f"{tax:.1f}%", value_style),
+            Paragraph(f"{discount:.1f}%", value_style),
+            Paragraph(f"₹{total:.2f}", value_style),
+        ])
+
+    if len(item_data) == 1:
+        item_data.append(["-", "No line items available", "-", "-", "-", "-", "-", "-", "-"])
+
+    items_table = Table(
+        item_data,
+        colWidths=[35, 135, 72, 42, 45, 58, 45, 45, 60],
+        repeatRows=1
+    )
+    items_table.setStyle(TableStyle([
+        ("BACKGROUND", (0, 0), (-1, 0), colors.HexColor("#a12828")),
+        ("TEXTCOLOR", (0, 0), (-1, 0), colors.white),
+        ("FONTNAME", (0, 0), (-1, 0), "DejaVuSans-Bold"),
+        ("FONTNAME", (0, 1), (-1, -1), "DejaVuSans"),
+        ("FONTSIZE", (0, 0), (-1, -1), 7.5),
+        ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+        ("ALIGN", (1, 1), (2, -1), "LEFT"),
+        ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ("GRID", (0, 0), (-1, -1), 0.5, colors.HexColor("#999999")),
+        ("ROWBACKGROUNDS", (0, 1), (-1, -1), [colors.white, colors.HexColor("#f7f7f7")]),
+        ("LEFTPADDING", (0, 0), (-1, -1), 4),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 4),
+        ("TOPPADDING", (0, 0), (-1, -1), 5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 5),
+    ]))
+    elements.append(items_table)
+    elements.append(Spacer(1, 16))
+
+    # ---------------------------------------------------
+    # TAX AND TOTAL SUMMARY
+    # ---------------------------------------------------
+    elements.append(Paragraph("TAX AND TOTALS SUMMARY", section_style))
+    elements.append(Spacer(1, 3))
+
+    shipping_charge = safe_float(dn.get("shipping_charge"), 0.0)
+    global_discount = safe_float(dn.get("global_discount"), 0.0)
+    final_total = grand_total + shipping_charge - global_discount
+
+    summary_data = [
+        [Paragraph("Subtotal:", value_style), Paragraph(f"₹{subtotal_sum:.2f}", value_style)],
+        [Paragraph("Total Discount (Item Level):", value_style), Paragraph(f"₹{total_discount_sum:.2f}", value_style)],
+        [Paragraph("Total Tax:", value_style), Paragraph(f"₹{total_tax_sum:.2f}", value_style)],
+        [Paragraph("Shipping Charge:", value_style), Paragraph(f"₹{shipping_charge:.2f}", value_style)],
+        [Paragraph("Global Discount:", value_style), Paragraph(f"₹{global_discount:.2f}", value_style)],
+        [Paragraph("GRAND TOTAL:", summary_white_style), Paragraph(f"₹{final_total:.2f}", summary_white_style)],
+    ]
+
+    summary_table = Table(summary_data, colWidths=[380, 120])
+    summary_table.setStyle(TableStyle([
+        ("ALIGN", (1, 0), (1, -1), "RIGHT"),
+        ("FONTNAME", (0, 0), (-1, -2), "DejaVuSans"),
+        ("FONTNAME", (0, -1), (-1, -1), "DejaVuSans-Bold"),
+        ("FONTSIZE", (0, 0), (-1, -1), 8.5),
+        ("BOTTOMPADDING", (0, 0), (-1, -1), 7),
+        ("TOPPADDING", (0, 0), (-1, -1), 7),
+        ("LEFTPADDING", (0, 0), (-1, -1), 8),
+        ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+        ("BACKGROUND", (0, -1), (-1, -1), colors.HexColor("#a12828")),
+        ("TEXTCOLOR", (0, -1), (-1, -1), colors.white),
+    ]))
+    elements.append(summary_table)
+    elements.append(Spacer(1, 18))
+
+    # ---------------------------------------------------
+    # DELIVERY NOTES
+    # ---------------------------------------------------
+    delivery_notes = safe_str(dn.get("delivery_notes"), "").strip()
+    if delivery_notes:
+        elements.append(Paragraph("Delivery Notes", section_style))
+        notes_table = Table([[Paragraph(delivery_notes, value_style)]], colWidths=[500])
+        notes_table.setStyle(TableStyle([
+            ("BOX", (0, 0), (-1, -1), 0.6, colors.HexColor("#999999")),
+            ("BACKGROUND", (0, 0), (-1, -1), colors.HexColor("#fafafa")),
+            ("LEFTPADDING", (0, 0), (-1, -1), 8),
+            ("RIGHTPADDING", (0, 0), (-1, -1), 8),
+            ("TOPPADDING", (0, 0), (-1, -1), 8),
+            ("BOTTOMPADDING", (0, 0), (-1, -1), 8),
+        ]))
+        elements.append(notes_table)
+        elements.append(Spacer(1, 12))
+
+    # ---------------------------------------------------
+    # TERMS AND CONDITIONS
+    # ---------------------------------------------------
+    elements.append(Paragraph("Terms and Conditions", section_style))
+
+    terms_list = [
+        "1. This Delivery Note is issued based on the confirmed order details.",
+        "2. Delivery will be made as per the agreed schedule.",
+        "3. Kindly verify the delivered items at the time of receipt.",
+        "4. Any shortage or damage should be reported immediately.",
+        "5. Goods once delivered will be considered accepted unless otherwise notified.",
+    ]
+
+    for term in terms_list:
+        elements.append(Paragraph(term, terms_style))
+
+    # ---------------------------------------------------
+    # BUILD PDF
+    # ---------------------------------------------------
+    doc.build(elements)
+    pdf_bytes = buffer.getvalue()
+    buffer.close()
+    return pdf_bytes
+
+# =======================================
+# Stock Reciept
+# =========================================
+ 
+@app.route('/stock-receipt')
+def stock_receipt():
+    data = [
+        {
+            "grn": "GRN-0001",
+            "po": "PO-0001",
+            "supplier": "Vasu",
+            "date": "10-01-2026",
+            "total": 20,
+            "status": "Draft",
+            "received_by": "Mandy",
+            "qc_by": "Sans"
+        },
+        {
+            "grn": "GRN-0002",
+            "po": "PO-0002",
+            "supplier": "Srinu",
+            "date": "10-01-2026",
+            "total": 20,
+            "status": "Submitted",
+            "received_by": "Mandy",
+            "qc_by": "Sans"
+        }
+    ]
+ 
+    return render_template(
+        'stock-reciept.html',   # ✅ EXACT match
+        data=data,
+        page='stock_receipt'
+    )
 
 # =========================================
 # ✅ RUN APP
 # =========================================
 if __name__ == "__main__":
+    print("Application is running successfully")
     app.run(debug=True)
