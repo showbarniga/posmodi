@@ -415,6 +415,7 @@ input[type="checkbox"] {
     padding: 10px 12px;
      overflow: hidden;
       height:  100vh; 
+       padding-bottom: 120px;
       
 
   }
@@ -438,7 +439,7 @@ input[type="checkbox"] {
   .permission-table {
     font-size: 13px;
       margin-top: 15px;
-       margin-bottom: 20px;
+       margin-bottom: 120px;
   }
 
   th, td {
