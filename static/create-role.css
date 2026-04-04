@@ -413,9 +413,14 @@ input[type="checkbox"] {
     width: 100%;
      max-width: 93%;
     padding: 16px;
-     overflow-y: auto;
+     overflow-y: hidden;
 
   }
+  .form-content {
+  flex: 1;
+  overflow-y: auto;
+}
+
 
   .form-row {
     flex-direction: column;
@@ -441,6 +446,10 @@ input[type="checkbox"] {
 
   .btn-area {
     display: flex;
+    position: sticky;
+  bottom: 0;
+  background: #fff;
+  padding: 10px;
     flex-direction: row;
     justify-content: space-between;
     gap: 12px;
