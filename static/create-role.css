@@ -412,7 +412,7 @@ input[type="checkbox"] {
     flex-direction: column;
     width: 100%;
      max-width: 93%;
-    padding: 16px;
+    padding: 10px 12px;
      overflow-y: hidden;
       height: 100vh; 
 
@@ -426,7 +426,8 @@ input[type="checkbox"] {
 
   .form-row {
     flex-direction: column;
-    gap: 15px;
+    gap: 12px;
+      margin-top: 10px;
   }
 
   .form-group {
@@ -435,6 +436,7 @@ input[type="checkbox"] {
 
   .permission-table {
     font-size: 13px;
+      margin-top: 15px;
   }
 
   th, td {
@@ -445,7 +447,10 @@ input[type="checkbox"] {
     width: 16px;
     height: 16px;
   }
-
+   .form-group label {
+  font-size: 13px;
+  margin-bottom: 3px;   /* 🔥 reduce gap */
+}
   .btn-area {
     display: flex;
     position: sticky;
