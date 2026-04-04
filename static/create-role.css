@@ -414,11 +414,13 @@ input[type="checkbox"] {
      max-width: 93%;
     padding: 16px;
      overflow-y: hidden;
+      height: 100vh; 
 
   }
   .form-content {
   flex: 1;
   overflow-y: auto;
+   padding-bottom: 20px;
 }
 
 
