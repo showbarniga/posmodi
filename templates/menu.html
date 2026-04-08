@@ -147,11 +147,37 @@
               <span>Invoice Return</span>
             </a>
           </div>
-        </div>
+       </div>
+       <!-- ========== Finance ========== -->
+         <div class="menu-group">
+          <button
+            type="button"
+            class="menu-toggle"
+            data-target="finance-submenu"
+          >
+            <span class="menu-icon">☰</span>
+            <span class="menu-text">Finance</span>
+            <span class="menu-chevron">›</span>
+          </button>
+            <div id="finance-submenu"
+               class="submenu{% if page in ['creditnote','debitnote'] %} open{% endif %}">
+            <a href="{{ url_for('creditnote') }}"
+             class="submenu-item{% if page == 'creditnote' %} active{% endif %}">
+              <span class="submenu-icon">🧾</span>
+              <span> Credit Note</span>
+            </a>
+           <a href="{{ url_for('debitnote') }}"
+           class="submenu-item{% if page == 'debitnote' %} active{% endif %}">
+            <span class="submenu-icon">🧾</span>
+            <span>Debit Note</span>
+          </a>
+      
+          </div>
+       </div>
       </nav>
     </aside>
 
-    <!-- ========== MAIN AREA ========== -->
+   <!-- ========== MAIN AREA ========== -->
     <main class="main">
       <header class="topbar">
         <div class="top-left">
@@ -169,7 +195,7 @@
               type="text"
               class="search-input"
               placeholder="Search..." />
-          </div>
+           </div>
           <!-- GLOBAL SEARCH RESULTS DROPDOWN -->
           <div class="search-results" id="searchResults"></div>
         </div>

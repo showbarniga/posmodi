@@ -1,0 +1,96 @@
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='credit-note.css') }}">
+{% endblock %}
+
+{% block content %}
+
+<div class="cn-page">
+
+    <!-- HEADER -->
+    <div class="cn-header">
+        <h2>Credit note list</h2>
+        <button class="cn-btn">Credit Note List</button>
+    </div>
+
+    <div class="cn-card">
+
+        <!-- SEARCH -->
+        <div class="cn-search-wrap">
+            <input id="search" placeholder="Search by ID number">
+        </div>
+
+        <!-- CLEAR -->
+        <div class="cn-clear-row">
+            <span id="clearBtn">Clear Filter</span>
+        </div>
+
+        <!-- FILTERS -->
+        <div class="cn-filters">
+
+            <div class="filter-box">
+                <label>Credit Notes</label>
+                <select id="typeFilter">
+                    <option value="all">All</option>
+                    <option>INV</option>
+                </select>
+            </div>
+
+            <div class="filter-box">
+                <label>Payment Status</label>
+                <select id="paymentFilter">
+                    <option value="all">All Types</option>
+                    <option>Paid</option>
+                    <option>Unpaid</option>
+                    <option>Partial</option>
+                </select>
+            </div>
+
+            <div class="filter-box">
+                <label>Received Date</label>
+                <div class="date-box">
+                    <input type="date" id="fromDate">
+                    <input type="date" id="toDate">
+                </div>
+            </div>
+
+        </div>
+
+        <!-- TABLE -->
+        <table class="cn-table">
+            <thead>
+                <tr>
+                    <th>S.No</th>
+                    <th>CRN ID</th>
+                    <th>Sales Order Ref</th>
+                    <th>Customer Name</th>
+                    <th>Credit Note Date</th>
+                    <th>Payment Date</th>
+                    <th>Status</th>
+                    <th>Payment Status</th>
+                    <th>Action</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+
+        <!-- FOOTER -->
+        <div class="cn-footer">
+            <span id="showing"></span>
+            <div class="pager">
+                <button id="prev">‹ Prev</button>
+                <span>Page <b id="pageNow">1</b> of <b id="totalPages">1</b></span>
+                <button id="next">Next ›</button>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='credit-note.js') }}" defer></script>
+{% endblock %}

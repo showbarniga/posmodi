@@ -1,0 +1,103 @@
+{% extends "menu.html" %}
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='debitnote.css') }}">
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='debitnote.js') }}" defer></script>
+{% endblock %}
+
+{% block content %}
+<div class="debitnote-page">
+  <div class="debitnote-header">
+    <h2 class="debitnote-title">Debit Note List</h2>
+  </div>
+
+  <div class="debitnote-card">
+
+    <div class="debitnote-search-section">
+      <div class="debitnote-search-wrap">
+        <input
+          type="text"
+          id="debitnoteSearch"
+          class="debitnote-search-input"
+          placeholder="Search by debitnote ID, Customer name....."
+          autocomplete="off"
+        />
+      </div>
+      <button type="button" class="debitnote-clear-btn" id="clearFilterBtn">Clear Filter</button>
+    </div>
+
+    <div class="debitnote-filters">
+
+      <div class="debitnote-filter-item">
+        <label for="statusFilter">DebitNote Status</label>
+        <select id="statusFilter" class="debitnote-select">
+          <option value="">All</option>
+          <option value="draft">Draft</option>
+          <option value="sent">Sent</option>
+          <option value="paid">Paid</option>
+          <option value="overdue">Over Due</option>
+          <option value="cancelled">Cancelled</option>
+        </select>
+      </div>
+
+      <div class="debitnote-filter-item">
+        <label for="supplierFilter">Supplier Name</label>
+        <select id="supplierFilter" class="debitnote-select">
+          <option value="">All</option>
+        </select>
+      </div>
+
+      <div class="debitnote-filter-item debitnote-date-filter">
+        <label>Debitnote Date</label>
+        <div class="debitnote-date-range">
+          <div class="debitnote-date-field">
+            <span>From</span>
+            <input type="date" id="fromDate" class="debitnote-date-input" />
+          </div>
+          <div class="debitnote-date-field">
+            <span>To</span>
+            <input type="date" id="toDate" class="debitnote-date-input" />
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="debitnote-table-wrap">
+      <table class="debitnote-table">
+        <thead>
+          <tr>
+            <th>S.No</th>
+            <th>DBN ID</th>
+            <th>PO Ref ID</th>
+            <th>Supplier Name</th>
+            <th>Debitnote Date</th>
+            <th>Status</th>
+            <th>Payment Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="debitnoteTableBody">
+          <tr id="noDataRow">
+            <td colspan="8" class="debitnote-empty">No debit notes found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="debitnote-footer">
+      <span id="showingCount">Showing 0 Entities</span>
+      <div class="debitnote-pager">
+        <button type="button" class="pager-btn" id="prevBtn">‹ Prev</button>
+        <span class="pager-text">Page <strong id="pageNow">1</strong> of <strong id="pageTotal">1</strong></span>
+        <button type="button" class="pager-btn" id="nextBtn">Next ›</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+{% endblock %}
+
+

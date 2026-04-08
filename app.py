@@ -10603,7 +10603,29 @@ def generate_sales_order_pdf_bytes(so):
     ]))
     elements.append(items_table)
     elements.append(Spacer(1, 14))
+    # =========================================
+# FINANCE — DEBIT NOTE   
+# =========================================
 
+@app.route("/debitnote")
+def debitnote():
+    return render_template(
+        "debitnote.html",
+        page="debitnote",
+        title="Debit Note"
+    )
+
+  # =========================================
+# FINANCE — CREDIT NOTE   
+# =========================================
+
+@app.route("/creditnote")
+def creditnote():
+    return render_template(
+        "credit-note.html",
+        page="creditnote",
+        title="Credit Note"
+    )
     # =========================================
     # TOTALS SUMMARY
     # =========================================

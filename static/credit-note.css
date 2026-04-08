@@ -1,0 +1,216 @@
+.cn-page {
+    background: #f6f1f1;
+    padding: 20px;
+    font-family: Poppins;
+}
+
+/* HEADER */
+.cn-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.cn-header h2 {
+    color: #a12828;
+}
+
+.cn-btn {
+    background: #a12828;
+    color: #fff;
+    padding: 8px 22px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+}
+
+/* CARD */
+.cn-card {
+    background: #fff;
+    padding: 18px;
+    border-radius: 12px;
+    margin-top: 10px;
+}
+
+/* SEARCH */
+.cn-search-wrap input {
+    width: 96%;
+    padding: 12px 18px;
+    border-radius: 30px;
+    border: 1.5px solid #a12828;
+    background: #fff5f5;
+    outline: none;
+}
+
+/* CLEAR */
+.cn-clear-row {
+    text-align: right;
+    color: #a12828;
+    font-size: 12px;
+    margin: 8px 0 12px;
+    cursor: pointer;
+}
+
+/* FILTERS */
+.cn-filters {
+    display: flex;
+    gap: 15px;
+}
+
+.filter-box {
+    flex: 1;
+}
+
+.filter-box label {
+    font-size: 16px;
+    margin-bottom: 5px;
+    display: block;
+}
+
+/* DROPDOWN FIX */
+.cn-filters select {
+    width: 100%;
+    height: 38px;
+    border-radius: 12px;
+    border: 1.5px solid #a12828;
+    background-color: #fff5f5 !important;
+    padding: 0 10px;
+    cursor: pointer;
+    transition: all 0.25s ease;
+}
+
+/* Hover + Focus */
+.cn-filters select:hover,
+.cn-filters select:focus {
+    border-color: #b9473e;
+    box-shadow: 0 4px 10px rgba(161, 40, 40, 0.12);
+    transform: scale(1.01);
+}
+
+/* Option color (limited browser support) */
+.cn-filters select option {
+    background-color: #d7aaaa;
+    color: #000;
+}
+
+/* DATE */
+.date-box {
+    display: flex;
+    border: 1.5px solid #a12828;
+    border-radius: 12px;
+    overflow: hidden;
+    height: 38px;
+    background: #fff5f5;
+}
+
+.date-box input {
+    flex: 1;
+    border: none;
+    padding: 0 10px;
+    background: transparent;
+    outline: none;
+}
+
+/* TABLE */
+.cn-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 15px;
+}
+
+.cn-table th {
+    background: #f3dede;
+    color: #7a1d1d;
+    font-size: 13px;
+}
+
+.cn-table td,
+.cn-table th {
+    padding: 10px;
+    text-align: center;
+    border-bottom: 1px solid #eee;
+}
+
+.cn-table tbody tr {
+    background: #fafafa;
+}
+
+/* BADGES */
+.badge {
+    padding: 4px 10px;
+    border-radius: 10px;
+    font-size: 11px;
+}
+
+.draft {
+    background: yellow;
+}
+
+.sent {
+    background: #8fd3b6;
+}
+
+.paid {
+    background: #1aa31a;
+    color: white;
+}
+
+.cancel {
+    background: red;
+    color: white;
+}
+
+/* ACTION ICONS */
+.action-icons i {
+    margin: 0 6px;
+    cursor: pointer;
+    color: #444;
+}
+
+.action-icons i:hover {
+    color: #a12828;
+}
+
+/* FOOTER */
+.cn-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.pager button {
+    background: #a12828;
+    color: #fff;
+    padding: 6px 14px;
+    border-radius: 6px;
+    border: none;
+    cursor: pointer;
+}
+
+/* DROPDOWN MENU */
+.dropdown {
+    position: relative;
+    display: inline-block;
+}
+
+.dropdown-menu {
+    display: none;
+    position: absolute;
+    right: 0;
+    top: 22px;
+    background: white;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    min-width: 120px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    z-index: 10;
+}
+
+.dropdown-menu div {
+    padding: 8px 12px;
+    cursor: pointer;
+}
+
+.dropdown-menu div:hover {
+    background: #f3dede;
+}
