@@ -1,276 +1,441 @@
 
-document.addEventListener("DOMContentLoaded", () => {
-  let currentPage = 1;
-  const pageSize = 5;
-  
-  // Mock data - replace with API call in production
-  const mockData = [
-    {
-      id: 1,
-      dbnId: "INV-0001",
-      poRefId: "SO-0001",
-      supplierName: "Acme Crop",
-      debitDate: "2025-01-28",
-      status: "draft",
-      paymentStatus: "Unpaid"
-    },
-    {
-      id: 2,
-      dbnId: "INV-0002",
-      poRefId: "SO-0002",
-      supplierName: "Acme Crop",
-      debitDate: "2025-01-28",
-      status: "sent",
-      paymentStatus: "Unpaid"
-    },
-    {
-      id: 3,
-      dbnId: "INV-0003",
-      poRefId: "SO-0003",
-      supplierName: "Crop",
-      debitDate: "2025-01-28",
-      status: "sent",
-      paymentStatus: "Paid"
-    },
-    {
-      id: 4,
-      dbnId: "INV-0004",
-      poRefId: "SO-0004",
-      supplierName: "Acme",
-      debitDate: "2025-01-28",
-      status: "paid",
-      paymentStatus: "Unpaid"
-    },
-    {
-      id: 5,
-      dbnId: "INV-0005",
-      poRefId: "SO-0005",
-      supplierName: "Freelance writer",
-      debitDate: "2025-01-28",
-      status: "overdue",
-      paymentStatus: "-"
-    }
-  ];
-  
-  // DOM Elements
+/* ============================================
+   DEBIT NOTE PAGE - MAIN LOGIC
+   ============================================ */
+
+(function () {
+  // ==================================================
+  // DOM ELEMENTS
+  // ==================================================
+  const addDebitNoteBtn = document.getElementById("addDebitNoteBtn");
   const searchInput = document.getElementById("debitnoteSearch");
-  const clearBtn = document.getElementById("clearFilterBtn");
+  const clearFilterBtn = document.getElementById("clearFilterBtn");
   const statusFilter = document.getElementById("statusFilter");
   const supplierFilter = document.getElementById("supplierFilter");
   const fromDate = document.getElementById("fromDate");
   const toDate = document.getElementById("toDate");
-  const tableBody = document.getElementById("debitnoteTableBody");
-  const showingCount = document.getElementById("showingCount");
+  const tbody = document.getElementById("debitnoteTableBody");
+  const noDataRow = document.getElementById("noDataRow");
   const prevBtn = document.getElementById("prevBtn");
   const nextBtn = document.getElementById("nextBtn");
   const pageNow = document.getElementById("pageNow");
   const pageTotal = document.getElementById("pageTotal");
+  const showingCount = document.getElementById("showingCount");
 
-  // Initialize supplier dropdown
-  function initializeSupplierDropdown() {
-    const suppliers = [...new Set(mockData.map(item => item.supplierName))];
-    suppliers.forEach(supplier => {
+  // ==================================================
+  // STATE
+  // ==================================================
+  const ROWS_PER_PAGE = 10;
+  let allDebitNotes = [];
+  let filteredDebitNotes = [];
+  let currentPage = 1;
+  let flyEl = null;
+  let hideTimer = null;
+
+  // ==================================================
+  // ADD DEBIT NOTE BUTTON
+  // ==================================================
+  if (addDebitNoteBtn) {
+    addDebitNoteBtn.addEventListener("click", () => {
+      // Navigate to add new debit note page
+      // Adjust the URL based on your routing
+      window.location.href = "/debitnote-new";
+    });
+  }
+
+  // ==================================================
+  // FETCH DATA
+  // ==================================================
+  async function fetchDebitNotes() {
+    try {
+      const response = await fetch("/api/debitnotes");
+      if (!response.ok) throw new Error("Failed to fetch debit notes");
+      const data = await response.json();
+      allDebitNotes = Array.isArray(data) ? data : data.debitnotes || [];
+      populateSupplierFilter();
+      applyFilters();
+    } catch (error) {
+      console.error("Error fetching debit notes:", error);
+      // Fallback to mock data for testing
+      allDebitNotes = [
+        {
+          "dbn_id": "DBN-0001",
+          "po_ref_id": "PO-0001",
+          "supplier_name": "Acme Supplies",
+          "debitnote_date": "2026-03-15",
+          "status": "draft",
+          "payment_status": "unpaid"
+        },
+        {
+          "dbn_id": "DBN-0002",
+          "po_ref_id": "PO-0002",
+          "supplier_name": "Fresh Produce Ltd",
+          "debitnote_date": "2026-03-10",
+          "status": "sent",
+          "payment_status": "paid"
+        },
+        {
+          "dbn_id": "DBN-0003",
+          "po_ref_id": "PO-0003",
+          "supplier_name": "Tech Solutions Inc",
+          "debitnote_date": "2026-03-08",
+          "status": "paid",
+          "payment_status": "paid"
+        }
+      ];
+      populateSupplierFilter();
+      applyFilters();
+    }
+  }
+
+  // ==================================================
+  // POPULATE DROPDOWN
+  // ==================================================
+  function populateSupplierFilter() {
+    if (!supplierFilter) return;
+
+    const suppliers = [...new Set(allDebitNotes.map((dn) => dn.supplier_name))];
+    suppliers.forEach((supplier) => {
       const option = document.createElement("option");
-      option.value = supplier.toLowerCase();
+      option.value = supplier;
       option.textContent = supplier;
       supplierFilter.appendChild(option);
     });
   }
 
-  // Get filtered data
-  function getFilteredData() {
-    let filtered = [...mockData];
+  // ==================================================
+  // FILTERS & SEARCH
+  // ==================================================
+  function applyFilters() {
+    const searchQuery = (searchInput?.value || "").trim().toLowerCase();
+    const status = statusFilter?.value || "";
+    const supplier = supplierFilter?.value || "";
+    const from = fromDate?.value || "";
+    const to = toDate?.value || "";
 
-    const searchTerm = searchInput.value.toLowerCase();
-    const statusValue = statusFilter.value;
-    const supplierValue = supplierFilter.value;
-    const fromDateValue = fromDate.value;
-    const toDateValue = toDate.value;
+    filteredDebitNotes = allDebitNotes.filter((dn) => {
+      const idMatch =
+        (dn.dbn_id || "").toLowerCase().includes(searchQuery) ||
+        (dn.customer_name || "").toLowerCase().includes(searchQuery);
 
-    // Search
-    if (searchTerm) {
-      filtered = filtered.filter(item => 
-        item.dbnId.toLowerCase().includes(searchTerm) ||
-        item.supplierName.toLowerCase().includes(searchTerm) ||
-        item.poRefId.toLowerCase().includes(searchTerm)
-      );
-    }
+      const statusMatch = !status || (dn.status || "") === status;
+      const supplierMatch = !supplier || (dn.supplier_name || "") === supplier;
 
-    // Status filter
-    if (statusValue) {
-      filtered = filtered.filter(item => item.status === statusValue);
-    }
+      let dateMatch = true;
+      if (from || to) {
+        const dnDate = new Date(dn.debitnote_date || "");
+        if (from) {
+          dateMatch = dateMatch && dnDate >= new Date(from);
+        }
+        if (to) {
+          dateMatch = dateMatch && dnDate <= new Date(to);
+        }
+      }
 
-    // Supplier filter
-    if (supplierValue) {
-      filtered = filtered.filter(item => 
-        item.supplierName.toLowerCase() === supplierValue
-      );
-    }
+      return idMatch && statusMatch && supplierMatch && dateMatch;
+    });
 
-    // Date range filter
-    if (fromDateValue) {
-      filtered = filtered.filter(item => item.debitDate >= fromDateValue);
-    }
-    if (toDateValue) {
-      filtered = filtered.filter(item => item.debitDate <= toDateValue);
-    }
-
-    return filtered;
+    currentPage = 1;
+    renderTable();
   }
 
-  // Get badge class based on status
-  function getStatusBadgeClass(status) {
-    switch(status) {
-      case "draft": return "debitnote-badge draft";
-      case "sent": return "debitnote-badge sent";
-      case "paid": return "debitnote-badge paid";
-      case "overdue": return "debitnote-badge overdue";
-      case "cancelled": return "debitnote-badge cancelled";
-      default: return "debitnote-badge";
+  // ==================================================
+  // EVENT LISTENERS
+  // ==================================================
+  if (searchInput) {
+    searchInput.addEventListener("input", applyFilters);
+  }
+
+  if (clearFilterBtn) {
+    clearFilterBtn.addEventListener("click", () => {
+      if (searchInput) searchInput.value = "";
+      if (statusFilter) statusFilter.value = "";
+      if (supplierFilter) supplierFilter.value = "";
+      if (fromDate) fromDate.value = "";
+      if (toDate) toDate.value = "";
+      applyFilters();
+    });
+  }
+
+  if (statusFilter) {
+    statusFilter.addEventListener("change", applyFilters);
+  }
+
+  if (supplierFilter) {
+    supplierFilter.addEventListener("change", applyFilters);
+  }
+
+  if (fromDate) {
+    fromDate.addEventListener("change", applyFilters);
+  }
+
+  if (toDate) {
+    toDate.addEventListener("change", applyFilters);
+  }
+
+  // ==================================================
+  // ACTION MENU (HOVER)
+  // ==================================================
+  function removeFly() {
+    if (flyEl) {
+      flyEl.remove();
+      flyEl = null;
     }
   }
 
-  // Get payment status class
-  function getPaymentStatusClass(status) {
-    switch(status) {
-      case "Paid": return "debitnote-payment-paid";
-      case "Unpaid": return "debitnote-payment-unpaid";
-      case "Partial": return "debitnote-payment-partial";
-      default: return "";
-    }
+  function scheduleHide() {
+    clearTimeout(hideTimer);
+    hideTimer = setTimeout(() => removeFly(), 120);
   }
 
-  // Render table
-  function render() {
-    const filteredData = getFilteredData();
-    const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
+  function keepOpen() {
+    clearTimeout(hideTimer);
+  }
 
-    // Validate current page
-    if (currentPage > totalPages) {
-      currentPage = totalPages;
+  function buildActionMenu(row, anchorBtn) {
+    const dbnId = String(row.dbn_id || "").trim();
+    if (!dbnId) return;
+
+    flyEl = document.createElement("div");
+    flyEl.className = "debitnote-action-menu";
+
+    const mkItem = (label, onClick, disabled) => {
+      const button = document.createElement("button");
+      button.type = "button";
+      button.className = "debitnote-action-item";
+      button.textContent = label;
+      button.disabled = !!disabled;
+
+      if (!disabled) {
+        button.addEventListener("click", onClick);
+      }
+
+      return button;
+    };
+
+    // Add menu items based on debit note status
+    flyEl.appendChild(mkItem("View", () => viewDebitNote(dbnId), false));
+    flyEl.appendChild(mkItem("Edit", () => editDebitNote(dbnId), false));
+    flyEl.appendChild(
+      mkItem("Delete", () => deleteDebitNote(dbnId), row.status === "paid")
+    );
+
+    flyEl.addEventListener("mouseenter", keepOpen);
+    flyEl.addEventListener("mouseleave", scheduleHide);
+
+    document.body.appendChild(flyEl);
+
+    // Position the menu
+    const btnRect = anchorBtn.getBoundingClientRect();
+
+    flyEl.style.visibility = "hidden";
+    flyEl.style.left = "0px";
+    flyEl.style.top = "0px";
+
+    const popRect = flyEl.getBoundingClientRect();
+    const gap = 8;
+    const dropY = 25;
+
+    let top = btnRect.top - popRect.height - gap + dropY;
+    if (top < 8) {
+      top = btnRect.bottom + gap + dropY;
     }
-    if (currentPage < 1) {
-      currentPage = 1;
-    }
 
-    // Update pagination display
-    pageNow.textContent = currentPage;
-    pageTotal.textContent = totalPages;
+    let left = btnRect.right - popRect.width;
+    const maxLeft = window.innerWidth - popRect.width - 8;
 
-    // Clear table
-    tableBody.innerHTML = "";
+    if (left > maxLeft) left = maxLeft;
+    if (left < 8) left = 8;
 
-    const startIndex = (currentPage - 1) * pageSize;
-    const endIndex = startIndex + pageSize;
-    const pageData = filteredData.slice(startIndex, endIndex);
+    flyEl.style.left = `${Math.round(left)}px`;
+    flyEl.style.top = `${Math.round(top)}px`;
+    flyEl.style.visibility = "visible";
+  }
 
-    if (pageData.length === 0) {
-      const noDataRow = document.createElement("tr");
-      noDataRow.innerHTML = `<td colspan="8" class="debitnote-empty">No debit notes found</td>`;
-      tableBody.appendChild(noDataRow);
-    } else {
-      pageData.forEach((item, index) => {
-        const row = document.createElement("tr");
-        row.innerHTML = `
-          <td>${startIndex + index + 1}</td>
-          <td>${item.dbnId}</td>
-          <td>${item.poRefId}</td>
-          <td>${item.supplierName}</td>
-          <td>${item.debitDate}</td>
-          <td><span class="${getStatusBadgeClass(item.status)}">${item.status}</span></td>
-          <td><span class="${getPaymentStatusClass(item.paymentStatus)}">${item.paymentStatus}</span></td>
-          <td>
-            <div class="debitnote-action-icons">
-              <button class="debitnote-action-icon" title="View" onclick="viewDebitnote('${item.dbnId}')">👁️</button>
-              <button class="debitnote-action-icon" title="Edit" onclick="editDebitnote('${item.dbnId}')">✏️</button>
-              <button class="debitnote-action-icon" title="Delete" onclick="deleteDebitnote('${item.dbnId}')">☰</button>
-            </div>
-          </td>
-        `;
-        tableBody.appendChild(row);
+  function attachActionMenu(btn, row) {
+    btn.addEventListener("mouseenter", () => {
+      removeFly();
+      keepOpen();
+      buildActionMenu(row, btn);
+    });
+
+    btn.addEventListener("mouseleave", scheduleHide);
+  }
+
+  // ==================================================
+  // ACTION HANDLERS
+  // ==================================================
+  function viewDebitNote(dbnId) {
+    // Navigate to view debit note page
+    window.location.href = `/debitnote-view/${dbnId}`;
+  }
+
+  function editDebitNote(dbnId) {
+    // Navigate to edit debit note page
+    window.location.href = `/debitnote-edit/${dbnId}`;
+  }
+
+  function deleteDebitNote(dbnId) {
+    if (!confirm("Are you sure you want to delete this debit note?")) return;
+
+    fetch(`/api/debitnotes/${dbnId}`, { method: "DELETE" })
+      .then((response) => {
+        if (!response.ok) throw new Error("Delete failed");
+        fetchDebitNotes();
+      })
+      .catch((error) => {
+        console.error("Error deleting debit note:", error);
+        alert("Failed to delete debit note");
       });
-    }
-
-    // Update showing count
-    showingCount.textContent = `Showing ${pageData.length} Entities`;
-
-    // Update button states
-    prevBtn.disabled = currentPage === 1;
-    nextBtn.disabled = currentPage === totalPages;
   }
 
-  // Event listeners
-  searchInput.addEventListener("input", () => {
-    currentPage = 1;
-    render();
-  });
+  // ==================================================
+  // HELPER FUNCTIONS
+  // ==================================================
+  function safeText(text) {
+    return String(text || "").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  }
 
-  statusFilter.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
+  function getStatusClass(status) {
+    const statusLower = (status || "").toLowerCase();
+    return `debitnote-badge ${statusLower}`;
+  }
 
-  supplierFilter.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
+  function getPaymentStatusClass(paymentStatus) {
+    const ps = (paymentStatus || "").toLowerCase();
+    if (ps === "paid") return "debitnote-payment-paid";
+    if (ps === "partial") return "debitnote-payment-partial";
+    return "debitnote-payment-unpaid";
+  }
 
-  fromDate.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
+  function totalPages() {
+    return Math.max(1, Math.ceil(filteredDebitNotes.length / ROWS_PER_PAGE));
+  }
 
-  toDate.addEventListener("change", () => {
-    currentPage = 1;
-    render();
-  });
-
-  clearBtn.addEventListener("click", () => {
-    searchInput.value = "";
-    statusFilter.value = "";
-    supplierFilter.value = "";
-    fromDate.value = "";
-    toDate.value = "";
-    currentPage = 1;
-    render();
-  });
-
-  prevBtn.addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      render();
+  function updateShowing() {
+    const total = filteredDebitNotes.length;
+    if (showingCount) {
+      showingCount.textContent = `Showing ${total} Entit${total !== 1 ? "ies" : "y"}`;
     }
-  });
+  }
 
-  nextBtn.addEventListener("click", () => {
-    const filteredData = getFilteredData();
-    const totalPages = Math.ceil(filteredData.length / pageSize) || 1;
-    if (currentPage < totalPages) {
-      currentPage++;
-      render();
+  function updatePagerUI() {
+    if (prevBtn) {
+      prevBtn.disabled = currentPage <= 1;
     }
-  });
-
-  // Action functions
-  window.viewDebitnote = (id) => {
-    console.log("View debitnote:", id);
-    alert("View functionality coming soon for: " + id);
-  };
-
-  window.editDebitnote = (id) => {
-    console.log("Edit debitnote:", id);
-    alert("Edit functionality coming soon for: " + id);
-  };
-
-  window.deleteDebitnote = (id) => {
-    console.log("Delete debitnote:", id);
-    if (confirm("Are you sure you want to delete: " + id + "?")) {
-      alert("Delete functionality coming soon for: " + id);
+    if (nextBtn) {
+      nextBtn.disabled = currentPage >= totalPages();
     }
-  };
+    if (pageNow) {
+      pageNow.textContent = currentPage;
+    }
+    if (pageTotal) {
+      pageTotal.textContent = totalPages();
+    }
+  }
 
-  // Initialize
-  initializeSupplierDropdown();
-  render();
-});
+  // ==================================================
+  // TABLE RENDERING
+  // ==================================================
+  function renderTable() {
+    if (!tbody) return;
+
+    tbody.innerHTML = "";
+
+    if (!filteredDebitNotes.length) {
+      if (noDataRow) {
+        tbody.appendChild(noDataRow);
+      }
+      currentPage = 1;
+      updateShowing();
+      updatePagerUI();
+      return;
+    }
+
+    const tp = totalPages();
+    currentPage = Math.min(Math.max(1, currentPage), tp);
+
+    const start = (currentPage - 1) * ROWS_PER_PAGE;
+    const end = start + ROWS_PER_PAGE;
+    const pageRows = filteredDebitNotes.slice(start, end);
+
+    if (noDataRow?.parentNode) {
+      noDataRow.remove();
+    }
+
+    // Add S.No starting from 1
+    let sNo = start + 1;
+
+    pageRows.forEach((dn) => {
+      const dbnId = String(dn.dbn_id || "").trim();
+
+      const tr = document.createElement("tr");
+
+      tr.innerHTML = `
+        <td>${sNo}</td>
+        <td>${safeText(dbnId)}</td>
+        <td>${safeText(dn.po_ref_id || "N/A")}</td>
+        <td>${safeText(dn.supplier_name || "")}</td>
+        <td>${safeText(dn.debitnote_date || "")}</td>
+        <td>
+          <span class="${getStatusClass(dn.status)}">
+            ${safeText(dn.status || "")}
+          </span>
+        </td>
+        <td>
+          <span class="${getPaymentStatusClass(dn.payment_status)}">
+            ${safeText(dn.payment_status || "")}
+          </span>
+        </td>
+        <td class="debitnote-action-cell">
+          <button
+            type="button"
+            class="debitnote-action-dots"
+            aria-label="Actions"
+            ${dbnId ? "" : "disabled"}
+          >
+            ⋮
+          </button>
+        </td>
+      `;
+
+      const dots = tr.querySelector(".debitnote-action-dots");
+      if (dots && dbnId) {
+        attachActionMenu(dots, dn);
+      }
+
+      tbody.appendChild(tr);
+      sNo++;
+    });
+
+    updateShowing();
+    updatePagerUI();
+  }
+
+  // ==================================================
+  // PAGINATION
+  // ==================================================
+  if (prevBtn) {
+    prevBtn.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderTable();
+      }
+    });
+  }
+
+  if (nextBtn) {
+    nextBtn.addEventListener("click", () => {
+      if (currentPage < totalPages()) {
+        currentPage++;
+        renderTable();
+      }
+    });
+  }
+
+  // ==================================================
+  // INITIALIZE
+  // ==================================================
+  fetchDebitNotes();
+})();
+

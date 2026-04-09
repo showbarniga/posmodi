@@ -1,0 +1,57 @@
+[
+  {
+    "dbn_id": "DBN-0001",
+    "po_ref_id": "PO-0001",
+    "supplier_name": "Acme Supplies",
+    "debitnote_date": "2026-03-15",
+    "status": "draft",
+    "payment_status": "unpaid",
+    "amount": 2500.00,
+    "reason": "Damaged goods received",
+    "notes": "Received 5 damaged rice bags"
+  },
+  {
+    "dbn_id": "DBN-0002",
+    "po_ref_id": "PO-0002",
+    "supplier_name": "Fresh Produce Ltd",
+    "debitnote_date": "2026-03-10",
+    "status": "sent",
+    "payment_status": "paid",
+    "amount": 1200.00,
+    "reason": "Short delivery",
+    "notes": "Missing 3 crates of vegetables"
+  },
+  {
+    "dbn_id": "DBN-0003",
+    "po_ref_id": "PO-0003",
+    "supplier_name": "Tech Solutions Inc",
+    "debitnote_date": "2026-03-08",
+    "status": "paid",
+    "payment_status": "paid",
+    "amount": 5000.00,
+    "reason": "Defective electronics",
+    "notes": "Returned faulty laptops"
+  },
+  {
+    "dbn_id": "DBN-0004",
+    "po_ref_id": "PO-0004",
+    "supplier_name": "Office Supplies Co",
+    "debitnote_date": "2026-03-05",
+    "status": "overdue",
+    "payment_status": "unpaid",
+    "amount": 800.00,
+    "reason": "Wrong items delivered",
+    "notes": "Received pens instead of notebooks"
+  },
+  {
+    "dbn_id": "DBN-0005",
+    "po_ref_id": "PO-0005",
+    "supplier_name": "Packaging Corp",
+    "debitnote_date": "2026-03-01",
+    "status": "cancelled",
+    "payment_status": "unpaid",
+    "amount": 1500.00,
+    "reason": "Quality issues",
+    "notes": "Packaging material was substandard"
+  }
+]

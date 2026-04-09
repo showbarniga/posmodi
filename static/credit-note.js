@@ -5,6 +5,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
     const data = [];
 
+    // SAMPLE DATA
     for (let i = 1; i <= 30; i++) {
         data.push({
             id: `INV-${String(i).padStart(4, '0')}`,
@@ -27,28 +28,24 @@ document.addEventListener("DOMContentLoaded", () => {
         const from = document.getElementById("fromDate").value;
         const to = document.getElementById("toDate").value;
 
-        // 🔍 SEARCH
         if (search) {
-            filtered = filtered.filter(d => d.id.toLowerCase().includes(search));
+            filtered = filtered.filter(d =>
+                d.id.toLowerCase().includes(search) ||
+                d.name.toLowerCase().includes(search)
+            );
         }
 
-        // 📌 TYPE FILTER
+        // ✅ FIXED FILTER
         if (type !== "all") {
-            filtered = filtered.filter(d => d.id.startsWith(type));
+            filtered = filtered.filter(d => d.status === type);
         }
 
-        // 💰 PAYMENT FILTER
         if (payment !== "all") {
             filtered = filtered.filter(d => d.pay === payment);
         }
 
-        // 📅 DATE FILTER
-        if (from) {
-            filtered = filtered.filter(d => d.date >= from);
-        }
-        if (to) {
-            filtered = filtered.filter(d => d.date <= to);
-        }
+        if (from) filtered = filtered.filter(d => d.date >= from);
+        if (to) filtered = filtered.filter(d => d.date <= to);
 
         return filtered;
     }
@@ -69,34 +66,54 @@ document.addEventListener("DOMContentLoaded", () => {
         const rows = filteredData.slice(start, start + size);
 
         rows.forEach((r, i) => {
-            tbody.innerHTML += `
-<tr>
-<td>${start + i + 1}</td>
-<td>${r.id}</td>
-<td>${r.so}</td>
-<td>${r.name}</td>
-<td>${r.date}</td>
-<td>${r.date}</td>
-<td><span class="badge ${r.status}">${r.status}</span></td>
-<td>${r.pay}</td>
-<td>
-<div class="dropdown">
-    <i class="fa-solid fa-ellipsis-vertical menu-btn"></i>
-    <div class="dropdown-menu">
-        <div onclick="viewItem('${r.id}')">View</div>
-        <div onclick="editItem('${r.id}')">Edit</div>
-        <div onclick="deleteItem('${r.id}')">Delete</div>
-    </div>
-</div>
-</td>
-</tr>`;
+
+            const tr = document.createElement("tr");
+
+            tr.innerHTML = `
+                <td>${start + i + 1}</td>
+                <td>${r.id}</td>
+                <td>${r.so}</td>
+                <td>${r.name}</td>
+                <td>${r.date}</td>
+                <td>${r.date}</td>
+                <td><span class="badge ${r.status}">${r.status}</span></td>
+                <td>${r.pay}</td>
+                <td>
+                    <div class="dropdown">
+                        <button class="menu-btn">⋮</button>
+                        <div class="dropdown-menu">
+                            <div class="view">View</div>
+                            <div class="edit">Edit</div>
+                            <div class="delete">Delete</div>
+                        </div>
+                    </div>
+                </td>
+            `;
+
+            tbody.appendChild(tr);
+
+            const menuBtn = tr.querySelector(".menu-btn");
+            const menu = tr.querySelector(".dropdown-menu");
+
+            menuBtn.onclick = (e) => {
+                e.stopPropagation();
+                document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
+                menu.style.display = "block";
+            };
+
+            tr.querySelector(".view").onclick = () => alert("View: " + r.id);
+            tr.querySelector(".edit").onclick = () => alert("Edit: " + r.id);
+            tr.querySelector(".delete").onclick = () => alert("Delete: " + r.id);
         });
 
         document.getElementById("showing").innerText =
             `Showing ${rows.length} of ${filteredData.length}`;
     }
 
-    // EVENTS
+    document.addEventListener("click", () => {
+        document.querySelectorAll(".dropdown-menu").forEach(m => m.style.display = "none");
+    });
+
     document.getElementById("search").oninput = () => { page = 1; render(); };
     document.getElementById("typeFilter").onchange = () => { page = 1; render(); };
     document.getElementById("paymentFilter").onchange = () => { page = 1; render(); };
@@ -104,15 +121,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("toDate").onchange = () => { page = 1; render(); };
 
     document.getElementById("prev").onclick = () => {
-        if (page > 1) {
-            page--;
-            render();
-        }
+        if (page > 1) { page--; render(); }
     };
 
     document.getElementById("next").onclick = () => {
-        page++;
-        render();
+        const total = Math.ceil(getFilteredData().length / size);
+        if (page < total) { page++; render(); }
     };
 
     document.getElementById("clearBtn").onclick = () => {
@@ -124,23 +138,6 @@ document.addEventListener("DOMContentLoaded", () => {
         page = 1;
         render();
     };
-
-    // ACTION FUNCTIONS
-    window.viewItem = (id) => alert("View: " + id);
-    window.editItem = (id) => alert("Edit: " + id);
-    window.deleteItem = (id) => alert("Delete: " + id);
-
-    // DROPDOWN TOGGLE
-    document.addEventListener("click", function (e) {
-        document.querySelectorAll(".dropdown-menu").forEach(menu => {
-            menu.style.display = "none";
-        });
-
-        if (e.target.classList.contains("menu-btn")) {
-            const menu = e.target.nextElementSibling;
-            menu.style.display = "block";
-        }
-    });
 
     render();
 });

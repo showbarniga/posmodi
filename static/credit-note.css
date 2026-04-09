@@ -4,7 +4,6 @@
     font-family: Poppins;
 }
 
-/* HEADER */
 .cn-header {
     display: flex;
     justify-content: space-between;
@@ -24,7 +23,6 @@
     cursor: pointer;
 }
 
-/* CARD */
 .cn-card {
     background: #fff;
     padding: 18px;
@@ -32,7 +30,6 @@
     margin-top: 10px;
 }
 
-/* SEARCH */
 .cn-search-wrap input {
     width: 96%;
     padding: 12px 18px;
@@ -42,7 +39,15 @@
     outline: none;
 }
 
-/* CLEAR */
+/* HOVER EFFECT */
+.cn-search-wrap input:hover,
+.cn-filters select:hover {
+    border-color: #b9473e;
+    box-shadow: 0 4px 10px rgba(161, 40, 40, 0.12);
+    transform: scale(1.01);
+    transition: 0.25s ease-in-out;
+}
+
 .cn-clear-row {
     text-align: right;
     color: #a12828;
@@ -51,7 +56,6 @@
     cursor: pointer;
 }
 
-/* FILTERS */
 .cn-filters {
     display: flex;
     gap: 15px;
@@ -67,7 +71,7 @@
     display: block;
 }
 
-/* DROPDOWN FIX */
+/* SELECT STYLE */
 .cn-filters select {
     width: 100%;
     height: 38px;
@@ -75,25 +79,14 @@
     border: 1.5px solid #a12828;
     background-color: #fff5f5 !important;
     padding: 0 10px;
-    cursor: pointer;
-    transition: all 0.25s ease;
 }
 
-/* Hover + Focus */
-.cn-filters select:hover,
-.cn-filters select:focus {
-    border-color: #b9473e;
-    box-shadow: 0 4px 10px rgba(161, 40, 40, 0.12);
-    transform: scale(1.01);
-}
-
-/* Option color (limited browser support) */
+/* OPTION COLOR */
 .cn-filters select option {
     background-color: #d7aaaa;
     color: #000;
 }
 
-/* DATE */
 .date-box {
     display: flex;
     border: 1.5px solid #a12828;
@@ -108,10 +101,8 @@
     border: none;
     padding: 0 10px;
     background: transparent;
-    outline: none;
 }
 
-/* TABLE */
 .cn-table {
     width: 100%;
     border-collapse: collapse;
@@ -121,7 +112,6 @@
 .cn-table th {
     background: #f3dede;
     color: #7a1d1d;
-    font-size: 13px;
 }
 
 .cn-table td,
@@ -131,11 +121,6 @@
     border-bottom: 1px solid #eee;
 }
 
-.cn-table tbody tr {
-    background: #fafafa;
-}
-
-/* BADGES */
 .badge {
     padding: 4px 10px;
     border-radius: 10px;
@@ -151,7 +136,7 @@
 }
 
 .paid {
-    background: #1aa31a;
+    background: green;
     color: white;
 }
 
@@ -160,37 +145,16 @@
     color: white;
 }
 
-/* ACTION ICONS */
-.action-icons i {
-    margin: 0 6px;
-    cursor: pointer;
-    color: #444;
-}
-
-.action-icons i:hover {
-    color: #a12828;
-}
-
-/* FOOTER */
-.cn-footer {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 12px;
-}
-
-.pager button {
-    background: #a12828;
-    color: #fff;
-    padding: 6px 14px;
-    border-radius: 6px;
+.menu-btn {
     border: none;
+    background: transparent;
+    color: #a12828;
+    font-size: 18px;
     cursor: pointer;
 }
 
-/* DROPDOWN MENU */
 .dropdown {
     position: relative;
-    display: inline-block;
 }
 
 .dropdown-menu {
@@ -202,15 +166,26 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     min-width: 120px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-    z-index: 10;
 }
 
 .dropdown-menu div {
-    padding: 8px 12px;
+    padding: 8px;
     cursor: pointer;
 }
 
 .dropdown-menu div:hover {
     background: #f3dede;
+}
+
+.cn-footer {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 12px;
+}
+
+.pager button {
+    background: #a12828;
+    color: #fff;
+    border: none;
+    padding: 6px 14px;
 }
