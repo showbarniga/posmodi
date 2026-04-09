@@ -124,6 +124,7 @@ os.makedirs(ATTACHMENTS_FOLDER, exist_ok=True)
 HOLD_FILE = os.path.join(app.root_path, "Hold-Billing.json")
 SALES_ORDERS_FILE = os.path.join(app.root_path, "sales_orders.json")
 DELIVERY_NOTE_FILE = os.path.join(app.root_path, "deliverynotes.json")
+DEBIT_NOTES_FILE = os.path.join(app.root_path, "debitnotes.json")
 
 
 
@@ -10932,6 +10933,26 @@ def save_delivery_notes(data):
         json.dump(data, f, indent=2)
 
 
+# Debit Notes JSON Storage
+# -----------------------------------------
+def load_debit_notes():
+    if not os.path.exists(DEBIT_NOTES_FILE):
+        with open(DEBIT_NOTES_FILE, "w", encoding="utf-8") as f:
+            json.dump([], f)
+        return []
+
+    with open(DEBIT_NOTES_FILE, "r", encoding="utf-8") as f:
+        try:
+            return json.load(f)
+        except json.JSONDecodeError:
+            return []
+
+
+def save_debit_notes(data):
+    with open(DEBIT_NOTES_FILE, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2)
+
+
 # -----------------------------------------
 # Next DN ID generator (DN-0001 format)
 # -----------------------------------------
@@ -11244,6 +11265,35 @@ def delivery_note_print(dn_id):
     if not dn:
         return "DN not found", 404
     return render_template("delivery-note-pdf.html", dn=dn)
+
+# =========================================
+# DEBIT NOTE - API (List)
+# =========================================
+
+@app.route("/api/debitnotes", methods=["GET"])
+def api_debit_notes():
+    notes = load_debit_notes()
+    return jsonify(notes)
+
+# =========================================
+# DEBIT NOTE - API (Get One + Delete)
+# =========================================
+
+@app.route("/api/debitnotes/<dbn_id>", methods=["GET", "DELETE"])
+def api_debit_note_one(dbn_id):
+    notes = load_debit_notes()
+    note_idx = next((i for i, x in enumerate(notes) if x.get("dbn_id") == dbn_id), None)
+
+    if note_idx is None:
+        return jsonify({"success": False, "message": "Debit Note not found"}), 404
+
+    if request.method == "GET":
+        return jsonify(notes[note_idx])
+
+    if request.method == "DELETE":
+        deleted_note = notes.pop(note_idx)
+        save_debit_notes(notes)
+        return jsonify({"success": True, "message": "Debit Note deleted", "data": deleted_note})
 
 # =========================================
 # ✅ RUN APP

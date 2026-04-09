@@ -1,52 +1,49 @@
 {% extends "menu.html" %}
-
+ 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='credit-note.css') }}">
 {% endblock %}
-
+ 
 {% block content %}
-
 <div class="cn-page">
-
-    <!-- HEADER -->
+ 
     <div class="cn-header">
-        <h2>Credit note list</h2>
-        <button class="cn-btn">Credit Note List</button>
+        <h2>Credit Note</h2>
+        <button class="cn-btn">+Add Credit Note</button>
     </div>
-
+ 
     <div class="cn-card">
-
-        <!-- SEARCH -->
+ 
         <div class="cn-search-wrap">
-            <input id="search" placeholder="Search by ID number">
+            <input id="search" placeholder="Search by ID or Name">
         </div>
-
-        <!-- CLEAR -->
+ 
         <div class="cn-clear-row">
             <span id="clearBtn">Clear Filter</span>
         </div>
-
-        <!-- FILTERS -->
+ 
         <div class="cn-filters">
-
             <div class="filter-box">
                 <label>Credit Notes</label>
                 <select id="typeFilter">
                     <option value="all">All</option>
-                    <option>INV</option>
+                    <option value="draft">Draft</option>
+                    <option value="sent">Sent</option>
+                    <option value="paid">Paid</option>
+                    <option value="cancel">Cancel</option>
                 </select>
             </div>
-
+ 
             <div class="filter-box">
                 <label>Payment Status</label>
                 <select id="paymentFilter">
-                    <option value="all">All Types</option>
-                    <option>Paid</option>
-                    <option>Unpaid</option>
-                    <option>Partial</option>
+                    <option value="all">All</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                    <option value="Partial">Partial</option>
                 </select>
             </div>
-
+ 
             <div class="filter-box">
                 <label>Received Date</label>
                 <div class="date-box">
@@ -54,10 +51,8 @@
                     <input type="date" id="toDate">
                 </div>
             </div>
-
         </div>
-
-        <!-- TABLE -->
+ 
         <table class="cn-table">
             <thead>
                 <tr>
@@ -74,8 +69,7 @@
             </thead>
             <tbody id="tbody"></tbody>
         </table>
-
-        <!-- FOOTER -->
+ 
         <div class="cn-footer">
             <span id="showing"></span>
             <div class="pager">
@@ -84,13 +78,12 @@
                 <button id="next">Next ›</button>
             </div>
         </div>
-
+ 
     </div>
-
 </div>
-
+ 
 {% endblock %}
-
+ 
 {% block extra_js %}
 <script src="{{ url_for('static', filename='credit-note.js') }}" defer></script>
 {% endblock %}
