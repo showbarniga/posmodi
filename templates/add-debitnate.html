@@ -1,0 +1,227 @@
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='add-debitnote.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="add-debitnote-page">
+  <div class="page-title-bar">
+    <h2>Debit Note</h2>
+  </div>
+
+  <form class="debitnote-form" method="POST" action="/save-debitnote">
+    <section class="section-card debitnote-card">
+      <div class="card-header">
+        <h3>Debit Note</h3>
+      </div>
+
+      <div class="card-grid">
+        <div class="form-group">
+          <label>Debit Note ID <span class="hint">(Auto Generate)</span></label>
+          <input type="text" name="debit_note_id" placeholder="Auto Generate" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Debit Note Date <span class="required">*</span></label>
+          <input type="date" name="debit_note_date" required>
+        </div>
+
+        <div class="form-group">
+          <label>Customer Information</label>
+          <select name="customer_id">
+            <option value="">Select Customer</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Created By <span class="required">*</span></label>
+          <select name="created_by" required>
+            <option value="">Select User</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Branch/Location <span class="required">*</span></label>
+          <select name="branch_location" required>
+            <option value="">Select Branch</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Currency <span class="required">*</span></label>
+          <select name="currency" required>
+            <option value="">Select Currency</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card supplier-card">
+      <div class="card-header">
+        <h3>Supplier Information</h3>
+      </div>
+
+      <div class="card-grid">
+        <div class="form-group">
+          <label>Supplier ID</label>
+          <input type="text" name="supplier_id" placeholder="Auto Generate" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Currency</label>
+          <input type="text" name="supplier_currency" placeholder="Select Currency" readonly>
+        </div>
+
+        <div class="form-group">
+          <label>Bureau/Location <span class="required">*</span></label>
+          <select name="supplier_branch" required>
+            <option value="">Select Branch</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Currency <span class="required">*</span></label>
+          <select name="supplier_currency_select" required>
+            <option value="">Select Currency</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="section-card returned-items-card">
+      <div class="card-header">
+        <h3>Returned Line Items</h3>
+      </div>
+
+      <div class="table-responsive">
+        <table class="line-items-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Product Name</th>
+              <th>Product ID</th>
+              <th>UOM</th>
+              <th>Returned Quantity</th>
+              <th>UOM</th>
+              <th>Rate (₹)</th>
+              <th>Tax (%)</th>
+              <th>Total</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>1</td>
+              <td><input type="text" name="product_name_1" value="T-shirtEdit"></td>
+              <td><input type="text" name="product_id_1" value="CT101"></td>
+              <td><input type="text" name="uom_1" value="PCS"></td>
+              <td><input type="number" name="returned_qty_1" value="10" min="0"></td>
+              <td><input type="text" name="uom2_1" value="PCS"></td>
+              <td><input type="number" name="rate_1" value="120.0" step="0.01"></td>
+              <td><input type="number" name="tax_1" value="20" step="0.01"></td>
+              <td><input type="text" name="total_1" value="₹1,009" readonly></td>
+            </tr>
+            <tr>
+              <td>2</td>
+              <td><input type="text" name="product_name_2" value="T-shirtEdit"></td>
+              <td><input type="text" name="product_id_2" value="CT101"></td>
+              <td><input type="text" name="uom_2" value="PCS"></td>
+              <td><input type="number" name="returned_qty_2" value="10" min="0"></td>
+              <td><input type="text" name="uom2_2" value="PCS"></td>
+              <td><input type="number" name="rate_2" value="120.0" step="0.01"></td>
+              <td><input type="number" name="tax_2" value="20" step="0.01"></td>
+              <td><input type="text" name="total_2" value="₹1,009" readonly></td>
+            </tr>
+            <tr>
+              <td>3</td>
+              <td><input type="text" name="product_name_3" value="T-shirtEdit"></td>
+              <td><input type="text" name="product_id_3" value="CT101"></td>
+              <td><input type="text" name="uom_3" value="PCS"></td>
+              <td><input type="number" name="returned_qty_3" value="10" min="0"></td>
+              <td><input type="text" name="uom2_3" value="PCS"></td>
+              <td><input type="number" name="rate_3" value="120.0" step="0.01"></td>
+              <td><input type="number" name="tax_3" value="20" step="0.01"></td>
+              <td><input type="text" name="total_3" value="₹1,009" readonly></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="summary-row">
+        <span>Purchase Total</span>
+        <strong>₹4,418</strong>
+      </div>
+    </section>
+
+    <section class="section-card payment-card">
+      <div class="card-header">
+        <h3>Payment & Refund Details</h3>
+      </div>
+
+      <div class="tabs">
+        <button type="button" class="tab active" data-tab="comments">Comments</button>
+        <button type="button" class="tab" data-tab="history">History</button>
+        <button type="button" class="tab" data-tab="attachments">Attachments</button>
+      </div>
+
+      <div class="tab-panels">
+        <div class="tab-panel active" id="comments">
+          <div class="comment-box">
+            <label>Add Comment...</label>
+            <textarea name="comment" placeholder="Enter your comments..."></textarea>
+            <button type="button" class="btn btn-secondary">+ Add Comment</button>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="history">
+          <div class="history-item">
+            <div class="history-avatar">M</div>
+            <div class="history-text">
+              <strong>Mandy</strong>
+              <span>May 2, 2025, 09:45 AM</span>
+              <p>Discussed discount approval with manager.</p>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-avatar">D</div>
+            <div class="history-text">
+              <strong>Director</strong>
+              <span>May 3, 2025, 11:45 AM</span>
+              <p>Discussed discount approval with manager.</p>
+            </div>
+          </div>
+          <div class="history-item">
+            <div class="history-avatar">R</div>
+            <div class="history-text">
+              <strong>Rose</strong>
+              <span>May 3, 2025, 12:49 AM</span>
+              <p>Customer asked for delivery date confirmation.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="tab-panel" id="attachments">
+          <div class="attachment-placeholder">
+            <p>Drag & drop files here or browse to upload attachments</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="form-actions">
+        <div class="left-actions">
+          <button type="button" class="btn btn-outline">Cancel Debit Note</button>
+          <button type="button" class="btn btn-outline">Cancel</button>
+        </div>
+        <div class="right-actions">
+          <button type="button" class="btn btn-secondary">Save Draft</button>
+          <button type="submit" class="btn btn-primary">Mark as Settled</button>
+        </div>
+      </div>
+    </section>
+  </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='sdd-debitnote.js') }}" defer></script>
+{% endblock %}

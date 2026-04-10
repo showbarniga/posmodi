@@ -10616,6 +10616,18 @@ def debitnote():
         title="Debit Note"
     )
 
+@app.route("/debitnote-new")
+def new_debitnote():
+    return render_template(
+        "add-debitnate.html",
+        page="debitnote",
+        title="Add Debit Note"
+    )
+
+@app.route("/add-debitnote")
+def add_debitnote_alias():
+    return redirect(url_for("new_debitnote"))
+
   # =========================================
 # FINANCE — CREDIT NOTE   
 # =========================================
