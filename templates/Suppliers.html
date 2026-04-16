@@ -1,0 +1,115 @@
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='Suppliers.css') }}">
+{% endblock %}
+
+{% block content %}
+
+
+
+<div class="supplier-page">
+
+  <!-- Header -->
+  <div class="supplier-header">
+    <h2>Supplier Master</h2>
+    <button class="btn-primary">+ New Supplier</button>
+  </div>
+
+  <!-- Search + Clear Filter -->
+  <div class="top-controls">
+    <div class="supplier-search">
+      <input type="text" placeholder="Search by ID number">
+    </div>
+    <button class="clear-filter" id="clearFilterBtn" type="button">Clear Filter</button>
+  </div>
+
+  <!-- Filters -->
+  <div class="supplier-filters">
+
+    <div class="filter-box">
+      <label>Status</label>
+      <select>
+        <option>All</option>
+        <option>Active</option>
+        <option>Inactive</option>
+      </select>
+    </div>
+
+    <div class="filter-box">
+      <label>Supplier Type</label>
+      <select>
+        <option>All Types</option>
+      </select>
+    </div>
+
+    <div class="filter-box">
+      <label>Supplier Tier</label>
+      <select>
+        <option>All Types</option>
+      </select>
+    </div>
+
+  </div>
+
+  <!-- Table -->
+  <div class="table-container">
+    <div class="table-wrap">
+      <table>
+      <thead>
+        <tr>
+          <th>S.No</th>
+          <th>Supplier ID</th>
+          <th>Supplier Name</th>
+          <th>Created Date</th>
+          <th>Status</th>
+          <th>Supplier Type</th>
+          <th>Action</th>
+        </tr>
+      </thead>
+
+      
+       <tbody>
+        {% if suppliers %}
+          {% for supplier in suppliers %}
+         <tr>
+          <td>{{ loop.index }}</td>
+           <td>{{ supplier.id }}</td>
+          <td>{{ supplier.name }}</td>
+          <td>{{ supplier.created_date or '-' }}</td>
+          <td>{{ supplier.status }}</td>
+          <td>{{ supplier.type }}</td>
+           <td>
+          <button class="btn-edit">Edit</button>
+          <button class="btn-delete">Delete</button>
+        </td>
+       </tr>
+        {% endfor %}
+      {% else %}
+      <tr>
+    <td colspan="7" class="empty">No suppliers found</td>
+  </tr>
+{% endif %}
+
+      </tbody>
+    </table>
+    </div>
+  </div>
+
+  <!-- Footer -->
+  <div class="table-footer">
+    <span>Showing 5 Entities</span>
+
+    <div class="pagination">
+      <button>Prev</button>
+      <span>Page 1 of 10</span>
+      <button>Next</button>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='js/Suppliers.js') }}"></script>
+{% endblock %}

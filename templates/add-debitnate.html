@@ -2,23 +2,33 @@
 
 {% block extra_css %}
 <link rel="stylesheet" href="{{ url_for('static', filename='add-debitnote.css') }}">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 {% endblock %}
 
 {% block content %}
-<div class="add-debitnote-page">
-  <div class="page-title-bar">
-    <h2>Debit Note</h2>
+<div class="sales-wrapper">
+
+  <!-- =========================================
+       PAGE HEADER
+  ========================================== -->
+  <div class="page-header">
+    <div class="page-title-wrap">
+      <h2>Debit Note</h2>
+    </div>
   </div>
 
-  <form class="debitnote-form" method="POST" action="/save-debitnote">
-    <section class="section-card debitnote-card">
-      <div class="card-header">
-        <h3>Debit Note</h3>
-      </div>
+  <div class="so-page-body">
+    <form class="debitnote-form">
 
-      <div class="card-grid">
+    <!-- =========================================
+         DEBIT NOTE DETAILS
+    ========================================== -->
+    <div class="card">
+      <h3>Debit Note Details</h3>
+
+      <div class="grid-2">
         <div class="form-group">
-          <label>Debit Note ID <span class="hint">(Auto Generate)</span></label>
+          <label>Debit Note ID</label>
           <input type="text" name="debit_note_id" placeholder="Auto Generate" readonly>
         </div>
 
@@ -50,49 +60,83 @@
 
         <div class="form-group">
           <label>Currency <span class="required">*</span></label>
-          <select name="currency" required>
-            <option value="">Select Currency</option>
-          </select>
+          <input type="text" name="currency" value="INR" readonly required>
         </div>
       </div>
-    </section>
+    </div>
 
-    <section class="section-card supplier-card">
-      <div class="card-header">
-        <h3>Supplier Information</h3>
-      </div>
+    <!-- =========================================
+         SUPPLIER INFORMATION
+    ========================================== -->
+    <div class="card">
+      <h3>Supplier Information</h3>
 
-      <div class="card-grid">
+      <div class="grid-2">
         <div class="form-group">
           <label>Supplier ID</label>
           <input type="text" name="supplier_id" placeholder="Auto Generate" readonly>
         </div>
 
         <div class="form-group">
-          <label>Currency</label>
-          <input type="text" name="supplier_currency" placeholder="Select Currency" readonly>
+          <label>Supplier Name <span class="required">*</span></label>
+          <select name="supplier_name" required>
+            <option value="">Select Supplier</option>
+          </select>
         </div>
 
         <div class="form-group">
-          <label>Bureau/Location <span class="required">*</span></label>
-          <select name="supplier_branch" required>
-            <option value="">Select Branch</option>
+          <label>PO Date <span class="required">*</span></label>
+          <input type="date" name="po_date" required>
+        </div>
+
+        <div class="form-group">
+          <label>Due Date <span class="required">*</span></label>
+          <input type="date" name="due_date" required>
+        </div>
+
+        <div class="form-group">
+          <label>Payment Terms <span class="required">*</span></label>
+          <select name="payment_terms" required>
+            <option value="">Select Payment Terms</option>
           </select>
+        </div>
+
+        <div class="form-group">
+          <label>Inco Terms <span class="required">*</span></label>
+          <select name="inco_terms" required>
+            <option value="">Select Inco Terms</option>
+          </select>
+        </div>
+
+        <div class="form-group">
+          <label>Payment Status <span class="required">*</span></label>
+          <input type="text" name="payment_status" placeholder="Enter payment status">
+        </div>
+
+        <div class="form-group">
+          <label>Credit Limit <span class="required">*</span></label>
+          <input type="text" name="credit_limit" placeholder="Eg: 50000rs">
         </div>
 
         <div class="form-group">
           <label>Currency <span class="required">*</span></label>
-          <select name="supplier_currency_select" required>
+          <select name="supplier_currency" required>
             <option value="">Select Currency</option>
           </select>
         </div>
-      </div>
-    </section>
 
-    <section class="section-card returned-items-card">
-      <div class="card-header">
-        <h3>Returned Line Items</h3>
+        <div class="form-group">
+          <label>Purchase Total <span class="required">*</span></label>
+          <input type="text" name="purchase_total" placeholder="Eg: ₹50000">
+        </div>
       </div>
+    </div>
+
+    <!-- =========================================
+         RETURNED LINE ITEMS
+    ========================================== -->
+    <div class="card">
+      <h3>Returned Line Items</h3>
 
       <div class="table-responsive">
         <table class="line-items-table">
@@ -151,81 +195,92 @@
         <span>Purchase Total</span>
         <strong>₹4,418</strong>
       </div>
-    </section>
+    </div>
 
-    <section class="section-card payment-card">
-      <div class="card-header">
-        <h3>Payment & Refund Details</h3>
-      </div>
+    <!-- =========================================
+         PAYMENT & REFUND DETAILS
+    ========================================== -->
+    <div class="card">
+      <h3>Payment & Refund Details</h3>
 
       <div class="tabs">
-        <button type="button" class="tab active" data-tab="comments">Comments</button>
-        <button type="button" class="tab" data-tab="history">History</button>
-        <button type="button" class="tab" data-tab="attachments">Attachments</button>
+        <button type="button" class="tab active" data-tab="comments"><span class="tab-icon">💬</span>Comments</button>
+        <button type="button" class="tab" data-tab="history"><span class="tab-icon">🕘</span>History</button>
+        <button type="button" class="tab" data-tab="attachments"><span class="tab-icon">📎</span>Attachments</button>
       </div>
 
       <div class="tab-panels">
         <div class="tab-panel active" id="comments">
           <div class="comment-box">
-            <label>Add Comment...</label>
+            <label>Add Comment:</label>
             <textarea name="comment" placeholder="Enter your comments..."></textarea>
-            <button type="button" class="btn btn-primary">+ Add Comment</button>
+            <button type="button" class="btn btn-primary btn-sm">+ Add Comment</button>
           </div>
         </div>
 
         <div class="tab-panel" id="history">
-          <div class="history-item">
-            <div class="history-avatar">M</div>
-            <div class="history-text">
-              <strong>Mandy</strong>
-              <span>May 2, 2025, 09:45 AM</span>
-              <p>Discussed discount approval with manager.</p>
-            </div>
-          </div>
-          <div class="history-item">
-            <div class="history-avatar">D</div>
-            <div class="history-text">
-              <strong>Director</strong>
-              <span>May 3, 2025, 11:45 AM</span>
-              <p>Discussed discount approval with manager.</p>
-            </div>
-          </div>
-          <div class="history-item">
-            <div class="history-avatar">R</div>
-            <div class="history-text">
-              <strong>Rose</strong>
-              <span>May 3, 2025, 12:49 AM</span>
-              <p>Customer asked for delivery date confirmation.</p>
-            </div>
+          <div class="no-history-message">
+            No history available.
           </div>
         </div>
 
         <div class="tab-panel" id="attachments">
-          <div class="attachment-placeholder">
-            <p>Drag & drop files here or browse to upload attachments</p>
+          <!-- Upload Section -->
+          <div class="upload-section">
+            <input type="file" id="fileInput" multiple hidden>
+            
+            <div class="upload-card" id="uploadCard" style="border: 2px dashed #ddd; padding: 30px; text-align: center; border-radius: 8px; background: #f8f9fa; cursor: pointer; margin-bottom: 20px;">
+              <i class="fa-solid fa-cloud-upload-alt" style="font-size: 48px; color: #666; margin-bottom: 15px;"></i>
+              <h4 style="margin: 10px 0; color: #333;">Upload Attachment</h4>
+              <p style="margin: 5px 0; color: #666;">Click to select or drag & drop</p>
+              <small style="color: #999;">PDF, DOC, XLS, JPG, PNG (Max 10MB)</small>
+            </div>
+            
+            <button class="btn-upload" id="uploadBtn" style="background: #007bff; color: white; border: none; padding: 10px 20px; border-radius: 4px; cursor: pointer;">
+              <i class="fa-solid fa-upload"></i> Choose File
+            </button>
+          </div>
+          
+          <!-- Files List -->
+          <div class="files-section" style="margin-top: 30px;">
+            <div class="files-header" style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px;">
+              <h4 style="margin: 0;"><i class="fa-solid fa-paperclip"></i> Attached Files</h4>
+              <span class="file-count" id="fileCount" style="color: #666; font-size: 14px;">0 files</span>
+            </div>
+            
+            <div class="files-list" id="filesList">
+              <div class="no-files" style="text-align: center; padding: 40px; color: #999;">
+                <i class="fa-regular fa-folder-open" style="font-size: 48px; margin-bottom: 15px;"></i>
+                <p>No files attached yet</p>
+              </div>
+            </div>
           </div>
         </div>
+      </div>
+    </div>
+    </form>
+
+    <div class="dn2-footer">
+      <!-- Left actions -->
+      <div class="dn2-left-actions">
+        <button type="button" class="btn-cancel-dn">Cancel Debit Note</button>
       </div>
 
-      <div class="form-actions">
-        <div class="left-actions">
-          <button type="button" class="btn btn-outline">Cancel Debit Note</button>
-        </div>
-        <div class="right-actions">
-          <button type="button" class="btn btn-outline">Cancel</button>
-          <button type="button" class="btn btn-secondary">Save Draft</button>
-          <button type="submit" class="btn btn-primary">Mark as Settled</button>
-          <div class="action-icons">
-            <button type="button" class="btn-icon" title="Download PDF">📄</button>
-            <button type="button" class="btn-icon" title="Send Email">✉</button>
-          </div>
+      <!-- Right actions -->
+      <div class="dn2-right-actions">
+        <button type="button" class="btn-outline">Cancel</button>
+        <button type="button" class="btn-save-draft">Save Draft</button>
+        <div class="submit-group">
+          <button type="submit" class="btn-submit">Submit</button>
+          <button type="button" class="btn-icon" id="mailBtn" title="Send Email">✉️</button>
+          <button type="button" class="btn-icon" id="pdfBtn" title="Generate PDF">📄</button>
         </div>
       </div>
-    </section>
-  </form>
+    </div>
+  </div>
 </div>
 {% endblock %}
 
 {% block extra_js %}
-<script src="{{ url_for('static', filename='sdd-debitnote.js') }}" defer></script>
+<script src="{{ url_for('static', filename='add-debitnote.js') }}" defer></script>
 {% endblock %}

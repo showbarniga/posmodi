@@ -47,8 +47,8 @@
           </button>
 
           <div id="masters-submenu"
-            class="submenu{% if page in ['manage_users','department_roles','products','customer'] %} open{% endif %}">
-            <a href="{{ url_for('manage_users') }}"
+                class="submenu{% if page in ['manage_users','department_roles','products','customer','suppliers'] %} open{% endif %}">
+          <a href="{{ url_for('manage_users') }}"
                class="submenu-item{% if page == 'manage_users' %} active{% endif %}">
               <span class="submenu-icon">👤</span>
               <span>Manage Users</span>
@@ -71,6 +71,11 @@
                class="submenu-item{% if page == 'customer' %} active{% endif %}">
               <span class="submenu-icon">👥</span>
               <span>Customer</span>
+            </a>
+            <a href= "{{ url_for('suppliers') }}"
+               class="submenu-item{% if page == 'suppliers' %} active{% endif %}">
+              <span class="submenu-icon">👥</span>
+              <span>suppliers</span>
             </a>
           </div>
         </div>
@@ -160,9 +165,9 @@
             <span class="menu-chevron">›</span>
           </button>
             <div id="finance-submenu"
-               class="submenu{% if page in ['creditnote','debitnote'] %} open{% endif %}">
-            <a href="{{ url_for('creditnote') }}"
-             class="submenu-item{% if page == 'creditnote' %} active{% endif %}">
+               class="submenu{% if page in ['credit_note','new_credit_note','debitnote'] %} open{% endif %}">
+            <a href="{{ url_for('credit_note') }}"
+             class="submenu-item{% if page in ['credit_note','new_credit_note'] %} active{% endif %}">
               <span class="submenu-icon">🧾</span>
               <span> Credit Note</span>
             </a>
