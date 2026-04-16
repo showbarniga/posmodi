@@ -215,10 +215,7 @@
 
     // Add menu items based on debit note status
     flyEl.appendChild(mkItem("View", () => viewDebitNote(dbnId), false));
-    flyEl.appendChild(mkItem("Edit", () => editDebitNote(dbnId), false));
-    flyEl.appendChild(
-      mkItem("Delete", () => deleteDebitNote(dbnId), row.status === "paid")
-    );
+    flyEl.appendChild(mkItem("Generate Debit Note Return", () => generateDebitNoteReturn(dbnId), false));
 
     flyEl.addEventListener("mouseenter", keepOpen);
     flyEl.addEventListener("mouseleave", scheduleHide);
@@ -266,8 +263,8 @@
   // ACTION HANDLERS
   // ==================================================
   function viewDebitNote(dbnId) {
-    // Navigate to view debit note page
-    window.location.href = `/debitnote-view/${dbnId}`;
+    // Navigate to add-debitnote page in view mode
+    window.location.href = `/add-debitnote?view=${dbnId}`;
   }
 
   function editDebitNote(dbnId) {
@@ -287,6 +284,11 @@
         console.error("Error deleting debit note:", error);
         alert("Failed to delete debit note");
       });
+  }
+
+  function generateDebitNoteReturn(dbnId) {
+    // Navigate to generate debit note return page
+    window.location.href = `/debitnote-return-new?ref=${dbnId}`;
   }
 
   // ==================================================
@@ -315,22 +317,55 @@
   function updateShowing() {
     const total = filteredDebitNotes.length;
     if (showingCount) {
-      showingCount.textContent = `Showing ${total} Entit${total !== 1 ? "ies" : "y"}`;
+      if (total === 0) {
+        showingCount.textContent = "Showing 0 entries";
+        return;
+      }
+      
+      const startEntry = (currentPage - 1) * ROWS_PER_PAGE + 1;
+      const endEntry = Math.min(currentPage * ROWS_PER_PAGE, total);
+      showingCount.textContent = `Showing ${startEntry}-${endEntry} of ${total} entries`;
     }
   }
 
   function updatePagerUI() {
-    if (prevBtn) {
-      prevBtn.disabled = currentPage <= 1;
+    const totalPagesCount = totalPages();
+    
+    if (totalPagesCount <= 1) {
+      if (prevBtn) {
+        prevBtn.classList.add('inactive');
+        prevBtn.style.pointerEvents = 'none';
+      }
+      if (nextBtn) {
+        nextBtn.classList.add('inactive');
+        nextBtn.style.pointerEvents = 'none';
+      }
+    } else {
+      if (prevBtn) {
+        if (currentPage <= 1) {
+          prevBtn.classList.add('inactive');
+          prevBtn.style.pointerEvents = 'none';
+        } else {
+          prevBtn.classList.remove('inactive');
+          prevBtn.style.pointerEvents = 'auto';
+        }
+      }
+      if (nextBtn) {
+        if (currentPage >= totalPagesCount) {
+          nextBtn.classList.add('inactive');
+          nextBtn.style.pointerEvents = 'none';
+        } else {
+          nextBtn.classList.remove('inactive');
+          nextBtn.style.pointerEvents = 'auto';
+        }
+      }
     }
-    if (nextBtn) {
-      nextBtn.disabled = currentPage >= totalPages();
-    }
+    
     if (pageNow) {
       pageNow.textContent = currentPage;
     }
     if (pageTotal) {
-      pageTotal.textContent = totalPages();
+      pageTotal.textContent = totalPagesCount;
     }
   }
 

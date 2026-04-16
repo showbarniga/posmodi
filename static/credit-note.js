@@ -139,5 +139,10 @@ document.addEventListener("DOMContentLoaded", () => {
         render();
     };
 
+    // Add Credit Note button click handler
+    document.querySelector(".cn-btn").onclick = () => {
+        window.location.href = "/new-credit-note";
+    };
+
     render();
 });

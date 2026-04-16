@@ -1,0 +1,325 @@
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='new-credit-note.css') }}">
+{% endblock %}
+
+{% block content %}
+<div class="cn-page">
+
+    <!-- HEADER -->
+    <div class="cn-header">
+        <h2>New Credit Note</h2>
+        <span class="cn-close" onclick="closePage()">✖ Close</span>
+    </div>
+
+    <div class="cn-card">
+
+        <!-- FORM -->
+        <div class="cn-form-grid create-form">
+
+            <div class="cn-field">
+                <label>Credit Note ID (Auto Generate)</label>
+                <input type="text" placeholder="Auto Generate" disabled>
+            </div>
+
+            <div class="cn-field">
+                <label>Credit Note Date *</label>
+                <input type="date">
+            </div>
+
+            <div class="cn-field">
+                <label>Invoice Ref ID (Auto Generate)</label>
+                <input type="text" disabled>
+            </div>
+
+            <div class="cn-field">
+                <label>Created By *</label>
+                <select>
+                    <option>Select User</option>
+                    <option>Admin</option>
+                    <option>net wet</option>
+                    <option>net12</option>
+                    <option>net 22</option>
+                    <option>due to receipt</option>
+
+                </select>
+            </div>
+
+            <div class="cn-field">
+                <label>Branch *</label>
+                <select>
+                    <option>Select Branch</option>
+                    <option>Branch 1</option>
+                    <option>Branch 2</option>
+                    <option>Branch 3</option>
+                </select>
+            </div>
+
+            <div class="cn-field">
+                <label>Currency *</label>
+                <select>
+                    <option>Select Currency</option>
+                    <option>usd</option>
+                    <option>IND</option>
+                    <option>ERP</option>
+                    <option>GDP</option>
+                    <option>SUP</option>
+                </select>
+            </div>
+
+        </div>
+
+        <!-- CUSTOMER -->
+        <h3 class="section-title">Customer & Invoice Details</h3>
+
+        <div class="cn-form-grid create-form">
+
+            <div class="cn-field">
+                <label>Customer *</label>
+                <select>
+                    <option>Select Customer</option>
+                    <option>anitha</option>
+                    <option>ravi</option>
+                    <option>sai </option>
+                    <option>jerish </option>
+                </select>
+            </div>
+
+            <div class="cn-field">
+                <label>Customer ID (Auto Generate)</label>
+                <input type="text" disabled>
+            </div>
+
+            <div class="cn-field">
+                <label>Billing Address *</label>
+                <input type="text">
+            </div>
+
+            <div class="cn-field">
+                <label>Phone number *</label>
+                <input type="text">
+            </div>
+
+            <div class="cn-field">
+                <label>Invoice Date *</label>
+                <input type="date">
+            </div>
+
+            <div class="cn-field">
+                <label>Due Date *</label>
+                <input type="date">
+            </div>
+
+            <div class="cn-field">
+                <label>payment team *</label>
+                <select>
+                    <option>select payment </option>
+                    <option>net 22</option>
+                    <option>net 33 </option>
+                    <option>due on receipt</option>
+                </select>
+            </div>
+            <div class="cn-field">
+                <label>invice status *</label>
+                <input type="text">
+            </div>
+            <div class="cn-field">
+                <label>Payment status *</label>
+                <input type="text">
+            </div>
+            <div class="cn-field">
+                <label>invice total*</label>
+                <input type="text">
+            </div>
+
+        </div>
+
+    </div>
+    <div class="card">
+        <!-- TABLE -->
+        <h3 class="section-title">Returned Line Items</h3>
+
+        <table class="cn-table" id="tableBody">
+            <thead>
+                <tr>
+                    <th>#</th>
+                    <th>Product</th>
+                    <th>ID</th>
+                    <th>Qty</th>
+                    <th>UOM</th>
+                    <th>Reason</th>
+                    <th>Price</th>
+                    <th>Tax %</th>
+                    <th>Discount %</th>
+                    <th>total</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+         <button class="cn-btn" onclick="addRow()">+ Add Row</button>
+
+    </div>
+    <!-- PAYMENT + REFUND -->
+    <div class="cn-payment">
+
+        <div class="pay-box">
+            <p>Invoice Total: ₹418</p>
+            <p>Amount Paid by customer:<input type="text" placeholder=""></p>
+            <p>Balance Due by customer: ₹0</p>
+            <p>inviced return amount</p>
+            <p> balance to refund</p>
+        </div>
+        <div class="refund-box create-form">
+
+            <div class="form-group">
+                <label>Refund Mode <select>
+                        <option>None</option>
+                        <option>UPI</option>
+                        <option>CASE</option>
+                        <option>BANK</option>
+                    </select></label>
+
+            </div>
+
+            <div class="form-group">
+                <label>Refund Paid</label>
+                <input type="number">
+            </div>
+
+            <div class="form-group">
+                <label>Refund Date</label>
+                <input type="date">
+            </div>
+
+            <div class="form-group">
+                <label>Reference</label>
+                <textarea></textarea>
+            </div>
+
+        </div>
+    </div>
+    <div class="cn-page">
+
+        <!-- CARD -->
+        <div class="cn-card cn-comments">
+
+            <!-- TABS -->
+            <div class="cn-tabs">
+                <span class="tab active" onclick="openTab(event,'comments')">Comments</span>
+                <span class="tab" onclick="openTab(event,'history')">History</span>
+                <span class="tab" onclick="openTab(event,'attachments')">Attachments</span>
+            </div>
+
+            <!-- COMMENTS -->
+            <div id="comments" class="tab-content active">
+
+                <div class="cn-add-comment">
+                    <label>Add Comment:</label>
+                    <input type="text" id="commentInput" placeholder="Enter your comment....">
+                    <button onclick="addComment()">+ Add</button>
+                </div>
+
+                <hr>
+
+                <div id="commentList">
+                    <div class="cn-comment">
+                        <div class="avatar">👤</div>
+                        <div>
+                            <strong>Mandy – May 2, 2025, 09:45 AM</strong>
+                            <p>Discussed discount approval with manager.</p>
+                        </div>
+                    </div>
+                    <div class="cn-comment">
+                        <div class="avatar">👤</div>
+                        <div>
+                            <strong>Director – May 3, 2025, 11:45 AM</strong>
+                            <p>Discussed discount approval with manager.</p>
+                        </div>
+                    </div>
+
+                    <div class="cn-comment">
+                        <div class="avatar">👤</div>
+                        <div>
+                            <strong>Rose – May 5, 2025, 12:45 AM</strong>
+                            <p>Customer asked for delivery date confirmation.</p>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+
+            <!-- HISTORY -->
+            <div id="history" class="tab-content">
+
+                <p><strong>🔄 Status Changes :</strong></p>
+
+                <div class="cn-comment">
+                    <div class="avatar">👤</div>
+                    <p>- Save Draft by John (May 2, 10:00 AM)</p>
+                </div>
+
+                <div class="cn-comment">
+                    <div class="avatar">👤</div>
+                    <p>- Submitted by John (May 2, 10:00 AM)</p>
+                </div>
+
+                <hr>
+
+                <p><strong>📧 Email / Print :</strong></p>
+
+                <div class="cn-comment">
+                    <div class="avatar">👤</div>
+                    <p>- Emailed to customer@example.com by Alice (May 2, 10:20 AM)</p>
+                </div>
+
+                <div class="cn-comment">
+                    <div class="avatar">👤</div>
+                    <p>- PDF generated by John (May 2, 09:50 AM)</p>
+                </div>
+
+            </div>
+            <!-- ATTACHMENTS -->
+            <div id="attachments" class="tab-content">
+
+                <!-- hidden file input -->
+                <input type="file" id="fileInput" multiple style="display:none">
+
+                <button class="upload-btn" onclick="document.getElementById('fileInput').click()">
+                    📁 Upload Files
+                </button>
+
+                <p style="margin-top:15px;"><strong>📎 Previously Attached Files:</strong></p>
+
+                <div id="fileList"></div>
+
+
+
+            </div>
+
+
+
+
+            <!-- FOOTER BUTTONS -->
+            <div class="cn-footer">
+                <button class="btn-outline">Delete Credit Note</button>
+
+                <div>
+                    <button class="btn-outline">Cancel</button>
+                    <button class="btn-primary">Save Draft</button>
+                    <button class="btn-disabled">Mark as Paid</button>
+                    <button class="btn-icon">💬</button>
+                    <button class="btn-icon">✉️</button>
+                </div>
+            </div>
+
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="{{ url_for('static', filename='new-credit-note.js') }}"></script>
+{% endblock %}
+ 

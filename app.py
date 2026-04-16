@@ -5424,6 +5424,61 @@ def save_custom_dropdown():
         json.dump(dropdowns, f, indent=2, ensure_ascii=False)
 
     return jsonify({"success": True})
+@app.route("/credit-note")
+def credit_note():
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
+    return render_template(
+        "credit-note.html",
+        title="Credit Note - Stackly",
+        page="credit_note",
+        section="finance",
+        user_email=user_email,
+        user_name=user_name,
+    )
+
+
+@app.route("/new-credit-note")
+def new_credit_note():
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
+    return render_template(
+        "new-credit-note.html",
+        title="New Credit Note - Stackly",
+        page="new_credit_note",
+        section="finance",
+        user_email=user_email,
+        user_name=user_name,
+    )
+
+
+# ===== Suppliers Page =====
+@app.route("/suppliers")
+def suppliers():
+    return render_template(
+        "Suppliers.html",
+        page="suppliers",
+        title="Supplier Master"
+    )
+
 
 
 @app.route("/crm")
@@ -10639,6 +10694,18 @@ def creditnote():
         page="creditnote",
         title="Credit Note"
     )
+@app.route("/creditnote-new")
+def new_creditnote():
+    return render_template(
+        "new-credit-note.html",   # your uploaded file :contentReference[oaicite:0]{index=0}
+        page="creditnote",
+        title="Add Credit Note"
+    )
+
+# OPTIONAL ALIAS (same page)
+@app.route("/add-creditnote")
+def add_creditnote_alias():
+    return redirect(url_for("new_creditnote"))
     # =========================================
     # TOTALS SUMMARY
     # =========================================
