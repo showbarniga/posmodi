@@ -1,6 +1,55 @@
 document.addEventListener("DOMContentLoaded", () => {
   console.log('DOM loaded, initializing debit note page');
+  const purchasedTotalEl = document.getElementById("purchasedTotal");
+const amountPaidInput = document.getElementById("amountPaid");
+const balanceDueEl = document.getElementById("balanceDue");
+const returnAmountEl = document.getElementById("returnAmount");
+const balanceRecoverEl = document.getElementById("balanceRecover");
+
+function updateSummary() {
+  const purchaseTotalText = document.getElementById("lineItemsTotal")?.textContent || "₹0";
+  const purchaseTotal = Number(purchaseTotalText.replace(/[₹,]/g, "")) || 0;
+
+  const paid = Number(amountPaidInput?.value || 0);
+
+  // Only calculate when user enters amount paid
+  if (paid > 0) {
+    const balanceDue = purchaseTotal - paid;
+    const returnAmount = purchaseTotal;
+    const recover = returnAmount - paid;
+
+    if (balanceDueEl) balanceDueEl.textContent = "₹" + balanceDue.toLocaleString("en-IN");
+    if (returnAmountEl) returnAmountEl.textContent = "₹" + returnAmount.toLocaleString("en-IN");
+    if (balanceRecoverEl) balanceRecoverEl.textContent = "₹" + recover.toLocaleString("en-IN");
+  } else {
+    // Show ₹0 when no amount is paid
+    if (balanceDueEl) balanceDueEl.textContent = "₹0";
+    if (returnAmountEl) returnAmountEl.textContent = "₹0";
+    if (balanceRecoverEl) balanceRecoverEl.textContent = "₹0";
+  }
+
+  if (purchasedTotalEl) purchasedTotalEl.textContent = "₹" + purchaseTotal.toLocaleString("en-IN");
+}
+
+// New function to update payment calculations when line items change
+function updatePaymentCalculations(purchaseTotal) {
+  const paid = Number(amountPaidInput?.value || 0);
   
+  // Show ₹0 for all balance fields initially
+  const balanceDue = 0;
+  const returnAmount = 0;
+  const recover = 0;
+
+  if (purchasedTotalEl) purchasedTotalEl.textContent = "₹" + purchaseTotal.toLocaleString("en-IN");
+  if (balanceDueEl) balanceDueEl.textContent = "₹" + balanceDue;
+  if (returnAmountEl) returnAmountEl.textContent = "₹" + returnAmount;
+  if (balanceRecoverEl) balanceRecoverEl.textContent = "₹" + recover;
+}
+
+amountPaidInput?.addEventListener("input", updateSummary);
+
+// initial load
+updateSummary();
   // Simple tab switching functionality
   function initializeTabs() {
     const tabs = document.querySelectorAll(".tab");
@@ -78,7 +127,62 @@ document.addEventListener("DOMContentLoaded", () => {
       `;
     }
   }
-  
+  function initializeRowActions() {
+    const tbody = document.querySelector(".line-items-table tbody");
+    const addBtn = document.getElementById("addRowBtn");
+
+    if (!tbody || !addBtn) return;
+
+    let rowCount = tbody.querySelectorAll("tr").length;
+
+    // ADD ROW
+    addBtn.addEventListener("click", () => {
+      rowCount++;
+
+      const newRow = document.createElement("tr");
+
+      newRow.innerHTML = `
+        <td>${rowCount}</td>
+        <td><input type="text" name="product_name_${rowCount}"></td>
+        <td><input type="text" name="product_id_${rowCount}"></td>
+        <td><input type="number" name="returned_qty_${rowCount}" value="0" min="0"></td>
+        <td><input type="text" name="uom2_${rowCount}" value="PCS"></td>
+        <td><input type="number" name="rate_${rowCount}" value="0" step="0.01"></td>
+        <td><input type="number" name="tax_${rowCount}" value="0" step="0.01"></td>
+        <td><input type="text" name="total_${rowCount}" readonly></td>
+        <td>
+          <button type="button" class="delete-row">
+            <i class="fa-solid fa-trash"></i>
+          </button>
+        </td>
+      `;
+
+      tbody.appendChild(newRow);
+      
+      // Add event listeners for calculations
+      const newInputs = newRow.querySelectorAll("input[name^='returned_qty_'], input[name^='rate_'], input[name^='tax_']");
+      newInputs.forEach((input) => {
+        input.addEventListener("input", window.updateTotals);
+      });
+    });
+
+    // DELETE ROW (event delegation)
+    tbody.addEventListener("click", (e) => {
+      if (e.target.closest(".delete-row")) {
+        const row = e.target.closest("tr");
+        row.remove();
+
+        // Reorder serial numbers
+        const rows = tbody.querySelectorAll("tr");
+        rows.forEach((row, index) => {
+          row.children[0].textContent = index + 1;
+        });
+
+        rowCount = rows.length;
+        window.updateTotals(); // Recalculate totals after deletion
+      }
+    });
+  }
   function initializeAttachments() {
     console.log('Initializing attachments');
     const fileInput = document.getElementById('fileInput');
@@ -206,6 +310,7 @@ document.addEventListener("DOMContentLoaded", () => {
   initializeTabs();
   
   // Initialize other functionality
+  initializeRowActions();
   initializeComments();
   initializeFormHandlers();
   initializeCalculations();
@@ -320,16 +425,28 @@ function initializeCalculations() {
     return total;
   };
 
-  const updateTotals = () => {
+  // Make updateTotals globally available
+  window.updateTotals = () => {
     const lineTableBody = document.querySelector(".line-items-table tbody");
     const purchaseTotalEl = document.querySelector(".summary-row strong");
+    const purchasedTotalEl = document.getElementById("purchasedTotal");
     
     if (!lineTableBody) return;
     const rows = Array.from(lineTableBody.querySelectorAll("tr"));
     const grandTotal = rows.reduce((sum, row) => sum + updateRowTotal(row), 0);
+    
+    const formattedTotal = formatCurrency(grandTotal);
+    
+    // Update both line items total and payment section
     if (purchaseTotalEl) {
-      purchaseTotalEl.textContent = formatCurrency(grandTotal);
+      purchaseTotalEl.textContent = formattedTotal;
     }
+    if (purchasedTotalEl) {
+      purchasedTotalEl.textContent = formattedTotal;
+    }
+    
+    // Trigger payment calculations update
+    updatePaymentCalculations(grandTotal);
   };
 
   const addLineInputListeners = () => {
@@ -337,10 +454,10 @@ function initializeCalculations() {
     if (!lineTableBody) return;
     const inputs = lineTableBody.querySelectorAll("input[name^='returned_qty_'], input[name^='rate_'], input[name^='tax_']");
     inputs.forEach((input) => {
-      input.addEventListener("input", updateTotals);
+      input.addEventListener("input", window.updateTotals);
     });
   };
 
   addLineInputListeners();
-  updateTotals();
+  window.updateTotals();
 }

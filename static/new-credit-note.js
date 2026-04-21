@@ -1,7 +1,9 @@
+/* ================= GLOBAL ================= */
 let count = 0;
 
+/* ================= ADD ROW ================= */
 function addRow() {
-    const table = document.querySelector("#tableBody tbody");
+    const table = document.querySelector("#tableBody");
     count++;
 
     const row = document.createElement("tr");
@@ -10,142 +12,211 @@ function addRow() {
         <td>${count}</td>
         <td><input type="text" value="Item"></td>
         <td>ID${count}</td>
-        <td><input type="number" value="1"></td>
-        <td>PCS</td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
-        <td><input type="text"></td>
+
+        <!-- Qty -->
+        <td><input type="number" value="1" class="qty"></td>
+
+        <!-- ✅ UOM as TEXT -->
+        <td><input type="text" value="PCS" class="uom"></td>
+
+        <!-- Reason -->
+        <td><input type="text" placeholder="Reason"></td>
+
+        <!-- Rate -->
+        <td><input type="number" value="0" class="rate"></td>
+
+        <!-- Tax -->
+        <td><input type="number" value="18" class="tax"></td>
+
+        <!-- Discount -->
+        <td><input type="number" value="20" class="discount"></td>
+
+        <!-- Total -->
+        <td class="row-total">₹0</td>
     `;
 
     table.appendChild(row);
+    attachRowEvents(row);
 }
 
-function closePage() {
-    window.location.href = "/credit-note";
-}
+/* ================= COMMENTS ================= */
 function addComment() {
     const input = document.getElementById("commentInput");
     const text = input.value.trim();
 
-    if (text === "") {
-        alert("Enter a comment!");
-        return;
-    }
-
-    const commentList = document.getElementById("commentList");
+    if (!text) return alert("Enter a comment!");
 
     const div = document.createElement("div");
     div.className = "cn-comment";
 
-    const now = new Date().toLocaleString();
-
     div.innerHTML = `
         <div class="avatar">👤</div>
         <div>
-            <strong>You – ${now}</strong>
+            <strong>You – ${new Date().toLocaleString()}</strong>
             <p>${text}</p>
         </div>
     `;
 
-    commentList.prepend(div);
+    document.getElementById("commentList").prepend(div);
     input.value = "";
-} function openTab(tabName) {
-
-    // hide all
-    document.querySelectorAll(".tab-content").forEach(tab => {
-        tab.classList.remove("active");
-    });
-
-    // remove active from tabs
-    document.querySelectorAll(".tab").forEach(tab => {
-        tab.classList.remove("active");
-    });
-
-    // show selected
-    document.getElementById(tabName).classList.add("active");
-
-    // highlight tab
-    event.target.classList.add("active");
 }
+
+/* ================= TABS ================= */
 function openTab(evt, tabName) {
+    document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
 
-    // hide all sections
-    document.querySelectorAll(".tab-content").forEach(el => {
-        el.style.display = "none";
-    });
-
-    // remove active class
-    document.querySelectorAll(".tab").forEach(el => {
-        el.classList.remove("active");
-    });
-
-    // show selected section
     document.getElementById(tabName).style.display = "block";
-
-    // activate clicked tab
     evt.currentTarget.classList.add("active");
 }
-const fileInput = document.getElementById("fileInput");
-const fileList = document.getElementById("fileList");
 
-// STORE FILES
-let uploadedFiles = [];
+/* ================= DATA ================= */
+let data = [
+    { name: "T-shirtEdit", id: "CT101", uom: "PCS", qty: 1, rate: 120, tax: 18, discount: 20 },
+    { name: "T-shirtEdit", id: "CT101", uom: "PCS", qty: 10, rate: 120, tax: 18, discount: 20 },
+    { name: "T-shirtEdit", id: "CT101", uom: "PCS", qty: 10, rate: 120, tax: 18, discount: 20 }
+];
 
-// HANDLE FILE SELECT
-fileInput.addEventListener("change", function () {
-    const files = Array.from(fileInput.files);
-
-    files.forEach(file => {
-        uploadedFiles.push(file);
-    });
-
-    renderFiles();
-    fileInput.value = ""; // reset
-});
-
-// RENDER FILE LIST
-function renderFiles() {
-    fileList.innerHTML = "";
-
-    uploadedFiles.forEach((file, index) => {
-
-        const div = document.createElement("div");
-        div.className = "file-item";
-
-        div.innerHTML = `
-            <p>${file.name}</p>
-            <button class="btn-primary" onclick="downloadFile(${index})">Download</button>
-            <button class="btn-remove" onclick="removeFile(${index})">Remove</button>
-        `;
-
-        fileList.appendChild(div);
-    });
+/* ================= CALC ================= */
+function calculateTotal(qty, rate, tax, discount) {
+    let base = qty * rate;
+    let discountAmount = base * discount / 100;
+    let afterDiscount = base - discountAmount;
+    let taxAmount = afterDiscount * tax / 100;
+    return afterDiscount + taxAmount;
 }
 
-// REMOVE FILE
-function removeFile(index) {
-    const confirmDelete = confirm("Are you sure you want to remove this file?");
+/* ================= RENDER ================= */
+function renderTable() {
+    const tbody = document.getElementById("tableBody");
+    const totalEl = document.getElementById("grandTotal");
 
-    if (confirmDelete) {
-        uploadedFiles.splice(index, 1);
-        renderFiles();
+    tbody.innerHTML = "";
+    let grandTotal = 0;
+
+    data.forEach((item, index) => {
+        let total = calculateTotal(item.qty, item.rate, item.tax, item.discount);
+        grandTotal += total;
+
+        let row = document.createElement("tr");
+
+        row.innerHTML = `
+            <td>${index + 1}</td>
+            <td>${item.name}</td>
+            <td>${item.id}</td>
+
+            <td><input type="number" value="${item.qty}" class="qty"></td>
+
+            <!-- ✅ TEXT UOM -->
+            <td><input type="text" value="${item.uom}" class="uom"></td>
+
+            <td><input type="text" placeholder="Reason"></td>
+
+            <td><input type="number" value="${item.rate}" class="rate"></td>
+
+            <td><input type="number" value="${item.tax}" class="tax"></td>
+
+            <td><input type="number" value="${item.discount}" class="discount"></td>
+
+            <td class="row-total">₹${total.toLocaleString()}</td>
+        `;
+
+        tbody.appendChild(row);
+        attachRowEvents(row);
+    });
+
+    totalEl.innerText = "₹" + grandTotal.toLocaleString();
+}
+
+/* ================= EVENTS ================= */
+function attachRowEvents(row) {
+    const qty = row.querySelector(".qty");
+    const rate = row.querySelector(".rate");
+    const tax = row.querySelector(".tax");
+    const discount = row.querySelector(".discount");
+    const totalCell = row.querySelector(".row-total");
+
+    function update() {
+        let total = calculateTotal(
+            parseFloat(qty.value) || 0,
+            parseFloat(rate.value) || 0,
+            parseFloat(tax.value) || 18,
+            parseFloat(discount.value) || 20
+        );
+
+        totalCell.innerText = "₹" + total.toLocaleString();
+        updateGrandTotal();
+    }
+
+    qty.addEventListener("input", update);
+    rate.addEventListener("input", update);
+    tax.addEventListener("input", update);
+    discount.addEventListener("input", update);
+}
+
+/* ================= GRAND TOTAL ================= */
+function updateGrandTotal() {
+    let total = 0;
+
+    document.querySelectorAll(".row-total").forEach(cell => {
+        total += parseFloat(cell.innerText.replace(/[₹,]/g, "")) || 0;
+    });
+
+    document.getElementById("grandTotal").innerText =
+        "₹" + total.toLocaleString();
+}
+
+/* ================= INIT ================= */
+window.addEventListener("load", renderTable);
+function openTab(evt, tabName) {
+    document.querySelectorAll(".tab-content").forEach(el => el.style.display = "none");
+    document.querySelectorAll(".tab").forEach(el => el.classList.remove("active"));
+
+    document.getElementById(tabName).style.display = "block";
+    evt.currentTarget.classList.add("active");
+}
+/* ================= NAVIGATION ================= */
+function goBack() {
+    window.history.back();
+}
+function deleteNote() {
+    if (confirm("Are you sure you want to delete this Credit Note?")) {
+        window.history.back();
+    }
+}
+/* ================= SAVE ================= */
+function saveDraft() {
+    if (confirm("Do you want to save as draft?")) {
+        alert("Draft Saved!");
     }
 }
 
-// DOWNLOAD FILE
-function downloadFile(index) {
-    const confirmDownload = confirm("Download this file?");
+/* ================= SUBMIT ================= */
+function submitForm() {
+    if (confirm("Are you sure you want to submit?")) {
+        alert("Submitted successfully!");
+    }
+}
 
-    if (confirmDownload) {
-        const file = uploadedFiles[index];
-        const url = URL.createObjectURL(file);
+/* ================= MESSAGE ================= */
+function openMessage() {
+    if (confirm("Open Messages?")) {
+        alert("Message opened!");
+    }
+}
 
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = file.name;
-        a.click();
-
-        URL.revokeObjectURL(url);
+/* ================= PDF ================= */
+function openPDF() {
+    if (confirm("Generate PDF?")) {
+        alert("PDF Generated!");
+    }
+}
+function handleCancel() {
+    // If previous page exists
+    if (window.history.length > 1) {
+        window.history.back();
+    } else {
+        // If no previous page → open blank page
+        window.location.href = "about:blank";
     }
 }
