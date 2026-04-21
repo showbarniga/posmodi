@@ -28,7 +28,7 @@
 
       <div class="grid-2">
         <div class="form-group">
-          <label>Debit Note ID</label>
+          <label>Debit Note ID (Auto Generate)</label>
           <input type="text" name="debit_note_id" placeholder="Auto Generate" readonly>
         </div>
 
@@ -38,10 +38,8 @@
         </div>
 
         <div class="form-group">
-          <label>Customer Information</label>
-          <select name="customer_id">
-            <option value="">Select Customer</option>
-          </select>
+          <label>PO Reference ID (Auto Generate)</label>
+          <input type="text" name="po_reference_id" placeholder="Auto Generate" readonly>
         </div>
 
         <div class="form-group">
@@ -73,7 +71,7 @@
 
       <div class="grid-2">
         <div class="form-group">
-          <label>Supplier ID</label>
+          <label>Supplier ID (Auto Generate)</label>
           <input type="text" name="supplier_id" placeholder="Auto Generate" readonly>
         </div>
 
@@ -118,14 +116,7 @@
           <input type="text" name="credit_limit" placeholder="Eg: 50000rs">
         </div>
 
-        <div class="form-group">
-          <label>Currency <span class="required">*</span></label>
-          <select name="supplier_currency" required>
-            <option value="">Select Currency</option>
-          </select>
-        </div>
-
-        <div class="form-group">
+        <div class="form-group purchase-total-row">
           <label>Purchase Total <span class="required">*</span></label>
           <input type="text" name="purchase_total" placeholder="Eg: ₹50000">
         </div>
@@ -145,55 +136,73 @@
               <th>#</th>
               <th>Product Name</th>
               <th>Product ID</th>
-              <th>UOM</th>
               <th>Returned Quantity</th>
               <th>UOM</th>
-              <th>Rate (₹)</th>
+              <th>Returned Reason</th> 
+              <th>Unit prize (₹)</th>
               <th>Tax (%)</th>
               <th>Total</th>
+              <th>Action</th>
+            
             </tr>
           </thead>
           <tbody>
-            <tr>
+    
               <td>1</td>
               <td><input type="text" name="product_name_1" value="T-shirtEdit"></td>
               <td><input type="text" name="product_id_1" value="CT101"></td>
-              <td><input type="text" name="uom_1" value="PCS"></td>
               <td><input type="number" name="returned_qty_1" value="10" min="0"></td>
               <td><input type="text" name="uom2_1" value="PCS"></td>
+              <td><input type="text" name="reason_3" value="Damaged"></td>
               <td><input type="number" name="rate_1" value="120.0" step="0.01"></td>
               <td><input type="number" name="tax_1" value="20" step="0.01"></td>
               <td><input type="text" name="total_1" value="₹1,009" readonly></td>
+              <td>
+                <button type="button" class="delete-row">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
             </tr>
             <tr>
               <td>2</td>
               <td><input type="text" name="product_name_2" value="T-shirtEdit"></td>
               <td><input type="text" name="product_id_2" value="CT101"></td>
-              <td><input type="text" name="uom_2" value="PCS"></td>
               <td><input type="number" name="returned_qty_2" value="10" min="0"></td>
               <td><input type="text" name="uom2_2" value="PCS"></td>
+              <td><input type="text" name="reason_3" value="Damaged"></td>
               <td><input type="number" name="rate_2" value="120.0" step="0.01"></td>
               <td><input type="number" name="tax_2" value="20" step="0.01"></td>
               <td><input type="text" name="total_2" value="₹1,009" readonly></td>
+              <td>
+                <button type="button" class="delete-row">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
             </tr>
             <tr>
               <td>3</td>
               <td><input type="text" name="product_name_3" value="T-shirtEdit"></td>
               <td><input type="text" name="product_id_3" value="CT101"></td>
-              <td><input type="text" name="uom_3" value="PCS"></td>
               <td><input type="number" name="returned_qty_3" value="10" min="0"></td>
               <td><input type="text" name="uom2_3" value="PCS"></td>
+              <td><input type="text" name="reason_3" value="Damaged"></td>
               <td><input type="number" name="rate_3" value="120.0" step="0.01"></td>
               <td><input type="number" name="tax_3" value="20" step="0.01"></td>
               <td><input type="text" name="total_3" value="₹1,009" readonly></td>
+              <td>
+                <button type="button" class="delete-row">
+                  <i class="fa-solid fa-trash"></i>
+                </button>
+             
             </tr>
           </tbody>
         </table>
+        <button type="button" id="addRowBtn" class="btn-secondary">
+           + Add Item
+        </button>
       </div>
 
       <div class="summary-row">
         <span>Purchase Total</span>
-        <strong>₹4,418</strong>
+        <strong id="lineItemsTotal">₹4,418</strong>
       </div>
     </div>
 
@@ -202,6 +211,66 @@
     ========================================== -->
     <div class="card">
       <h3>Payment & Refund Details</h3>
+      <!-- PAYMENT SUMMARY BLOCK -->
+<div class="payment-summary-block">
+
+  <!-- LEFT SIDE -->
+  <div class="summary-left">
+    <div class="summary-item">
+      <label>Purchased Total:</label>
+      <span id="purchasedTotal">₹4,418</span>
+    </div>
+
+    <div class="summary-item">
+      <label>Amount Paid to Vendor:</label>
+      <input type="number" id="amountPaid" placeholder="Enter amount">
+    </div>
+
+    <div class="summary-item">
+      <label>Balance Due to Vendor:</label>
+      <span id="balanceDue">₹0</span>
+    </div>
+
+    <div class="summary-item">
+      <label>Purchase Return Amount:</label>
+      <span id="returnAmount">₹0</span>
+    </div>
+
+    <div class="summary-item">
+      <label>Balance to Recover:</label>
+      <span id="balanceRecover">₹0</span>
+    </div>
+  </div>
+
+  <!-- RIGHT SIDE -->
+  <div class="summary-right">
+    <div class="summary-item">
+      <label>Refund Mode:</label>
+      <select id="refundMode">
+        <option value="">Select</option>
+        <option>Cash</option>
+        <option>Bank</option>
+        <option>UPI</option>
+      </select>
+    </div>
+
+    <div class="summary-item">
+      <label>Refund Received:</label>
+      <input type="number" id="refundReceived" placeholder="Enter amount">
+    </div>
+
+    <div class="summary-item">
+      <label>Refund Date:</label>
+      <input type="date" id="refundDate">
+    </div>
+
+    <div class="summary-item">
+      <label>Adjusted Invoice Reference:</label>
+      <textarea id="invoiceRef" placeholder="Enter reference"></textarea>
+    </div>
+  </div>
+
+</div>
 
       <div class="tabs">
         <button type="button" class="tab active" data-tab="comments"><span class="tab-icon">💬</span>Comments</button>

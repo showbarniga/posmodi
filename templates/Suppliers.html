@@ -79,10 +79,15 @@
           <td>{{ supplier.created_date or '-' }}</td>
           <td>{{ supplier.status }}</td>
           <td>{{ supplier.type }}</td>
-           <td>
-          <button class="btn-edit">Edit</button>
-          <button class="btn-delete">Delete</button>
-        </td>
+           <td class="supplier-action-cell">
+            <button
+              type="button"
+              class="supplier-action-dots"
+              aria-label="Actions"
+            >
+              ⋮
+            </button>
+          </td>
        </tr>
         {% endfor %}
       {% else %}
@@ -97,13 +102,12 @@
   </div>
 
   <!-- Footer -->
-  <div class="table-footer">
-    <span>Showing 5 Entities</span>
-
-    <div class="pagination">
-      <button>Prev</button>
-      <span>Page 1 of 10</span>
-      <button>Next</button>
+  <div class="supplier-footer">
+    <span id="showingCount">Showing 5 Entities</span>
+    <div class="supplier-pager">
+      <button type="button" class="pager-btn" id="prevBtn">‹ Prev</button>
+      <span class="pager-text">Page <strong id="pageNow">1</strong> of <strong id="pageTotal">10</strong></span>
+      <button type="button" class="pager-btn" id="nextBtn">Next ›</button>
     </div>
   </div>
 

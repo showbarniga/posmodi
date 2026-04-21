@@ -166,15 +166,32 @@
     border: 1px solid #ddd;
     border-radius: 8px;
     min-width: 120px;
+    z-index: 1000;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 .dropdown-menu div {
-    padding: 8px;
+    padding: 8px 12px;
     cursor: pointer;
+    font-size: 12px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.dropdown-menu div:last-child {
+    border-bottom: none;
 }
 
 .dropdown-menu div:hover {
     background: #f3dede;
+}
+
+.dropdown-menu .delete {
+    color: #d32f2f;
+}
+
+.dropdown-menu .delete:hover {
+    background: #ffebee;
+    color: #b71c1c;
 }
 
 .cn-footer {
