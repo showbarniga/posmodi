@@ -147,7 +147,7 @@
             </tr>
           </thead>
           <tbody>
-    
+            <tr>
               <td>1</td>
               <td><input type="text" name="product_name_1" value="T-shirtEdit"></td>
               <td><input type="text" name="product_id_1" value="CT101"></td>
@@ -158,9 +158,10 @@
               <td><input type="number" name="tax_1" value="20" step="0.01"></td>
               <td><input type="text" name="total_1" value="₹1,009" readonly></td>
               <td>
-                <button type="button" class="delete-row">
+                <button type="button" class="delete-row so-delete-btn" aria-label="Delete row" title="Delete">
                   <i class="fa-solid fa-trash"></i>
                 </button>
+              </td>
             </tr>
             <tr>
               <td>2</td>
@@ -173,9 +174,10 @@
               <td><input type="number" name="tax_2" value="20" step="0.01"></td>
               <td><input type="text" name="total_2" value="₹1,009" readonly></td>
               <td>
-                <button type="button" class="delete-row">
+                <button type="button" class="delete-row so-delete-btn" aria-label="Delete row" title="Delete">
                   <i class="fa-solid fa-trash"></i>
                 </button>
+              </td>
             </tr>
             <tr>
               <td>3</td>
@@ -188,10 +190,10 @@
               <td><input type="number" name="tax_3" value="20" step="0.01"></td>
               <td><input type="text" name="total_3" value="₹1,009" readonly></td>
               <td>
-                <button type="button" class="delete-row">
+                <button type="button" class="delete-row so-delete-btn" aria-label="Delete row" title="Delete">
                   <i class="fa-solid fa-trash"></i>
                 </button>
-             
+              </td>
             </tr>
           </tbody>
         </table>
@@ -272,28 +274,29 @@
 
 </div>
 
-      <div class="tabs">
-        <button type="button" class="tab active" data-tab="comments"><span class="tab-icon">💬</span>Comments</button>
-        <button type="button" class="tab" data-tab="history"><span class="tab-icon">🕘</span>History</button>
-        <button type="button" class="tab" data-tab="attachments"><span class="tab-icon">📎</span>Attachments</button>
-      </div>
+      <div class="comment-box">
+        <div class="comment-tabs tabs">
+          <button type="button" class="tab active" data-tab="comments"><span class="tab-icon">💬</span>Comments</button>
+          <button type="button" class="tab" data-tab="history"><span class="tab-icon">🕘</span>History</button>
+          <button type="button" class="tab" data-tab="attachments"><span class="tab-icon">📎</span>Attachments</button>
+        </div>
 
-      <div class="tab-panels">
-        <div class="tab-panel active" id="comments">
-          <div class="comment-box">
+        <div class="tab-panels">
+          <div class="comment-body tab-panel active" id="comments">
             <label>Add Comment:</label>
-            <textarea name="comment" placeholder="Enter your comments..."></textarea>
-            <button type="button" class="btn btn-primary btn-sm">+ Add Comment</button>
+            <textarea id="commentText" name="comment" placeholder="Enter your comment"></textarea>
+            <button type="button" class="add-btn" id="addCommentBtn">Add New</button>
+            <div class="latest-comment-wrap">
+              <label>Latest Comment:</label>
+              <div id="latestCommentPreview" class="latest-comment-empty">No comments yet.</div>
+            </div>
           </div>
-        </div>
 
-        <div class="tab-panel" id="history">
-          <div class="no-history-message">
-            No history available.
+          <div class="comment-history tab-panel" id="history">
+            <div class="no-history-message">No history available.</div>
           </div>
-        </div>
 
-        <div class="tab-panel" id="attachments">
+          <div class="tab-panel" id="attachments">
           <!-- Upload Section -->
           <div class="upload-section">
             <input type="file" id="fileInput" multiple hidden>
@@ -324,6 +327,7 @@
               </div>
             </div>
           </div>
+          </div>
         </div>
       </div>
     </div>
@@ -340,7 +344,7 @@
         <button type="button" class="btn-outline">Cancel</button>
         <button type="button" class="btn-save-draft">Save Draft</button>
         <div class="submit-group">
-          <button type="submit" class="btn-submit">Submit</button>
+          <button type="submit" class="btn-submit">Mark as Settled</button>
           <button type="button" class="btn-icon" id="mailBtn" title="Send Email">✉️</button>
           <button type="button" class="btn-icon" id="pdfBtn" title="Generate PDF">📄</button>
         </div>
