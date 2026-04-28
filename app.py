@@ -5469,16 +5469,54 @@ def new_credit_note():
         user_name=user_name,
     )
 
+# =========================================
+# supplier page 
+# =========================================
 
-# ===== Suppliers Page =====
 @app.route("/suppliers")
 def suppliers():
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
     return render_template(
-        "Suppliers.html",
+        "suppliers.html",
+        title="Suppliers - Stackly",
         page="suppliers",
-        title="Supplier Master"
+        section="inventory",
+        user_email=user_email,
+        user_name=user_name,
     )
 
+
+@app.route("/supplier-new")
+def supplier_new():
+    user_email = session.get("user")
+    if not user_email:
+        return redirect(url_for("login", message="session_expired"))
+
+    users = load_users()
+    user_name = "User"
+    for u in users:
+        if isinstance(u, dict) and (u.get("email") or "").lower() == user_email.lower():
+            user_name = u.get("name") or "User"
+            break
+
+    return render_template(
+        "supplier-new.html",
+        title="New Supplier - Stackly",
+        page="supplier_new",
+        section="inventory",
+        user_email=user_email,
+        user_name=user_name,
+    )
 
 
 @app.route("/crm")
