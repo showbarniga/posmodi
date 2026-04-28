@@ -114,9 +114,9 @@
     const to = toDate?.value || "";
 
     filteredDebitNotes = allDebitNotes.filter((dn) => {
-      const idMatch =
+      const searchMatch =
         (dn.dbn_id || "").toLowerCase().includes(searchQuery) ||
-        (dn.customer_name || "").toLowerCase().includes(searchQuery);
+        (dn.supplier_name || "").toLowerCase().includes(searchQuery);
 
       const statusMatch = !status || (dn.status || "") === status;
       const supplierMatch = !supplier || (dn.supplier_name || "") === supplier;
@@ -132,7 +132,7 @@
         }
       }
 
-      return idMatch && statusMatch && supplierMatch && dateMatch;
+      return searchMatch && statusMatch && supplierMatch && dateMatch;
     });
 
     currentPage = 1;

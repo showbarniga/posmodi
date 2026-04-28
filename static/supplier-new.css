@@ -14,13 +14,14 @@
    
   }
  
-  .customer-page .page-title {
+  .page-title {
     font-size: 28px;
     font-weight: 600;
     color: #a12828;
+    margin-top: 18px;
     margin-bottom: 12px;
-    text-shadow: 1px 1px 2px #d8b7b7; /* 🔥 3D text effect */
-    margin-left: 24px;
+    margin-right: 24px;
+    text-shadow: 1px 1px 2px #d8b7b7;
     display: inline-block;
   }
  
@@ -31,16 +32,13 @@
     align-items: center;
  
   }
- 
-  .close-btn{
-    background: #fff;
-    color: red;
-    font-weight: 600;
-    border: none;
-    padding: 8px 18px;
-    border: 1px solid red;
-    border-radius: 8px;
+
+  .page-close {
+    color: #a12828;
+    font-size: 16px;
+    font-weight: 500;
     cursor: pointer;
+    user-select: none;
   }
  
    .customer-page #customerForm{
