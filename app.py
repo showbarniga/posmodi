@@ -2666,50 +2666,10 @@ def api_product_colors():
 
 @app.route("/api/product-suppliers", methods=["GET", "POST"])
 def api_product_suppliers():
+    # Backward-compatible endpoint mapped to the new supplier service.
     if request.method == "GET":
-        suppliers = load_suppliers()
-        return jsonify({"success": True, "items": suppliers}), 200
-
-    user_email, resp, status = _require_login_json()
-    if resp is not None:
-        return resp, status
-
-    data = request.get_json(silent=True) or {}
-    name = (data.get("name") or "").strip()
-    contact = (data.get("contact") or "").strip()
-    phone = (data.get("phone") or "").strip()
-    email = (data.get("email") or "").strip()
-    address = (data.get("address") or "").strip()
-
-    if not name:
-        return jsonify({"success": False, "message": "Supplier name is required."}), 400
-    if len(name) < 3:
-        return jsonify({"success": False, "message": "Supplier Name should contain atleast 3 characters."}), 400
-    if not re.fullmatch(r"[A-Za-z\s]+", name):
-        return jsonify({"success": False, "message": "Supplier Name should contain atleast 3 characters."}), 400
-
-    # Contact person: apply same rules as Supplier Name
-    if not contact or len(contact.strip()) < 3 or not re.fullmatch(r"[A-Za-z\s]+", contact.strip()):
-        return jsonify({"success": False, "message": "Contact Person Name should contain atleast 3 characters."}), 400
-
-    items = load_suppliers()
-    key = name.strip().lower()
-    for item in items:
-        if (item.get("name") or "").strip().lower() == key:
-            # Duplicate supplier name not allowed
-            return jsonify({"success": False, "message": "Supplier name already exists."}), 409
-
-    items.append(
-        {
-            "name": name,
-            "contact": contact,
-            "phone": phone,
-            "email": email,
-            "address": address,
-        }
-    )
-    save_suppliers(items)
-    return jsonify({"success": True, "message": "Supplier saved."}), 201
+        return api_suppliers_collection()
+    return api_create_supplier_legacy()
 
 # =========================
 # API: GET SINGLE PRODUCT (Supports HTML & JSON)
@@ -5517,6 +5477,333 @@ def supplier_new():
         user_email=user_email,
         user_name=user_name,
     )
+
+
+# =========================================
+# Supplier Backend (Clean REST + PostgreSQL)
+# =========================================
+SUPPLIER_NAME_REGEX = re.compile(r"^[A-Za-z0-9 .,&()'/-]{3,100}$")
+SUPPLIER_CONTACT_REGEX = re.compile(r"^[A-Za-z .'-]{2,80}$")
+SUPPLIER_PHONE_REGEX = re.compile(r"^\+?[0-9][0-9\s-]{6,19}$")
+SUPPLIER_EMAIL_REGEX = re.compile(r"^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$")
+SUPPLIER_FIELDS = ("name", "contact", "phone", "email", "address")
+
+
+def get_db_connection():
+    """Create PostgreSQL connection using environment configuration."""
+    try:
+        import psycopg2  # type: ignore[import]
+        from psycopg2.extras import RealDictCursor  # type: ignore[import]
+    except Exception as exc:
+        raise RuntimeError("PostgreSQL driver missing. Install psycopg2-binary.") from exc
+
+    db_name = os.getenv("POSTGRES_DB") or os.getenv("DB_NAME")
+    db_user = os.getenv("POSTGRES_USER") or os.getenv("DB_USER")
+    db_password = os.getenv("POSTGRES_PASSWORD") or os.getenv("DB_PASSWORD")
+    db_host = os.getenv("POSTGRES_HOST") or os.getenv("DB_HOST", "localhost")
+    db_port = int(os.getenv("POSTGRES_PORT") or os.getenv("DB_PORT", "5432"))
+
+    if not db_name or not db_user or not db_password:
+        raise RuntimeError("Missing DB config. Set POSTGRES_DB, POSTGRES_USER, POSTGRES_PASSWORD.")
+
+    return psycopg2.connect(
+        dbname=db_name,
+        user=db_user,
+        password=db_password,
+        host=db_host,
+        port=db_port,
+        cursor_factory=RealDictCursor,
+    )
+
+
+def supplier_json_response(success, message, data=None, errors=None, status=200):
+    """Return one consistent JSON response format for all supplier APIs."""
+    payload = {"success": success, "message": message, "data": data}
+    if errors:
+        payload["errors"] = errors
+    return jsonify(payload), status
+
+
+def supplier_auth_guard():
+    """Ensure user session exists for supplier APIs."""
+    _, resp, status = _require_login_json()
+    if resp is not None:
+        return resp, status
+    return None, None
+
+
+def validate_supplier_payload(payload, is_update=False):
+    """Validate and normalize request payload for create/update operations."""
+    if not isinstance(payload, dict):
+        return None, {"body": "Invalid JSON payload."}
+
+    # Step 1: Normalize only whitelisted fields.
+    cleaned = {}
+    for field in SUPPLIER_FIELDS:
+        if field in payload:
+            value = payload.get(field)
+            if value is None:
+                cleaned[field] = ""
+            elif isinstance(value, str):
+                cleaned[field] = value.strip()
+            else:
+                return None, {field: f"{field} must be a string."}
+
+    # Step 2: Validate required fields for create.
+    errors = {}
+    if not is_update:
+        for required in ("name", "contact"):
+            if not cleaned.get(required):
+                errors[required] = f"{required.capitalize()} is required."
+
+    # Step 3: Validate supplier name.
+    if "name" in cleaned:
+        if not cleaned["name"]:
+            errors["name"] = "Supplier name is required."
+        elif not SUPPLIER_NAME_REGEX.fullmatch(cleaned["name"]):
+            errors["name"] = "Supplier name must be 3-100 valid characters."
+
+    # Step 4: Validate contact person.
+    if "contact" in cleaned:
+        if not cleaned["contact"]:
+            errors["contact"] = "Contact person is required."
+        elif not SUPPLIER_CONTACT_REGEX.fullmatch(cleaned["contact"]):
+            errors["contact"] = "Contact person must be 2-80 valid alphabetic characters."
+
+    # Step 5: Validate phone if provided.
+    if cleaned.get("phone") and not SUPPLIER_PHONE_REGEX.fullmatch(cleaned["phone"]):
+        errors["phone"] = "Invalid phone number format."
+
+    # Step 6: Validate and normalize email if provided.
+    if cleaned.get("email"):
+        cleaned["email"] = cleaned["email"].lower()
+        if not SUPPLIER_EMAIL_REGEX.fullmatch(cleaned["email"]):
+            errors["email"] = "Invalid email format."
+
+    # Step 7: Validate address length.
+    if "address" in cleaned and len(cleaned.get("address", "")) > 500:
+        errors["address"] = "Address must be at most 500 characters."
+
+    # Step 8: Update must include at least one field.
+    if is_update and not cleaned:
+        errors["body"] = "At least one field is required for update."
+
+    if errors:
+        return None, errors
+    return cleaned, None
+
+
+def ensure_supplier_table():
+    """Create suppliers table once if it does not exist."""
+    create_table_sql = """
+    CREATE TABLE IF NOT EXISTS suppliers (
+        id BIGSERIAL PRIMARY KEY,
+        name VARCHAR(100) NOT NULL UNIQUE,
+        contact VARCHAR(80) NOT NULL,
+        phone VARCHAR(20),
+        email VARCHAR(120),
+        address VARCHAR(500),
+        created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+        updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    );
+    """
+    # Step 1: Open DB connection.
+    with get_db_connection() as conn:
+        # Step 2: Execute schema SQL.
+        with conn.cursor() as cur:
+            cur.execute(create_table_sql)
+        # Step 3: Commit schema change.
+        conn.commit()
+
+
+def map_supplier_row(row):
+    """Convert DB row to JSON-ready supplier object."""
+    return {
+        "id": row.get("id"),
+        "name": row.get("name"),
+        "contact": row.get("contact"),
+        "phone": row.get("phone") or "",
+        "email": row.get("email") or "",
+        "address": row.get("address") or "",
+        "created_at": row.get("created_at").isoformat() if row.get("created_at") else None,
+        "updated_at": row.get("updated_at").isoformat() if row.get("updated_at") else None,
+    }
+
+
+def supplier_repo_create(data):
+    """Insert a supplier and return created record."""
+    insert_sql = """
+        INSERT INTO suppliers (name, contact, phone, email, address)
+        VALUES (%s, %s, %s, %s, %s)
+        RETURNING id, name, contact, phone, email, address, created_at, updated_at
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(
+                insert_sql,
+                (
+                    data.get("name"),
+                    data.get("contact"),
+                    data.get("phone") or None,
+                    data.get("email") or None,
+                    data.get("address") or None,
+                ),
+            )
+            row = cur.fetchone()
+        conn.commit()
+    return map_supplier_row(row)
+
+
+def supplier_repo_list():
+    """Fetch all suppliers ordered by latest first."""
+    select_sql = """
+        SELECT id, name, contact, phone, email, address, created_at, updated_at
+        FROM suppliers
+        ORDER BY id DESC
+    """
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(select_sql)
+            rows = cur.fetchall()
+    return [map_supplier_row(row) for row in rows]
+
+
+def supplier_repo_update(supplier_id, data):
+    """Update supplier fields and return updated record."""
+    update_map = {field: data[field] for field in SUPPLIER_FIELDS if field in data}
+    if not update_map:
+        return None
+
+    set_clauses = [f"{field} = %s" for field in update_map.keys()]
+    values = [update_map[field] or None for field in update_map.keys()]
+
+    update_sql = f"""
+        UPDATE suppliers
+        SET {", ".join(set_clauses)}, updated_at = NOW()
+        WHERE id = %s
+        RETURNING id, name, contact, phone, email, address, created_at, updated_at
+    """
+    values.append(supplier_id)
+
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(update_sql, tuple(values))
+            row = cur.fetchone()
+        conn.commit()
+    return map_supplier_row(row) if row else None
+
+
+def supplier_repo_delete(supplier_id):
+    """Delete supplier by id and return True if deleted."""
+    delete_sql = "DELETE FROM suppliers WHERE id = %s RETURNING id"
+    with get_db_connection() as conn:
+        with conn.cursor() as cur:
+            cur.execute(delete_sql, (supplier_id,))
+            row = cur.fetchone()
+        conn.commit()
+    return bool(row)
+
+
+def _is_duplicate_supplier_error(exc):
+    message = str(exc).lower()
+    return "duplicate key value" in message and "suppliers_name" in message
+
+
+@app.route("/api/suppliers", methods=["POST"])
+def api_create_supplier():
+    # Step 1: Check authentication.
+    auth_resp, auth_status = supplier_auth_guard()
+    if auth_resp is not None:
+        return auth_resp, auth_status
+
+    # Step 2: Validate request body.
+    payload = request.get_json(silent=True) or {}
+    cleaned, errors = validate_supplier_payload(payload, is_update=False)
+    if errors:
+        return supplier_json_response(False, "Validation failed.", data=None, errors=errors, status=400)
+
+    try:
+        # Step 3: Ensure table exists.
+        ensure_supplier_table()
+        # Step 4: Insert and return created supplier.
+        supplier = supplier_repo_create(cleaned)
+        return supplier_json_response(True, "Supplier created.", data=supplier, status=201)
+    except Exception as exc:
+        if _is_duplicate_supplier_error(exc):
+            return supplier_json_response(False, "Supplier name already exists.", data=None, status=409)
+        return supplier_json_response(False, "Failed to create supplier.", data=None, errors={"server": str(exc)}, status=500)
+
+
+@app.route("/api/suppliers", methods=["GET"])
+def api_get_all_suppliers():
+    # Step 1: Check authentication.
+    auth_resp, auth_status = supplier_auth_guard()
+    if auth_resp is not None:
+        return auth_resp, auth_status
+
+    try:
+        # Step 2: Ensure table exists.
+        ensure_supplier_table()
+        # Step 3: Fetch supplier list.
+        suppliers = supplier_repo_list()
+        return supplier_json_response(True, "Suppliers fetched.", data=suppliers, status=200)
+    except Exception as exc:
+        return supplier_json_response(False, "Failed to fetch suppliers.", data=None, errors={"server": str(exc)}, status=500)
+
+
+@app.route("/api/suppliers/<int:supplier_id>", methods=["PUT"])
+def api_update_supplier(supplier_id):
+    # Step 1: Check authentication.
+    auth_resp, auth_status = supplier_auth_guard()
+    if auth_resp is not None:
+        return auth_resp, auth_status
+
+    # Step 2: Validate request body.
+    payload = request.get_json(silent=True) or {}
+    cleaned, errors = validate_supplier_payload(payload, is_update=True)
+    if errors:
+        return supplier_json_response(False, "Validation failed.", data=None, errors=errors, status=400)
+
+    try:
+        # Step 3: Ensure table exists.
+        ensure_supplier_table()
+        # Step 4: Update supplier by id.
+        supplier = supplier_repo_update(supplier_id, cleaned)
+        if not supplier:
+            return supplier_json_response(False, "Supplier not found.", data=None, status=404)
+        return supplier_json_response(True, "Supplier updated.", data=supplier, status=200)
+    except Exception as exc:
+        if _is_duplicate_supplier_error(exc):
+            return supplier_json_response(False, "Supplier name already exists.", data=None, status=409)
+        return supplier_json_response(False, "Failed to update supplier.", data=None, errors={"server": str(exc)}, status=500)
+
+
+@app.route("/api/suppliers/<int:supplier_id>", methods=["DELETE"])
+def api_delete_supplier(supplier_id):
+    # Step 1: Check authentication.
+    auth_resp, auth_status = supplier_auth_guard()
+    if auth_resp is not None:
+        return auth_resp, auth_status
+
+    try:
+        # Step 2: Ensure table exists.
+        ensure_supplier_table()
+        # Step 3: Delete supplier by id.
+        deleted = supplier_repo_delete(supplier_id)
+        if not deleted:
+            return supplier_json_response(False, "Supplier not found.", data=None, status=404)
+        return supplier_json_response(True, "Supplier deleted.", data={"id": supplier_id}, status=200)
+    except Exception as exc:
+        return supplier_json_response(False, "Failed to delete supplier.", data=None, errors={"server": str(exc)}, status=500)
+
+
+def api_create_supplier_legacy():
+    """Backward-compatible POST /api/product-suppliers mapped to new supplier API."""
+    response, status = api_create_supplier()
+    body = response.get_json(silent=True) or {}
+    if status >= 400:
+        return jsonify({"success": False, "message": body.get("message", "Failed.")}), status
+    return jsonify({"success": True, "message": "Supplier saved.", "item": body.get("data")}), 201
 
 
 @app.route("/crm")
