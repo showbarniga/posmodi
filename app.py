@@ -5448,7 +5448,7 @@ def suppliers():
 
     return render_template(
         "suppliers.html",
-        title="Suppliers - Stackly",
+        title="suppliers - Stackly",
         page="suppliers",
         section="inventory",
         user_email=user_email,
@@ -5746,7 +5746,7 @@ def api_get_all_suppliers():
         ensure_supplier_table()
         # Step 3: Fetch supplier list.
         suppliers = supplier_repo_list()
-        return supplier_json_response(True, "Suppliers fetched.", data=suppliers, status=200)
+        return supplier_json_response(True, "suppliers fetched.", data=suppliers, status=200)
     except Exception as exc:
         return supplier_json_response(False, "Failed to fetch suppliers.", data=None, errors={"server": str(exc)}, status=500)
 
