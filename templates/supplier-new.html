@@ -1,18 +1,16 @@
- 
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Create New Supplier</title>
-  <link rel="stylesheet" href="{{ url_for('static', filename='supplier-new.css') }}">
-</head>
-<body>
+{% extends "menu.html" %}
+
+{% block extra_css %}
+<link rel="stylesheet" href="{{ url_for('static', filename='supplier-new.css') }}">
+{% endblock %}
+
+{% block content %}
  
 <div class="supplier-page">
  
   <div class="title-header">
     <h2 class="page-title">Create New Supplier</h2>
+    <span class="page-close" onclick="window.history.back()">✖ Close</span>
   </div>
   <div class="supplier-page-card">
  
@@ -430,7 +428,9 @@
   </form>
 </div>
  
+{% endblock %}
+
+{% block extra_js %}
 <script src="{{ url_for('static', filename='supplier-new.js') }}"></script>
-</body>
-</html>
+{% endblock %}
  

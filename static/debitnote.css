@@ -69,113 +69,101 @@
 .debitnote-search-section {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 20px;
 }
 
 .debitnote-search-wrap {
+  display: flex;
+  align-items: center;
+  position: relative;
   width: 100%;
+  height: 42px;
+  margin-top: 4px;
+  background: #ffffff;
+  border: 2px solid #d9d9d9;
+  border-radius: 999px;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.debitnote-search-wrap::before {
+  content: "🔍";
+  position: absolute;
+  left: 12px;
+  font-size: 16px;
+  line-height: 1;
+  color: #8a8a8a;
+  pointer-events: none;
+}
+
+.debitnote-search-wrap:hover {
+  border-color: #cfcfcf;
 }
 
 .debitnote-search-input {
   width: 100%;
-  padding: 8px 14px;
-  border-radius: 25px;
-  border: 1.5px solid #a12828;
-  background: #fff5f5;
-  font-size: 13px;
+  height: 100%;
+  border: none;
   outline: none;
-  transition: all 0.3s ease;
-  font-family: inherit;
-  height: 36px;
-  box-sizing: border-box;
-}
-
-.debitnote-search-input:hover {
-  transform: scale(1.01);
-  background: #f5d4d4;
-  border-color: #b9473e;
-  box-shadow: 0 4px 10px rgba(161, 40, 40, 0.12);
-  transition: 0.25s ease-in-out;
-}
-
-.debitnote-search-input:focus {
-  border-color: #b9473e;
-  box-shadow: 0 4px 12px rgba(161, 40, 40, 0.15);
+  background: transparent;
+  padding-left: 30px;
+  padding-right: 18px;
+  font-size: 14px;
+  color: #4a1f1a;
 }
 
 .debitnote-search-input::placeholder {
-  color: #a99;
+  color: #b7b7b7;
 }
 
 .debitnote-clear-btn {
   align-self: flex-end;
-  color: #a12828;
-  font-size: 13px;
-  background: none;
+  margin-top: 10px;
   border: none;
+  background: transparent;
   cursor: pointer;
-  font-weight: 500;
-  transition: color 0.3s ease;
+  text-align: right;
   white-space: nowrap;
-  padding: 4px 0;
-}
-
-.debitnote-clear-btn:hover {
-  color: #7a1d1d;
-  text-decoration: underline;
+  font-size: 15px;
+  font-weight: 700;
+  color: #8d1f1f;
 }
 
 /* ============================================
    FILTERS SECTION
    ============================================ */
 .debitnote-filters {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 20px;
-  margin-bottom: 25px;
-  padding-bottom: 20px;
-  border-bottom: 1px solid #eee;
+  display: flex;
+  align-items: flex-end;
+  gap: 16px;
+  margin-top: 10px;
+  margin-bottom: 26px;
+  flex-wrap: nowrap;
+  overflow-x: auto;
+  padding-bottom: 2px;
 }
 
 .debitnote-filter-item {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
+  flex: 1 1 0;
+  min-width: 0;
 }
 
 .debitnote-filter-item label {
-  font-size: 14px;
-  font-weight: 600;
-  color: #333;
+  display: block;
+  margin-bottom: 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: #4a1f1a;
 }
 
 .debitnote-select {
   width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border-radius: 12px;
-  border: 1.5px solid #a12828;
-  background-color: #fff5f5 !important;
-  font-size: 14px;
-  cursor: pointer;
-  transition: all 0.3s ease;
-  font-family: inherit;
-}
-
-.debitnote-select:hover {
-  transform: scale(1.02);
-  background: #f5d4d4 !important;
-  border-color: #b9473e;
-  box-shadow: 0 6px 15px rgba(161, 40, 40, 0.2);
-  transition: 0.25s ease-in-out;
-}
-
-.debitnote-select:focus {
+  height: 30px;
+  padding: 0 16px;
+  border: 2px solid #ead0d0;
+  border-radius: 18px;
+  background: #fff;
   outline: none;
-  border-color: #b9473e;
-  box-shadow: 0 4px 12px rgba(161, 40, 40, 0.15);
-  transform: scale(1.01);
+  white-space: nowrap;
+  font-size: 13px;
 }
 
 .debitnote-select option {
@@ -186,25 +174,30 @@
 
 /* Date Filter Specific */
 .debitnote-date-filter {
-  grid-column: span 1;
+  flex: 2 1 0;
 }
 
 .debitnote-date-range {
   display: flex;
-  border: 1.5px solid #a12828;
-  border-radius: 12px;
+  align-items: center;
+  height: 27px;
   overflow: hidden;
-  background: #fff5f5;
-  height: 40px;
+  background: #fff;
+  border: 2px solid #ead0d0;
+  border-radius: 16px;
 }
 
 .debitnote-date-field {
-  flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
+  width: 50%;
+  height: 100%;
   padding: 0 12px;
-  border-right: 1px solid #ddd;
+}
+
+.debitnote-date-field:first-child {
+  border-right: 1px solid #e6bcbc;
 }
 
 .debitnote-date-field:last-child {
@@ -212,33 +205,20 @@
 }
 
 .debitnote-date-field span {
-  font-size: 12px;
-  color: #666;
-  font-weight: 500;
   white-space: nowrap;
+  font-size: 12px;
+  font-weight: 700;
+  color: #7a1d1d;
 }
 
 .debitnote-date-input {
-  flex: 1;
+  width: 100%;
+  height: 100%;
   border: none;
-  background: transparent;
   outline: none;
+  background: transparent;
   font-size: 13px;
-  font-family: inherit;
-  transition: all 0.2s ease;
-}
-
-.debitnote-date-input:hover {
-  transform: scale(1.01);
-  transition: 0.25s ease-in-out;
-}
-
-.debitnote-date-range:hover {
-  transform: scale(1.01);
-  background: #f5d4d4;
-  border-color: #b9473e;
-  box-shadow: 0 4px 10px rgba(161, 40, 40, 0.12);
-  transition: 0.25s ease-in-out;
+  color: #4a1f1a;
 }
 
 .debitnote-date-input::placeholder {
@@ -543,11 +523,11 @@
    ============================================ */
 @media (max-width: 1024px) {
   .debitnote-filters {
-    grid-template-columns: repeat(2, 1fr);
+    flex-wrap: wrap;
   }
 
   .debitnote-date-filter {
-    grid-column: span 1;
+    flex: 1 1 100%;
   }
 }
 
@@ -561,12 +541,20 @@
   }
 
   .debitnote-filters {
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
-  .debitnote-search-row {
-    flex-direction: column;
-    align-items: stretch;
+  .debitnote-filter-item {
+    flex: 1 1 49%;
+  }
+
+  .debitnote-date-filter {
+    flex: 1 1 100%;
+  }
+
+  .debitnote-date-range {
+    height: 32px;
   }
 
   .debitnote-search-wrap {

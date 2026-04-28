@@ -45,6 +45,14 @@
   display: inline-block;
 }
 
+.page-close {
+  color: #a12828;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  user-select: none;
+}
+
 .header-actions {
   display: flex;
   gap: 10px;
@@ -1142,6 +1150,16 @@ button {
 
 .latest-comment-empty {
   color: #8a7a7a;
+}
+
+/* Keep comments/attachments section visually carded */
+.comment-card {
+  margin-top: 16px;
+  padding: 16px;
+  background: #fff;
+  border: 1px solid #e7b7b5;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(161, 40, 40, 0.08);
 }
 
 .line-items-table td input[name*="product_id"],
